@@ -56,6 +56,13 @@ export const useSession = () => {
   const createSession = useCallback(async (mode, jdAnalysisId) => {
     setIsLoading(true);
     setError(null);
+    // Reset state so stale data from a previous session doesn't carry over
+    setEvaluations([]);
+    setCurrentQuestion(null);
+    setFollowUp(null);
+    setNudge(null);
+    setIsComplete(false);
+    localStorage.removeItem(SESSION_STORAGE_KEY);
     try {
       const result = await apiClient.createSession(mode, jdAnalysisId);
       setSessionId(result.sessionId);
@@ -83,7 +90,7 @@ export const useSession = () => {
     }
   }, []);
 
-  const answerQuestion = useCallback(async (questionId, transcript) => {
+  const answerQuestion = useCallback(async (questionId, transcript, language = 'english') => {
     if (!sessionId) {
       setError('No active session');
       return;
@@ -95,7 +102,7 @@ export const useSession = () => {
     setFollowUp(null);
 
     try {
-      const result = await apiClient.answerBehavioral(sessionId, questionId, transcript);
+      const result = await apiClient.answerBehavioral(sessionId, questionId, transcript, language);
 
       if (result.nextAction === 'first_question') {
         setCurrentQuestion(result.nextQuestion);

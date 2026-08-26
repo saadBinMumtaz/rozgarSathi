@@ -5,6 +5,7 @@ import ModeSelection from './pages/ModeSelection';
 import BehavioralInterview from './pages/BehavioralInterview';
 import TechnicalInterview from './pages/TechnicalInterview';
 import Toast from './design-system/Toast';
+import { useLanguage } from './hooks/useLanguage';
 
 export const App = () => {
   const [currentPage, setCurrentPage] = useState('landing');
@@ -12,6 +13,7 @@ export const App = () => {
   const [selectedMode, setSelectedMode] = useState(null);
   const [toastMessage, setToastMessage] = useState(null);
   const [pendingSampleJD, setPendingSampleJD] = useState(null);
+  const { language, setLanguage, isUrdu } = useLanguage();
 
   // Sec. 15.1: Landing's "Try a sample JD" hands the fixture text + sampleId
   // over to JDInput, which pre-fills the textarea and runs the analyze flow.
@@ -60,6 +62,8 @@ export const App = () => {
           jdAnalysis={jdAnalysis}
           onSelectMode={handleSelectMode}
           onNavigate={setCurrentPage}
+          language={language}
+          setLanguage={setLanguage}
         />
       )}
 
@@ -67,6 +71,8 @@ export const App = () => {
         <BehavioralInterview
           jdAnalysisId={jdAnalysis?._id || jdAnalysis?.id}
           onNavigate={setCurrentPage}
+          language={language}
+          isUrdu={isUrdu}
         />
       )}
 
@@ -74,6 +80,8 @@ export const App = () => {
         <TechnicalInterview
           jdAnalysisId={jdAnalysis?._id || jdAnalysis?.id}
           onNavigate={setCurrentPage}
+          language={language}
+          isUrdu={isUrdu}
         />
       )}
 

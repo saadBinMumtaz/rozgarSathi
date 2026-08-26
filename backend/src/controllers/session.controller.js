@@ -12,6 +12,9 @@ export const createSession = async (req, res, next) => {
       jdSnapshot: jdAnalysisId ? { jdAnalysisId } : {},
       status: 'in_progress',
       questions: [],
+      metadata: {
+        sessionSeed: Math.floor(Date.now() / 1000) % 100, // Time-based seed for cross-session variety
+      },
     });
     return res.status(201).json({ sessionId: newSession._id.toString() });
   } catch (err) {

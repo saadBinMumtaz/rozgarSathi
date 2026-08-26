@@ -4,7 +4,7 @@ import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '../de
 import { Badge } from '../design-system/Badge';
 import { ScoreRing } from '../design-system/ScoreRing';
 
-export const ModeSelection = ({ jdAnalysis, onSelectMode, onNavigate }) => {
+export const ModeSelection = ({ jdAnalysis, onSelectMode, onNavigate, language, setLanguage }) => {
   const [selectedMode, setSelectedMode] = useState(null);
 
   if (!jdAnalysis) {
@@ -64,7 +64,7 @@ export const ModeSelection = ({ jdAnalysis, onSelectMode, onNavigate }) => {
   return (
     <div className="min-h-screen bg-slate-950 text-slate-100 p-6 md:p-12 flex flex-col items-center">
       {/* Navigation Header */}
-      <header className="w-full max-w-5xl flex justify-between items-center mb-8">
+      <header className="w-full max-w-5xl flex flex-wrap items-center justify-between gap-4 mb-8">
         <Button
           variant="link"
           className="text-slate-400 hover:text-white flex items-center gap-2"
@@ -72,7 +72,30 @@ export const ModeSelection = ({ jdAnalysis, onSelectMode, onNavigate }) => {
         >
           ← Edit Job Description
         </Button>
-        <Badge variant="success">Step 2 of 2: Mode Selection</Badge>
+
+        <div className="flex items-center gap-3">
+          {/* Language Toggle */}
+          <div className="flex items-center gap-2 bg-slate-900/80 border border-slate-800 rounded-lg px-3 py-1.5">
+            <span className="text-xs text-slate-500">
+              {language === 'urdu' ? 'زبان' : 'Language'}
+            </span>
+            <Button
+              variant={language === 'english' ? 'primary' : 'ghost'}
+              size="sm"
+              onClick={() => setLanguage('english')}
+            >
+              English
+            </Button>
+            <Button
+              variant={language === 'urdu' ? 'primary' : 'ghost'}
+              size="sm"
+              onClick={() => setLanguage('urdu')}
+            >
+              {'اردو'}
+            </Button>
+          </div>
+          <Badge variant="success">Step 2 of 2</Badge>
+        </div>
       </header>
 
       <main className="w-full max-w-5xl space-y-8">

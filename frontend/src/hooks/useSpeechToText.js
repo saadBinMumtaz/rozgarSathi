@@ -1,11 +1,12 @@
 // frontend/src/hooks/useSpeechToText.js
 // Wraps Web Speech API SpeechRecognition for speech-to-text.
 // Exposes: start(), stop(), transcript, interimTranscript, isListening, isSupported, error.
+// Supports language-aware recognition (English en-US, Urdu ur-PK).
 // Auto-renders TypedFallback if mic permission denied or STT fails.
 
 import { useState, useEffect, useRef, useCallback } from 'react';
 
-export const useSpeechToText = () => {
+export const useSpeechToText = (language = 'english') => {
   const [transcript, setTranscript] = useState('');
   const [interimTranscript, setInterimTranscript] = useState('');
   const [isListening, setIsListening] = useState(false);
@@ -13,9 +14,25 @@ export const useSpeechToText = () => {
   const [error, setError] = useState(null);
   const [checked, setChecked] = useState(false);
   const recognitionRef = useRef(null);
+  const languageRef = useRef(language);
+
+  // Keep language ref in sync
+  useEffect(() => {
+    languageRef.current = language;
+    // Reconfigure recognition language if instance exists
+    if (recognitionRef.current) {
+      const wasListening = isListening;
+      recognitionRef.current.stop();
+      recognitionRef.current.lang = language === 'urdu' ? 'ur-PK' : 'en-US';
+      // Don't auto-restart — let caller control start/stop
+      if (wasListening) {
+        setIsListening(false);
+      }
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [language]);
 
   useEffect(() => {
-    // Check if SpeechRecognition is supported
     const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
     if (typeof window !== 'undefined' && SpeechRecognition) {
       setIsSupported(true);
@@ -23,7 +40,7 @@ export const useSpeechToText = () => {
       const recognition = new SpeechRecognition();
       recognition.continuous = true;
       recognition.interimResults = true;
-      recognition.lang = 'en-US';
+      recognition.lang = languageRef.current === 'urdu' ? 'ur-PK' : 'en-US';
 
       recognition.onresult = (event) => {
         let interim = '';
@@ -66,6 +83,7 @@ export const useSpeechToText = () => {
         recognitionRef.current.stop();
       }
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const start = useCallback(() => {
@@ -77,6 +95,9 @@ export const useSpeechToText = () => {
     setError(null);
     setTranscript('');
     setInterimTranscript('');
+
+    // Ensure language is current before starting
+    recognitionRef.current.lang = languageRef.current === 'urdu' ? 'ur-PK' : 'en-US';
 
     try {
       recognitionRef.current.start();

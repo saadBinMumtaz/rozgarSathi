@@ -1,7 +1,7 @@
 // backend/src/services/retrieval.js
 // Question retrieval using TF-IDF + cosine similarity.
 // Deterministic: same JD + question bank = same ranking.
-// No LLM calls — pure text similarity.
+// No LLM calls � pure text similarity.
 // Supports both behavioral and technical question banks.
 
 import fs from 'fs';
@@ -12,7 +12,7 @@ import logger from '../utils/logger.js';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-// ─── Behavioral question bank ────────────────────────────────────────
+// --- Behavioral question bank ----------------------------------------
 const behavioralPath = path.join(__dirname, '../data/behavioral-questions.json');
 let behavioralBank = [];
 try {
@@ -28,7 +28,7 @@ try {
   behavioralBank = [];
 }
 
-// ─── Technical question bank ─────────────────────────────────────────
+// --- Technical question bank -----------------------------------------
 const technicalPath = path.join(__dirname, '../data/technical-questions.json');
 let technicalBank = [];
 try {
@@ -44,7 +44,7 @@ try {
   technicalBank = [];
 }
 
-// ─── Shared TF-IDF infrastructure ────────────────────────────────────
+// --- Shared TF-IDF infrastructure ------------------------------------
 
 const tokenize = (text) => {
   return text
@@ -126,9 +126,84 @@ const behavioralIndex = buildTfIdfIndex(behavioralBank, (q) => `${q.text} ${q.to
 const technicalIndex = buildTfIdfIndex(technicalBank, (q) => `${q.text} ${q.skill || ''} ${q.difficulty || ''}`);
 
 /**
- * Generic retrieval function using a pre-built TF-IDF index.
+ * Enhanced scoring with multiple relevance signals:
+ * 1. TF-IDF cosine similarity (base score)
+ * 2. Exact skill/topic match boost
+ * 3. Keyword density boost
+ * 4. Seniority alignment boost
  */
-const retrieveFromIndex = ({ index, bank, queryText, excludeIds = [], filters = {}, limit = 1 }) => {
+const enhancedScoring = ({ question, queryVector, vector, jdAnalysis, jdTerms }) => {
+  // Base: TF-IDF cosine similarity
+  const baseScore = cosineSimilarity(queryVector, vector);
+  
+  let boostedScore = baseScore;
+  const matchedTerms = [];
+  
+  const questionText = `${question.text} ${question.skill || question.topic || ''}`.toLowerCase();
+  const questionSkill = (question.skill || question.topic || '').toLowerCase();
+  
+  // Boost 1: Exact skill/topic match with JD technical focus or skills
+  const jdSkills = [
+    ...(jdAnalysis.technicalFocus || []),
+    ...(jdAnalysis.skills || []),
+    ...(jdAnalysis.keywords || []),
+  ].map(s => s.toLowerCase());
+  
+  jdSkills.forEach(skill => {
+    if (questionSkill.includes(skill) || skill.includes(questionSkill)) {
+      boostedScore += 0.4; // Significant boost for exact skill match
+      if (!matchedTerms.includes(skill)) matchedTerms.push(skill);
+    }
+  });
+  
+  // Boost 2: Keyword density - how many JD terms appear in the question
+  const matchedKeywords = jdTerms.filter(term => {
+    const termLower = term.toLowerCase();
+    return questionText.includes(termLower) || 
+           tokenize(term).some(token => token.length > 3 && questionText.includes(token));
+  });
+  
+  if (jdTerms.length > 0) {
+    const keywordRatio = matchedKeywords.length / jdTerms.length;
+    boostedScore += keywordRatio * 0.3; // Up to 0.3 boost for keyword coverage
+    matchedTerms.push(...matchedKeywords);
+  }
+  
+  // Boost 3: Seniority alignment
+  const expLevel = (jdAnalysis.experienceLevel || '').toLowerCase();
+  const qDifficulty = (question.difficulty || '').toLowerCase();
+  
+  const seniorityMap = {
+    'entry': ['easy', 'medium'],
+    'junior': ['easy', 'medium'],
+    'mid': ['medium', 'hard'],
+    'mid-level': ['medium', 'hard'],
+    'senior': ['hard', 'expert'],
+    'lead': ['hard', 'expert'],
+    'executive': ['expert'],
+  };
+  
+  const alignedDifficulties = seniorityMap[expLevel] || [];
+  if (alignedDifficulties.includes(qDifficulty)) {
+    boostedScore += 0.15; // Small boost for seniority alignment
+  }
+  
+  // Normalize score to 0-1 range (cap at 1.0)
+  boostedScore = Math.min(1.0, boostedScore);
+  
+  return {
+    score: boostedScore,
+    matchedTerms: [...new Set(matchedTerms)],
+    baseScore,
+  };
+};
+
+/**
+ * Generic retrieval function using enhanced scoring.
+ * Filters out questions with relevance score < 0.3.
+ * Supports randomize=true for session variety (top-K weighted shuffle).
+ */
+const retrieveFromIndex = ({ index, bank, queryText, excludeIds = [], filters = {}, limit = 1, jdAnalysis = {}, jdTerms = [], randomize = false, sessionSeed = 0 }) => {
   if (bank.length === 0) {
     logger.warn('Question bank is empty');
     return [];
@@ -136,7 +211,7 @@ const retrieveFromIndex = ({ index, bank, queryText, excludeIds = [], filters = 
 
   const queryVector = index.computeVector(queryText);
 
-  const candidates = index.questionVectors
+  const allScored = index.questionVectors
     .filter(({ question }) => {
       if (excludeIds.includes(question.id)) return false;
       for (const [key, value] of Object.entries(filters)) {
@@ -147,17 +222,53 @@ const retrieveFromIndex = ({ index, bank, queryText, excludeIds = [], filters = 
       return true;
     })
     .map(({ question, vector }) => {
-      const score = cosineSimilarity(queryVector, vector);
-      return { question, score };
+      const scoring = enhancedScoring({ question, queryVector, vector, jdAnalysis, jdTerms });
+      return { question, ...scoring };
     })
-    .sort((a, b) => b.score - a.score)
-    .slice(0, limit);
+    .sort((a, b) => b.score - a.score);
 
-  return candidates.map((c) => c.question);
+  // Apply relevance threshold filter
+  let candidates = allScored.filter(({ score }) => score >= 0.3);
+
+  // Fallback: if threshold filters out everything, use top-scoring questions regardless
+  if (candidates.length === 0 && allScored.length > 0) {
+    logger.debug(`All questions scored below 0.3 threshold. Falling back to top ${limit} from ${allScored.length} candidates.`);
+    candidates = allScored;
+  }
+
+  // If randomize is enabled, pick from top-K (K=8) with weighted randomness
+  if (randomize && candidates.length > limit) {
+    const topK = candidates.slice(0, Math.max(limit * 4, 8));
+    // Weighted shuffle: higher-ranked items have higher probability
+    const weighted = topK.map((c, i) => ({
+      ...c,
+      weight: (topK.length - i) * (1 + sessionSeed * 0.1),
+    }));
+    // Fisher-Yates with weight bias
+    for (let i = weighted.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      if (weighted[i].weight < weighted[j].weight && Math.random() > 0.6) {
+        [weighted[i], weighted[j]] = [weighted[j], weighted[i]];
+      }
+    }
+    return weighted.slice(0, limit).map((c) => ({
+      ...c.question,
+      matchedTerms: c.matchedTerms,
+      relevanceScore: c.score,
+    }));
+  }
+
+  return candidates.slice(0, limit).map((c) => ({
+    ...c.question,
+    matchedTerms: c.matchedTerms,
+    relevanceScore: c.score,
+  }));
 };
 
 /**
  * Retrieve behavioral questions ranked by relevance to JD.
+ * @param {boolean} [randomize=false] - Enable weighted randomization for session variety
+ * @param {number} [sessionSeed=0] - Seed based on session count for cross-session variety
  */
 export const retrieveBehavioralQuestions = ({
   jdAnalysis,
@@ -165,9 +276,21 @@ export const retrieveBehavioralQuestions = ({
   topic,
   difficulty,
   limit = 1,
+  randomize = false,
+  sessionSeed = 0,
 }) => {
-  const queryText = [
+  // Collect all JD terms for traceability
+  const jdTerms = [
     ...(jdAnalysis.behavioralFocus || []),
+    ...(jdAnalysis.skills || []),
+    ...(jdAnalysis.keywords || []),
+  ];
+
+  // Enhanced query text: include role, behavioral focus, and skills
+  const queryText = [
+    jdAnalysis.role || '',
+    ...(jdAnalysis.behavioralFocus || []),
+    ...(jdAnalysis.skills || []),
     ...(jdAnalysis.keywords || []),
   ].join(' ');
 
@@ -178,10 +301,14 @@ export const retrieveBehavioralQuestions = ({
     excludeIds,
     filters: { topic, difficulty },
     limit,
+    jdAnalysis,
+    jdTerms,
+    randomize,
+    sessionSeed,
   });
 
   logger.debug(
-    `Retrieved ${results.length} behavioral questions (topic=${topic || 'any'}, difficulty=${difficulty || 'any'})`
+    `Retrieved ${results.length} behavioral questions (topic=${topic || 'any'}, difficulty=${difficulty || 'any'}, avgScore=${results.length > 0 ? (results.reduce((sum, r) => sum + (r.relevanceScore || 0), 0) / results.length).toFixed(3) : 'N/A'})`
   );
   return results;
 };
@@ -194,7 +321,9 @@ export const retrieveBehavioralQuestions = ({
  * @param {string} [params.skill] - Filter by skill (e.g. 'React', 'Node.js')
  * @param {string} [params.difficulty] - Filter by difficulty
  * @param {number} [params.limit=1] - Number of questions to return
- * @returns {Array} Ranked questions
+ * @param {boolean} [params.randomize=false] - Enable weighted randomization for session variety
+ * @param {number} [params.sessionSeed=0] - Seed based on session count for cross-session variety
+ * @returns {Array} Ranked questions with matchedTerms
  */
 export const retrieveTechnicalQuestions = ({
   jdAnalysis,
@@ -202,8 +331,19 @@ export const retrieveTechnicalQuestions = ({
   skill,
   difficulty,
   limit = 1,
+  randomize = false,
+  sessionSeed = 0,
 }) => {
+  // Collect all JD terms for traceability
+  const jdTerms = [
+    ...(jdAnalysis.technicalFocus || []),
+    ...(jdAnalysis.skills || []),
+    ...(jdAnalysis.keywords || []),
+  ];
+
+  // Enhanced query text: include role, technical focus, and skills
   const queryText = [
+    jdAnalysis.role || '',
     ...(jdAnalysis.technicalFocus || []),
     ...(jdAnalysis.skills || []),
     ...(jdAnalysis.keywords || []),
@@ -216,10 +356,14 @@ export const retrieveTechnicalQuestions = ({
     excludeIds,
     filters: { skill, difficulty },
     limit,
+    jdAnalysis,
+    jdTerms,
+    randomize,
+    sessionSeed,
   });
 
   logger.debug(
-    `Retrieved ${results.length} technical questions (skill=${skill || 'any'}, difficulty=${difficulty || 'any'})`
+    `Retrieved ${results.length} technical questions (skill=${skill || 'any'}, difficulty=${difficulty || 'any'}, avgScore=${results.length > 0 ? (results.reduce((sum, r) => sum + (r.relevanceScore || 0), 0) / results.length).toFixed(3) : 'N/A'})`
   );
   return results;
 };

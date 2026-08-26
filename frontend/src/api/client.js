@@ -54,13 +54,13 @@ export const apiClient = {
     return res.json();
   },
 
-  async answerBehavioral(sessionId, questionId, transcript) {
+  async answerBehavioral(sessionId, questionId, transcript, language = 'english') {
     const res = await fetch(`${API_BASE_URL}/sessions/${sessionId}/answer`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify({ questionId, transcript }),
+      body: JSON.stringify({ questionId, transcript, language }),
     });
 
     if (!res.ok) {
@@ -71,13 +71,13 @@ export const apiClient = {
     return res.json();
   },
 
-  async answerTechnical(sessionId, questionId, transcript) {
+  async answerTechnical(sessionId, questionId, transcript, language = 'english') {
     const res = await fetch(`${API_BASE_URL}/sessions/${sessionId}/answer`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify({ questionId, transcript }),
+      body: JSON.stringify({ questionId, transcript, language }),
     });
 
     if (!res.ok) {
@@ -99,6 +99,23 @@ export const apiClient = {
 
     if (!res.ok) {
       const errorData = await res.json().catch(() => ({ error: 'Failed to translate evaluation' }));
+      throw new Error(errorData.error || `Server error: ${res.status}`);
+    }
+
+    return res.json();
+  },
+
+  async translateQuestion(questionText, followUpPrompts = [], targetLanguage = 'urdu') {
+    const res = await fetch(`${API_BASE_URL}/sessions/translate-question`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ questionText, followUpPrompts, targetLanguage }),
+    });
+
+    if (!res.ok) {
+      const errorData = await res.json().catch(() => ({ error: 'Failed to translate question' }));
       throw new Error(errorData.error || `Server error: ${res.status}`);
     }
 

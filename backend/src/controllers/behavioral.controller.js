@@ -6,6 +6,7 @@ import Session from '../models/Session.model.js';
 import JDAnalysis from '../models/JDAnalysis.model.js';
 import { retrieveBehavioralQuestions, getRandomQuestion } from '../services/retrieval.js';
 import { evaluateBehavioralAnswer, INVALID_EVALUATION } from '../services/scoring.js';
+import { detectAnswerLanguage, translateQuestionText } from '../services/bilingual.js';
 import logger from '../utils/logger.js';
 
 const MIN_WORDS_FOR_NUDGE = 10;
@@ -14,7 +15,17 @@ const MAX_QUESTIONS = 5; // behavioral interview length
 
 const PROFANITY_LIST = [
   'fuck', 'shit', 'bitch', 'asshole', 'bastard', 'cunt', 'motherfucker', 'dick', 'piss',
+  'damn', 'hell', 'crap', 'bastard', 'slut', 'whore',
 ];
+
+/**
+ * Check if transcript contains profanity.
+ * Returns the first profane word found, or null.
+ */
+const detectProfanity = (transcript) => {
+  const lower = transcript.toLowerCase();
+  return PROFANITY_LIST.find((p) => lower.includes(p)) || null;
+};
 
 /**
  * Detect low-quality / non-answer submissions (too short, profanity,
@@ -34,10 +45,33 @@ const isLowQualityAnswer = (transcript) => {
 };
 
 const STAR_FOLLOWUPS = {
-  situation: "Let's go back to the beginning — what was the specific situation you were in?",
-  task: 'What exactly was your responsibility in that situation?',
-  action: 'Walk me through the specific steps you personally took.',
-  result: 'How did it end — what was the concrete result of your actions?',
+  situation: "Let's go back to the beginning — what was the specific situation you were in, and what made it particularly challenging?",
+  task: 'What exactly was your responsibility in that situation, and how did you clarify what was expected of you?',
+  action: 'Walk me through the specific steps you personally took — not the team, but you individually. What was your thought process?',
+  result: 'How did it end — what was the concrete result of your actions, and how did you measure whether you succeeded?',
+};
+
+/**
+ * Build context-aware follow-ups that probe deeper into the candidate's answer.
+ * Uses the weakest STAR dimension and anchors to something the candidate actually said.
+ */
+const DEEP_PROBES = {
+  situation: [
+    'What made that situation particularly complex or high-stakes?',
+    'Were there any constraints that limited your options at the time?',
+  ],
+  task: [
+    'How did you prioritize what needed to happen first?',
+    'Was there ambiguity about who owned the problem? How did you handle that?',
+  ],
+  action: [
+    'What alternatives did you consider before committing to that approach?',
+    'What was the biggest risk you took, and how did you mitigate it?',
+  ],
+  result: [
+    'If you could do it again, what would you change and why?',
+    'How did this experience change how you approach similar situations now?',
+  ],
 };
 
 /**
@@ -57,6 +91,7 @@ const extractAnchor = (transcript) => {
 /**
  * STAR coaching folded into a follow-up: target the weakest STAR dimension
  * and anchor it to something the candidate actually said.
+ * Also includes a deep probe from the same dimension for richer follow-ups.
  */
 const buildStarFollowUp = (evaluation, transcript) => {
   const dims = evaluation.dimensions || {};
@@ -68,10 +103,16 @@ const buildStarFollowUp = (evaluation, transcript) => {
   }
   const base = STAR_FOLLOWUPS[dimKey];
   const anchor = extractAnchor(transcript);
+  const deepProbes = DEEP_PROBES[dimKey] || [];
+  const probe = deepProbes.length > 0 ? deepProbes[Math.floor(Math.random() * deepProbes.length)] : '';
+  
   if (anchor) {
-    return `You mentioned "${anchor}" — ${base.charAt(0).toLowerCase() + base.slice(1)}`;
+    const combined = probe
+      ? `You mentioned "${anchor}" — ${base.charAt(0).toLowerCase() + base.slice(1)} Also, ${probe.charAt(0).toLowerCase() + probe.slice(1)}`
+      : `You mentioned "${anchor}" — ${base.charAt(0).toLowerCase() + base.slice(1)}`;
+    return combined;
   }
-  return base;
+  return probe ? `${base} ${probe}` : base;
 };
 
 // INVALID_EVALUATION is now imported from scoring.js (Rules §5: only scoring.js constructs evaluations)
@@ -114,15 +155,32 @@ const finalizeQuestion = async (session, evaluation, res) => {
 
   await session.save(); // Incremental save
 
+  // Auto-translate next question if language is Urdu
+  let translatedQuestion = null;
+  const sessionLanguage = session.metadata?.language;
+  
+  if (sessionLanguage === 'urdu') {
+    try {
+      const translation = await translateQuestionText(nextQ.text, [], 'urdu');
+      translatedQuestion = translation.questionText;
+    } catch (err) {
+      logger.warn(`Failed to translate question to Urdu: ${err.message}`);
+    }
+  }
+
   return res.json({
     evaluation,
     nextAction: 'next_question',
     nextQuestion: {
       questionId: nextQ.id,
       questionText: nextQ.text,
+      translatedQuestionText: translatedQuestion,
       topic: nextQ.topic,
       difficulty: nextQ.difficulty,
+      matchedTerms: nextQ.matchedTerms || [],
     },
+    detectedLanguage: sessionLanguage,
+    languageConfidence: 1,
   });
 };
 
@@ -139,11 +197,13 @@ const getFirstQuestion = async (session) => {
     }
   }
 
-  // Retrieve top-ranked question
+  // Retrieve top-ranked question with randomization for session variety
   const questions = retrieveBehavioralQuestions({
     jdAnalysis,
     excludeIds: [],
     limit: 1,
+    randomize: true,
+    sessionSeed: session.metadata?.sessionSeed || 0,
   });
 
   if (questions.length === 0) {
@@ -175,6 +235,8 @@ const getNextQuestion = async (session) => {
     jdAnalysis,
     excludeIds,
     limit: 1,
+    randomize: true,
+    sessionSeed: session.metadata?.sessionSeed || 0,
   });
 
   if (questions.length === 0) {
@@ -201,7 +263,12 @@ export const answerBehavioral = async (req, res, next) => {
       return next();
     }
 
-    const { questionId, transcript } = req.body;
+    const { questionId, transcript, language } = req.body;
+    const activeLanguage = language || 'english';
+
+    // Store language preference in session metadata
+    if (!session.metadata) session.metadata = {};
+    session.metadata.language = activeLanguage;
 
     // First call: no questions yet, retrieve and return the first question
     if (session.questions.length === 0) {
@@ -223,14 +290,27 @@ export const answerBehavioral = async (req, res, next) => {
 
       await session.save(); // Incremental save
 
+      // Auto-translate question if Urdu mode
+      let translatedQuestionText = null;
+      if (activeLanguage === 'urdu') {
+        try {
+          const translation = await translateQuestionText(question.text, [], 'urdu');
+          translatedQuestionText = translation.questionText;
+        } catch (err) {
+          logger.warn(`Failed to translate first question to Urdu: ${err.message}`);
+        }
+      }
+
       return res.json({
         evaluation: null,
         nextAction: 'first_question',
         nextQuestion: {
           questionId: session.questions[0].questionId,
           questionText: question.text,
+          translatedQuestionText,
           topic: question.topic,
           difficulty: question.difficulty,
+          matchedTerms: question.matchedTerms || [],
         },
       });
     }
@@ -263,6 +343,20 @@ export const answerBehavioral = async (req, res, next) => {
     // Main answer path with low-quality / non-answer detection.
     const lowQuality = isLowQualityAnswer(transcript);
     const alreadyNudged = Boolean(currentQuestion.transcript);
+    const profaneWord = detectProfanity(transcript);
+
+    // Profanity detected — give strong warning and end interview
+    if (profaneWord) {
+      session.status = 'terminated';
+      session.overallScore = 0;
+      await session.save();
+      return res.json({
+        evaluation: null,
+        nextAction: 'complete',
+        terminationReason: 'profanity',
+        message: `Interview terminated: Inappropriate language detected. Please maintain professional conduct during the interview.`,
+      });
+    }
 
     if (lowQuality && !alreadyNudged) {
       // Nudge once politely (spoken aloud by the client) before scoring.
@@ -291,8 +385,13 @@ export const answerBehavioral = async (req, res, next) => {
           result: 'Share the outcome and what you learned',
         },
       };
-      evaluation = await evaluateBehavioralAnswer({ question: questionData, transcript });
+      evaluation = await evaluateBehavioralAnswer({ question: questionData, transcript, language: activeLanguage });
     }
+
+    // Detect answer language for Urdu auto-translation
+    const langDetection = detectAnswerLanguage(transcript);
+    session.metadata.lastAnswerLanguage = langDetection.detectedLanguage;
+    session.metadata.languageConfidence = langDetection.confidence;
 
     currentQuestion.transcript = transcript;
     currentQuestion.evaluation = evaluation;

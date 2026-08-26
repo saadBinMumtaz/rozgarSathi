@@ -9,7 +9,7 @@ const pdfParse = require('pdf-parse');
 import mammoth from 'mammoth';
 import fs from 'fs';
 import path from 'path';
-import { callQwen } from './ai.js';
+import { callAI } from './ai.js';
 import logger from '../utils/logger.js';
 
 /**
@@ -69,7 +69,7 @@ Focus on technical skills explicitly mentioned. For yearsExperience, look for da
   const requiredFields = ['claimedSkills', 'yearsExperience', 'projectsSummary'];
 
   try {
-    return await callQwen({ systemPrompt, userPrompt, requiredFields });
+    return await callAI({ systemPrompt, userPrompt, requiredFields });
   } catch (err) {
     logger.warn(`Qwen résumé extraction failed (${err.message}). Using deterministic fallback.`);
     return fallbackExtractResume(resumeText);

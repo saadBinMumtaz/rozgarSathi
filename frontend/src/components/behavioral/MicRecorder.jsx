@@ -6,9 +6,9 @@ import React, { useEffect, useRef, useState } from 'react';
 import { Mic, MicOff, Square } from 'lucide-react';
 import { useSpeechToText } from '../../hooks/useSpeechToText';
 
-export const MicRecorder = ({ isSpeaking, onTranscriptChange, resetKey, onUnsupported, autoStart = false }) => {
+export const MicRecorder = ({ isSpeaking, onTranscriptChange, resetKey, onUnsupported, autoStart = false, language = 'english' }) => {
   const { transcript, interimTranscript, isListening, isSupported, checked, error, start, stop, reset } =
-    useSpeechToText();
+    useSpeechToText(language);
   const [levels, setLevels] = useState([0, 0, 0, 0, 0]);
   const onUnsupportedRef = useRef(onUnsupported);
   const autoStartedRef = useRef(false);

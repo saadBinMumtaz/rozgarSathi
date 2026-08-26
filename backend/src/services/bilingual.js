@@ -3,8 +3,60 @@
 // Rule: a "Show in Urdu" toggle reuses the SAME evaluation JSON,
 // translated only at render/prompt time — never re-runs the full evaluation.
 
-import { callQwen } from './ai.js';
+import { callAI } from './ai.js';
 import logger from '../utils/logger.js';
+
+// Common Urdu/Roman Urdu words and phrases for language detection
+const URDU_MARKERS = [
+  'mein', 'main', 'hum', 'tum', 'aap', 'woh', 'yeh', 'hai', 'hain', 'tha', 'thi', 'the',
+  'kya', 'kab', 'kahan', 'kaise', 'kyun', 'jo', 'ki', 'ka', 'ke', 'ko', 'se', 'mein', 'par',
+  'aur', 'ya', 'lekin', 'magar', 'isliye', 'kyunki', 'agar', 'toh', 'phir', 'ab', 'pehle',
+  'baad', 'upar', 'neeche', 'andar', 'bahar', 'saath', 'bina', 'karna', 'karta', 'kari',
+  'tha', 'raha', 'rahi', 'hota', 'hoti', 'chahiye', 'sakta', 'sakti', 'chahie',
+  'mujhe', 'tujhe', 'usse', 'humne', 'tumne', 'unhone', 'maine',
+  'acha', 'theek', 'sahi', 'galat', 'bada', 'chhota', 'zyada', 'kam',
+  'bhai', 'dost', 'kaam', 'paisa', 'waqt', 'din', 'raat', 'saal',
+];
+
+/**
+ * Detect if a transcript is primarily in Urdu/Roman Urdu.
+ * Uses a simple heuristic: count Urdu marker words vs total words.
+ * @param {string} transcript - The text to analyze
+ * @returns {Object} { isUrdu: boolean, confidence: number, detectedLanguage: string }
+ */
+export const detectAnswerLanguage = (transcript) => {
+  if (!transcript || typeof transcript !== 'string') {
+    return { isUrdu: false, confidence: 0, detectedLanguage: 'english' };
+  }
+
+  const text = transcript.toLowerCase();
+  const words = text.split(/\s+/).filter(Boolean);
+  
+  if (words.length === 0) {
+    return { isUrdu: false, confidence: 0, detectedLanguage: 'english' };
+  }
+
+  // Count Urdu markers
+  const urduWordCount = URDU_MARKERS.filter(marker => {
+    // Match whole words only
+    const regex = new RegExp(`\\b${marker}\\b`, 'i');
+    return regex.test(text);
+  }).length;
+
+  const urduRatio = urduWordCount / words.length;
+  
+  // Threshold: if more than 15% of words are Urdu markers, consider it Urdu
+  const isUrdu = urduRatio > 0.15;
+  const confidence = Math.min(urduRatio * 3, 1); // Normalize to 0-1
+  
+  return {
+    isUrdu,
+    confidence,
+    detectedLanguage: isUrdu ? 'urdu' : 'english',
+    urduWordCount,
+    totalWords: words.length,
+  };
+};
 
 /**
  * Translate an evaluation object's text fields to the target language.
@@ -57,7 +109,7 @@ Do not translate field names, only values.`;
   "evidence": ${JSON.stringify(fieldsToTranslate.evidence)}
 }`;
 
-    const result = await callQwen({
+    const result = await callAI({
       systemPrompt,
       userPrompt,
       requiredFields: ['strength', 'missing', 'improvement'],
@@ -77,4 +129,57 @@ Do not translate field names, only values.`;
   }
 };
 
-export default { translateEvaluation };
+/**
+ * Translate question text and follow-up prompts to the target language.
+ * Enables smooth Urdu code-switching during the interview.
+ *
+ * @param {string} questionText - The question text to translate
+ * @param {string[]} followUpPrompts - Array of follow-up prompts to translate
+ * @param {string} targetLanguage - 'urdu' | 'english' | 'mixed'
+ * @returns {Promise<Object>} { questionText, followUpPrompts }
+ */
+export const translateQuestionText = async (questionText, followUpPrompts = [], targetLanguage = 'english') => {
+  if (targetLanguage === 'english' || !targetLanguage) {
+    return { questionText, followUpPrompts };
+  }
+
+  const languageLabel =
+    targetLanguage === 'urdu'
+      ? 'Urdu (اردو) — use natural conversational Urdu with common English tech terms kept as-is'
+      : targetLanguage === 'mixed'
+        ? 'Roman Urdu (mixed English-Urdu script)'
+        : targetLanguage;
+
+  try {
+    const textsToTranslate = [questionText, ...followUpPrompts];
+    
+    const systemPrompt = `You are a bilingual interview translator. Translate the following interview question and follow-up prompts into ${languageLabel}.
+Rules:
+- Keep technical terms (React, Node.js, API, MongoDB, etc.) in English
+- Use natural conversational tone suitable for a Pakistani job interview
+- Maintain the professional interview context
+- Return ONLY valid JSON with keys: { "questionText": "...", "followUpPrompts": ["..."] }`;
+
+    const userPrompt = `Translate:
+{
+  "questionText": ${JSON.stringify(questionText)},
+  "followUpPrompts": ${JSON.stringify(followUpPrompts)}
+}`;
+
+    const result = await callAI({
+      systemPrompt,
+      userPrompt,
+      requiredFields: ['questionText', 'followUpPrompts'],
+    });
+
+    return {
+      questionText: result.questionText || questionText,
+      followUpPrompts: Array.isArray(result.followUpPrompts) ? result.followUpPrompts : followUpPrompts,
+    };
+  } catch (err) {
+    logger.warn(`Question translation failed: ${err.message}. Returning original English.`);
+    return { questionText, followUpPrompts };
+  }
+};
+
+export default { translateEvaluation, translateQuestionText, detectAnswerLanguage };

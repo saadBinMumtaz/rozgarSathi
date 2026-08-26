@@ -8,14 +8,53 @@ import JDAnalysis from '../models/JDAnalysis.model.js';
 import { retrieveTechnicalQuestions, getRandomTechnicalQuestion } from '../services/retrieval.js';
 import { evaluateTechnicalAnswer } from '../services/scoring.js';
 import { nextDifficulty } from '../services/difficultyEngine.js';
+import { detectAnswerLanguage, translateQuestionText } from '../services/bilingual.js';
 import logger from '../utils/logger.js';
 
 const MAX_QUESTIONS = 5; // technical interview length
 const FOLLOW_UP_SCORE_THRESHOLD = 50;
 
+const PROFANITY_LIST = [
+  'fuck', 'shit', 'bitch', 'asshole', 'bastard', 'cunt', 'motherfucker', 'dick', 'piss',
+  'damn', 'hell', 'crap', 'slut', 'whore',
+];
+
+const detectProfanity = (transcript) => {
+  const lower = transcript.toLowerCase();
+  return PROFANITY_LIST.find((p) => lower.includes(p)) || null;
+};
+
 /**
  * Build a technical follow-up based on the weakest rubric dimension.
+ * Enhanced with context-aware deep probes anchored to the candidate's answer.
  */
+const TECHNICAL_DEEP_PROBES = {
+  correctness: [
+    'Can you verify that with a concrete example from your experience?',
+    'What edge cases might break that assumption?',
+  ],
+  depth: [
+    'Can you go one level deeper — what are the underlying mechanics?',
+    'How does this behave under high load or with large datasets?',
+  ],
+  practical: [
+    'How would you apply this in a real production system?',
+    'What monitoring or observability would you add to catch issues early?',
+  ],
+  relevance: [
+    'How does this relate specifically to the role requirements?',
+    'Can you connect this to a project you have actually shipped?',
+  ],
+  communication: [
+    'Can you rephrase that more concisely for a junior developer?',
+    'What would you include in a design doc about this decision?',
+  ],
+  reasoning: [
+    'What was your reasoning process for arriving at that conclusion?',
+    'What alternatives did you consider and why did you reject them?',
+  ],
+};
+
 const buildTechnicalFollowUp = (evaluation, question) => {
   const dims = evaluation.dimensions || {};
   const keys = Object.keys(dims).filter((k) => typeof dims[k] === 'number');
@@ -27,16 +66,12 @@ const buildTechnicalFollowUp = (evaluation, question) => {
   keys.sort((a, b) => dims[a] - dims[b]);
   const weakest = keys[0];
 
-  const prompts = {
-    correctness: 'Can you verify that explanation with a concrete example?',
-    depth: 'Can you go one level deeper — what are the underlying mechanics?',
-    practical: 'How would you apply this in a real production system?',
-    relevance: 'How does this relate specifically to the role requirements?',
-    communication: 'Can you rephrase that more concisely?',
-    reasoning: 'What was your reasoning process for arriving at that conclusion?',
-  };
+  const prompts = TECHNICAL_DEEP_PROBES[weakest] || [
+    'Can you elaborate more on that with a specific example?',
+  ];
 
-  return prompts[weakest] || 'Can you elaborate more on that with a specific example?';
+  // Pick a random deep probe for variety
+  return prompts[Math.floor(Math.random() * prompts.length)];
 };
 
 /**
@@ -54,10 +89,13 @@ const loadJdAnalysis = async (session) => {
  * Get the first technical question for a session.
  */
 const getFirstQuestion = async (session, jdAnalysis) => {
+  const sessionSeed = session.metadata?.sessionSeed || 0;
   const questions = retrieveTechnicalQuestions({
     jdAnalysis,
     excludeIds: [],
     limit: 1,
+    randomize: true,
+    sessionSeed,
   });
 
   if (questions.length === 0) {
@@ -70,9 +108,17 @@ const getFirstQuestion = async (session, jdAnalysis) => {
 
 /**
  * Get the next technical question, considering adaptive difficulty.
+ * Returns null if MAX_QUESTIONS has been reached.
  */
 const getNextQuestion = async (session, jdAnalysis, skillHistory) => {
+  // Strict limit check: never retrieve more than MAX_QUESTIONS
+  if (session.questions.length >= MAX_QUESTIONS) {
+    logger.debug(`Max questions (${MAX_QUESTIONS}) reached. Not retrieving more.`);
+    return null;
+  }
+
   const excludeIds = session.questions.map((q) => q.questionId);
+  const sessionSeed = session.metadata?.sessionSeed || 0;
 
   // Determine the next difficulty based on the last answer
   const lastQuestion = session.questions[session.questions.length - 1];
@@ -121,6 +167,8 @@ const getNextQuestion = async (session, jdAnalysis, skillHistory) => {
       skill: targetSkill,
       difficulty: nextDiff,
       limit: 1,
+      randomize: true,
+      sessionSeed,
     });
   }
 
@@ -131,6 +179,8 @@ const getNextQuestion = async (session, jdAnalysis, skillHistory) => {
       excludeIds,
       difficulty: nextDiff,
       limit: 1,
+      randomize: true,
+      sessionSeed,
     });
   }
 
@@ -140,6 +190,8 @@ const getNextQuestion = async (session, jdAnalysis, skillHistory) => {
       jdAnalysis,
       excludeIds,
       limit: 1,
+      randomize: true,
+      sessionSeed,
     });
   }
 
@@ -170,7 +222,12 @@ export const answerTechnical = async (req, res, next) => {
       return next();
     }
 
-    const { questionId, transcript } = req.body;
+    const { questionId, transcript, language } = req.body;
+    const activeLanguage = language || 'english';
+
+    // Store language preference in session metadata
+    if (!session.metadata) session.metadata = {};
+    session.metadata.language = activeLanguage;
 
     // Read skill history from session metadata (persisted across answers)
     const skillHistory = session.metadata?.skillHistory || {};
@@ -195,21 +252,48 @@ export const answerTechnical = async (req, res, next) => {
 
       await session.save();
 
+      // Auto-translate question if Urdu mode
+      let translatedQuestionText = null;
+      if (activeLanguage === 'urdu') {
+        try {
+          const translation = await translateQuestionText(question.text, [], 'urdu');
+          translatedQuestionText = translation.questionText;
+        } catch (err) {
+          logger.warn(`Failed to translate first technical question to Urdu: ${err.message}`);
+        }
+      }
+
       return res.json({
         evaluation: null,
         nextAction: 'first_question',
         nextQuestion: {
           questionId: session.questions[0].questionId,
           questionText: question.text,
+          translatedQuestionText,
           topic: question.skill,
           difficulty: question.difficulty,
+          matchedTerms: question.matchedTerms || [],
         },
       });
     }
 
-    // ─── Subsequent calls: process the answer ────────────────────────
+    // ─── Subsequent calls: process the answer ───────────────────────
     if (!transcript) {
       return res.status(400).json({ error: 'Transcript is required' });
+    }
+
+    // Profanity check — terminate interview if detected
+    const profaneWord = detectProfanity(transcript);
+    if (profaneWord) {
+      session.status = 'terminated';
+      session.overallScore = 0;
+      await session.save();
+      return res.json({
+        evaluation: null,
+        nextAction: 'complete',
+        terminationReason: 'profanity',
+        message: 'Interview terminated: Inappropriate language detected. Please maintain professional conduct during the interview.',
+      });
     }
 
     const currentQuestion = session.questions[session.questions.length - 1];
@@ -244,7 +328,12 @@ export const answerTechnical = async (req, res, next) => {
       },
     };
 
-    const evaluation = await evaluateTechnicalAnswer({ question: questionData, transcript });
+    const evaluation = await evaluateTechnicalAnswer({ question: questionData, transcript, language: activeLanguage });
+
+    // Detect answer language for Urdu auto-translation
+    const langDetection = detectAnswerLanguage(transcript);
+    session.metadata.lastAnswerLanguage = langDetection.detectedLanguage;
+    session.metadata.languageConfidence = langDetection.confidence;
 
     currentQuestion.transcript = transcript;
     currentQuestion.evaluation = evaluation;
@@ -271,7 +360,9 @@ export const answerTechnical = async (req, res, next) => {
  * Finalize the current question and advance to the next one (or complete).
  */
 const finalizeTechnicalQuestion = async (session, evaluation, res) => {
+  // Strict check: if we've reached MAX_QUESTIONS, complete the session
   if (session.questions.length >= MAX_QUESTIONS) {
+    logger.info(`Technical session completed: ${session.questions.length} questions answered.`);
     return completeTechnicalSession(session, evaluation, res);
   }
 
@@ -302,19 +393,38 @@ const finalizeTechnicalQuestion = async (session, evaluation, res) => {
 
   await session.save();
 
+  // Auto-translate next question if language is Urdu
+  let questionText = question.text;
+  let translatedQuestion = null;
+  const sessionLanguage = session.metadata?.language;
+  
+  if (sessionLanguage === 'urdu') {
+    try {
+      const translation = await translateQuestionText(question.text, [], 'urdu');
+      questionText = translation.questionText;
+      translatedQuestion = translation.questionText;
+    } catch (err) {
+      logger.warn(`Failed to translate question to Urdu: ${err.message}`);
+    }
+  }
+
   return res.json({
     evaluation,
     nextAction: 'next_question',
     nextQuestion: {
       questionId: question.id,
       questionText: question.text,
+      translatedQuestionText: translatedQuestion,
       topic: question.skill,
       difficulty: nextDifficulty,
+      matchedTerms: question.matchedTerms || [],
     },
     difficultyChange: {
       from: session.questions[session.questions.length - 2]?.difficulty,
       to: nextDifficulty,
     },
+    detectedLanguage: sessionLanguage,
+    languageConfidence: 1,
   });
 };
 

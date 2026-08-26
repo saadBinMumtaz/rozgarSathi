@@ -286,5 +286,213 @@
       "How did you balance this with your other responsibilities?",
       "What did this experience teach you about setting standards?"
     ]
+  },
+  {
+    "text": "Tell me about a time when you had to adapt your communication style for a stakeholder with very different expectations or priorities.",
+    "topic": "Communication",
+    "difficulty": "hard",
+    "rubric": {
+      "situation": "The stakeholder context and differing expectations",
+      "task": "What you needed to achieve and why alignment mattered",
+      "action": "How you adapted your approach to bridge the gap",
+      "result": "Outcome and what you learned about stakeholder management"
+    },
+    "followUpPrompts": [
+      "How did you identify what mattered most to that stakeholder?",
+      "What would you do differently if the relationship was hostile?",
+      "How has this experience shaped your approach to managing up?"
+    ]
+  },
+  {
+    "text": "Describe a situation where you identified a risk or potential problem before it became critical. What did you do?",
+    "topic": "Problem Solving",
+    "difficulty": "hard",
+    "rubric": {
+      "situation": "The context and early warning signs you noticed",
+      "task": "Why the risk mattered and what could have gone wrong",
+      "action": "How you communicated the risk and what steps you took",
+      "result": "Outcome and whether your intervention was appreciated"
+    },
+    "followUpPrompts": [
+      "How did you build confidence to speak up about something uncertain?",
+      "What framework do you use to assess risks vs. rewards?",
+      "Has this experience changed how you approach risk assessment?"
+    ]
+  },
+  {
+    "text": "Give me an example of when you had to own a mistake publicly in front of your team or stakeholders. How did you handle it?",
+    "topic": "Leadership",
+    "difficulty": "hard",
+    "rubric": {
+      "situation": "The context and what went wrong",
+      "task": "Your responsibility and the impact of the mistake",
+      "action": "How you communicated the mistake and what you did to fix it",
+      "result": "How the team responded and what you learned about accountability"
+    },
+    "followUpPrompts": [
+      "How did you rebuild trust after the mistake?",
+      "What systems did you put in place to prevent recurrence?",
+      "How has this experience shaped your approach to transparency?"
+    ]
+  },
+  {
+    "text": "Tell me about a time when you had to make a decision with incomplete information. What was your approach?",
+    "topic": "Decision Making",
+    "difficulty": "medium",
+    "rubric": {
+      "situation": "The context and why information was incomplete",
+      "task": "What decision needed to be made and the stakes involved",
+      "action": "How you gathered what you could and made the best choice",
+      "result": "Outcome and what you learned about decision-making under uncertainty"
+    },
+    "followUpPrompts": [
+      "How did you know when you had enough information to decide?",
+      "What would you have done differently with more time?",
+      "How did you communicate the uncertainty to stakeholders?"
+    ]
+  },
+  {
+    "text": "Describe a time when you proactively improved a team process or workflow without being asked to do so.",
+    "topic": "Initiative",
+    "difficulty": "easy",
+    "rubric": {
+      "situation": "The team context and the inefficiency you noticed",
+      "task": "Why you felt ownership over the problem",
+      "action": "How you designed the improvement and got buy-in",
+      "result": "The impact on team productivity or morale"
+    },
+    "followUpPrompts": [
+      "How did you get the team to adopt the change?",
+      "What resistance did you face and how did you overcome it?",
+      "How did you measure the improvement's impact?"
+    ]
+  },
+  {
+    "text": "Tell me about a time when you had to say no to a request from a senior leader or important stakeholder. How did you handle it?",
+    "topic": "Conflict",
+    "difficulty": "hard",
+    "rubric": {
+      "situation": "The request and why it was problematic",
+      "task": "Your responsibility and what was at stake",
+      "action": "How you communicated your position respectfully",
+      "result": "Outcome and what you learned about managing expectations"
+    },
+    "followUpPrompts": [
+      "How did you prepare for that conversation?",
+      "What alternatives did you offer instead of a flat refusal?",
+      "How did this experience affect your confidence in similar situations?"
+    ]
+  },
+  {
+    "text": "Tell me about a time when project requirements changed significantly midway through. How did you adapt your approach?",
+    "topic": "Adaptability",
+    "difficulty": "medium",
+    "rubric": {
+      "situation": "The project context and what changed",
+      "task": "Your role and what needed to be adjusted",
+      "action": "How you adapted your plan, priorities, and communication",
+      "result": "Outcome and what you learned about flexibility"
+    },
+    "followUpPrompts": [
+      "How did you communicate the changes to your team and stakeholders?",
+      "What was the hardest part of shifting direction?",
+      "How did this experience change how you plan projects going forward?"
+    ]
+  },
+  {
+    "text": "Describe a time when you had to learn a completely new technology or framework under a tight deadline. How did you approach it?",
+    "topic": "Adaptability",
+    "difficulty": "medium",
+    "rubric": {
+      "situation": "Why you needed to learn the new technology",
+      "task": "What you needed to build and the timeline",
+      "action": "Your learning strategy and how you applied it",
+      "result": "What you delivered and how proficient you became"
+    },
+    "followUpPrompts": [
+      "What resources were most effective in your learning process?",
+      "How did you balance learning with delivering on time?",
+      "What would you do differently when facing a similar learning curve?"
+    ]
+  },
+  {
+    "text": "Give me an example of how you managed your time when you had multiple important tasks competing for your attention.",
+    "topic": "Time Management",
+    "difficulty": "easy",
+    "rubric": {
+      "situation": "The competing tasks and why they were all important",
+      "task": "Your responsibility for each task",
+      "action": "How you prioritized, scheduled, and executed",
+      "result": "Outcome for each task and what you learned"
+    },
+    "followUpPrompts": [
+      "How did you decide which task to tackle first?",
+      "Did you have to delegate or push back on any deadlines?",
+      "What tools or techniques helped you stay organized?"
+    ]
+  },
+  {
+    "text": "Tell me about a time when you realized you could not meet a deadline. What did you do?",
+    "topic": "Time Management",
+    "difficulty": "hard",
+    "rubric": {
+      "situation": "The project and why the deadline was at risk",
+      "task": "Your responsibility and what was expected",
+      "action": "How you communicated early and what trade-offs you proposed",
+      "result": "Outcome and what you learned about estimation"
+    },
+    "followUpPrompts": [
+      "How soon did you raise the flag about the deadline risk?",
+      "What alternatives did you propose to the stakeholder?",
+      "How did this experience change how you estimate tasks?"
+    ]
+  },
+  {
+    "text": "Describe a time when you mentored a junior team member through a challenging technical problem.",
+    "topic": "Mentoring",
+    "difficulty": "medium",
+    "rubric": {
+      "situation": "The junior member and the challenge they faced",
+      "task": "Your role as mentor and what they needed",
+      "action": "How you guided them without solving it for them",
+      "result": "Their growth and what you learned about teaching"
+    },
+    "followUpPrompts": [
+      "How did you balance guiding them with letting them figure it out?",
+      "What signs told you they were starting to understand?",
+      "How has this experience shaped your mentoring approach?"
+    ]
+  },
+  {
+    "text": "Tell me about a time when you had to make a technical decision that affected other teams or stakeholders. How did you handle the cross-team communication?",
+    "topic": "Stakeholder Management",
+    "difficulty": "hard",
+    "rubric": {
+      "situation": "The decision and which teams were affected",
+      "task": "Your responsibility and what was at stake",
+      "action": "How you gathered input, communicated the decision, and handled concerns",
+      "result": "Outcome and how cross-team relationships were affected"
+    },
+    "followUpPrompts": [
+      "How did you ensure all affected teams had a voice in the decision?",
+      "What pushback did you receive and how did you address it?",
+      "How did you document and share the rationale with the wider organization?"
+    ]
+  },
+  {
+    "text": "Give me an example of a time when you took full ownership of a project from start to finish without direct supervision.",
+    "topic": "Ownership",
+    "difficulty": "medium",
+    "rubric": {
+      "situation": "The project and why you owned it",
+      "task": "What you were responsible for delivering",
+      "action": "How you planned, executed, and communicated progress",
+      "result": "What you delivered and how it was received"
+    },
+    "followUpPrompts": [
+      "How did you keep yourself accountable without a manager checking in?",
+      "What was the biggest challenge of working independently?",
+      "How did this experience affect how you handle ownership going forward?"
+    ]
   }
 ]

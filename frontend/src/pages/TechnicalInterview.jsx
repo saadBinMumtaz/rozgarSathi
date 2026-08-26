@@ -13,11 +13,12 @@ import { MicRecorder } from '../components/behavioral/MicRecorder';
 import { TypedFallback } from '../components/behavioral/TypedFallback';
 import { EvidenceCard } from '../components/shared/EvidenceCard';
 import { DifficultyIndicator } from '../components/technical/DifficultyIndicator';
+import { QuestionTraceBadge } from '../components/shared/QuestionTraceBadge';
 import { apiClient } from '../api/client';
 
 const TECHNICAL_SESSION_KEY = 'rozgar-sathi-technical-session-v1';
 
-export const TechnicalInterview = ({ jdAnalysisId, onNavigate }) => {
+export const TechnicalInterview = ({ jdAnalysisId, onNavigate, language = 'english', isUrdu = false }) => {
   const [sessionId, setSessionId] = useState(null);
   const [currentQuestion, setCurrentQuestion] = useState(null);
   const [evaluations, setEvaluations] = useState([]);
@@ -31,8 +32,10 @@ export const TechnicalInterview = ({ jdAnalysisId, onNavigate }) => {
   const [typedTranscript, setTypedTranscript] = useState('');
   const [difficultyInfo, setDifficultyInfo] = useState({ current: 'medium', previous: null, ratingDelta: 0 });
   const [questionCount, setQuestionCount] = useState(0);
-  const [translatedEvaluation, setTranslatedEvaluation] = useState(null);
-  const [isTranslating, setIsTranslating] = useState(false);
+  const [urduQuestionText, setUrduQuestionText] = useState(null);
+  const [isTranslatingUrdu, setIsTranslatingUrdu] = useState(false);
+  const [urduEvaluations, setUrduEvaluations] = useState([]);
+  const [terminationMessage, setTerminationMessage] = useState(null);
 
   const MAX_QUESTIONS = 5;
 
@@ -58,6 +61,51 @@ export const TechnicalInterview = ({ jdAnalysisId, onNavigate }) => {
       }
     }
   }, [sessionId, currentQuestion, evaluations, isComplete, questionCount]);
+
+  // Auto-translate question to Urdu when language is Urdu and question changes
+  useEffect(() => {
+    if (!isUrdu || !currentQuestion?.questionText) {
+      setUrduQuestionText(null);
+      return;
+    }
+    // Already have translation for this question
+    if (urduQuestionText) return;
+
+    setIsTranslatingUrdu(true);
+    apiClient
+      .translateQuestion(currentQuestion.questionText, [], 'urdu')
+      .then((result) => setUrduQuestionText(result.questionText))
+      .catch((err) => {
+        console.error('Question translation failed:', err);
+        setUrduQuestionText(currentQuestion.questionText);
+      })
+      .finally(() => setIsTranslatingUrdu(false));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [currentQuestion?.questionId, currentQuestion?.questionText, isUrdu]);
+
+  // Auto-translate evaluations when interview completes in Urdu mode
+  useEffect(() => {
+    if (!isUrdu || !isComplete || evaluations.length === 0) {
+      setUrduEvaluations([]);
+      return;
+    }
+    let cancelled = false;
+    const translate = async () => {
+      const translated = [];
+      for (const ev of evaluations) {
+        try {
+          const result = await apiClient.translateEvaluation(ev, 'urdu');
+          translated.push(result);
+        } catch {
+          translated.push(ev);
+        }
+        if (cancelled) break;
+      }
+      if (!cancelled) setUrduEvaluations(translated);
+    };
+    translate();
+    return () => { cancelled = true; };
+  }, [isUrdu, isComplete, evaluations]);
 
   // Create a new technical session
   const createSession = useCallback(async () => {
@@ -97,6 +145,7 @@ export const TechnicalInterview = ({ jdAnalysisId, onNavigate }) => {
       setCurrentQuestion(result.nextQuestion);
       setQuestionCount((prev) => prev + 1);
       setFollowUp(null);
+      setUrduQuestionText(null); // Clear for auto-translate of new question
       if (result.difficultyChange) {
         setDifficultyInfo({
           current: result.difficultyChange.to,
@@ -108,12 +157,22 @@ export const TechnicalInterview = ({ jdAnalysisId, onNavigate }) => {
       if (result.evaluation) {
         setEvaluations((prev) => [...prev, result.evaluation]);
       }
+      if (result.terminationReason === 'profanity' && result.message) {
+        setTerminationMessage(result.message);
+      }
       setIsComplete(true);
       setCurrentQuestion(null);
     }
   };
 
   const submitAnswer = useCallback(async () => {
+    // Strict limit: prevent submitting more than MAX_QUESTIONS
+    if (questionCount >= MAX_QUESTIONS) {
+      setIsComplete(true);
+      setCurrentQuestion(null);
+      return;
+    }
+
     const transcript = useTypedFallback ? typedTranscript.trim() : micTranscript.trim();
     if (!transcript || !sessionId) return;
 
@@ -123,7 +182,7 @@ export const TechnicalInterview = ({ jdAnalysisId, onNavigate }) => {
     setTypedTranscript('');
 
     try {
-      const result = await apiClient.answerTechnical(sessionId, currentQuestion?.questionId, transcript);
+      const result = await apiClient.answerTechnical(sessionId, currentQuestion?.questionId, transcript, language);
       handleAnswerResult(result);
     } catch (err) {
       setError(err.message || 'Failed to submit answer');
@@ -189,15 +248,33 @@ export const TechnicalInterview = ({ jdAnalysisId, onNavigate }) => {
           </div>
         )}
 
-        {/* Voice question player — reuses shared component from Day 2 */}
+        {/* Voice question player */}
         {currentQuestion && (
           <VoiceQuestionPlayer
-            text={followUp || currentQuestion.questionText}
+            text={isUrdu && urduQuestionText
+              ? urduQuestionText
+              : (followUp || currentQuestion.questionText)}
             onSpeakingChange={setIsSpeaking}
+            language={language}
           />
         )}
 
+        {/* Urdu translation indicator */}
+        {isUrdu && isTranslatingUrdu && (
+          <div className="text-xs text-slate-400 animate-pulse">Translating to Urdu...</div>
+        )}
+        {isUrdu && urduQuestionText && (
+          <div className="text-xs text-slate-400">Showing question in Urdu</div>
+        )}
+
         {/* Follow-up display */}
+
+        {/* JD traceability badge */}
+        {currentQuestion?.matchedTerms && (
+          <div className="mb-4 p-3 bg-slate-800/50 border border-slate-700 rounded-lg">
+            <QuestionTraceBadge matchedTerms={currentQuestion.matchedTerms} />
+          </div>
+        )}
         {followUp && !currentQuestion?.evaluation && (
           <div className="bg-indigo-900/20 border border-indigo-700/50 rounded-lg p-4">
             <div className="text-xs text-indigo-400 font-medium mb-1">Follow-up question</div>
@@ -205,33 +282,7 @@ export const TechnicalInterview = ({ jdAnalysisId, onNavigate }) => {
           </div>
         )}
 
-        {/* Latest evaluation */}
-        {evaluations.length > 0 && (
-          <EvidenceCard
-            evaluation={evaluations[evaluations.length - 1]}
-            translatedEvaluation={translatedEvaluation}
-            onToggleUrdu={async (lang) => {
-              if (lang === 'urdu') {
-                if (!translatedEvaluation) {
-                  setIsTranslating(true);
-                  try {
-                    const result = await apiClient.translateEvaluation(evaluations[evaluations.length - 1], 'urdu');
-                    setTranslatedEvaluation(result.evaluation);
-                  } catch (err) {
-                    console.error('Translation failed:', err);
-                    // Fallback: show original if translation fails
-                    setTranslatedEvaluation(evaluations[evaluations.length - 1]);
-                  } finally {
-                    setIsTranslating(false);
-                  }
-                }
-              } else {
-                // Switching back to English — clear translated evaluation
-                setTranslatedEvaluation(null);
-              }
-            }}
-          />
-        )}
+        {/* Latest evaluation — REMOVED from live view, shown only on completion */}
 
         {/* Answer input area */}
         {currentQuestion && !isComplete && (
@@ -271,6 +322,7 @@ export const TechnicalInterview = ({ jdAnalysisId, onNavigate }) => {
                   resetKey={`${currentQuestion?.questionId || ''}|${followUp || ''}`}
                   onUnsupported={() => setUseTypedFallback(true)}
                   autoStart={!isSpeaking}
+                  language={language}
                 />
               )}
 
@@ -313,19 +365,28 @@ export const TechnicalInterview = ({ jdAnalysisId, onNavigate }) => {
         {/* Completion screen */}
         {isComplete && (
           <div className="space-y-6">
-            <Card className="border-emerald-700/50">
+            <Card className={terminationMessage ? 'border-rose-700/50' : 'border-emerald-700/50'}>
               <CardContent className="text-center py-8 space-y-4">
-                <div className="text-2xl font-bold text-emerald-400">Technical Interview Complete!</div>
-                <div className="text-slate-400">
-                  You answered {evaluations.length} questions.
-                  Overall score:{' '}
-                  <span className="text-white font-semibold">
-                    {evaluations.length > 0
-                      ? Math.round(evaluations.reduce((sum, e) => sum + e.score, 0) / evaluations.length)
-                      : 0}
-                    /100
-                  </span>
-                </div>
+                {terminationMessage ? (
+                  <>
+                    <div className="text-2xl font-bold text-rose-400">Interview Terminated</div>
+                    <div className="text-rose-300 text-sm max-w-md mx-auto">{terminationMessage}</div>
+                  </>
+                ) : (
+                  <>
+                    <div className="text-2xl font-bold text-emerald-400">Technical Interview Complete!</div>
+                    <div className="text-slate-400">
+                      You answered {evaluations.length} questions.
+                      Overall score:{' '}
+                      <span className="text-white font-semibold">
+                        {evaluations.length > 0
+                          ? Math.round(evaluations.reduce((sum, e) => sum + e.score, 0) / evaluations.length)
+                          : 0}
+                        /100
+                      </span>
+                    </div>
+                  </>
+                )}
                 <div className="flex justify-center gap-3 mt-4">
                   <Button variant="primary" onClick={() => onNavigate('mode-selection')}>
                     Try Another Mode
@@ -342,7 +403,11 @@ export const TechnicalInterview = ({ jdAnalysisId, onNavigate }) => {
               <div className="space-y-4">
                 <h3 className="text-lg font-semibold text-slate-200">Question Feedback Summary</h3>
                 {evaluations.map((evaluation, idx) => (
-                  <EvidenceCard key={idx} evaluation={evaluation} />
+                  <EvidenceCard
+                    key={idx}
+                    evaluation={urduEvaluations[idx] || evaluation}
+                    language={language}
+                  />
                 ))}
               </div>
             )}

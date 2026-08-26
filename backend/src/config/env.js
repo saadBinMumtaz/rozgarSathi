@@ -8,7 +8,7 @@ const __dirname = path.dirname(__filename);
 // Load .env from root directory (two levels up from backend/src/config)
 dotenv.config({ path: path.resolve(__dirname, '../../../.env') });
 
-const requiredKeys = ['QWEN_API_KEY', 'MONGO_URI'];
+const requiredKeys = ['GROQ_API_KEY', 'MONGO_URI'];
 
 for (const key of requiredKeys) {
   if (!process.env[key] || process.env[key].trim() === '') {
@@ -21,8 +21,9 @@ for (const key of requiredKeys) {
 export const env = Object.freeze({
   PORT: parseInt(process.env.PORT || '5000', 10),
   MONGO_URI: process.env.MONGO_URI,
-  QWEN_API_KEY: process.env.QWEN_API_KEY,
-  QWEN_API_URL: process.env.QWEN_API_URL || 'https://dashscope.aliyuncs.com/compatible-mode/v1',
+  GROQ_API_KEY: process.env.GROQ_API_KEY,
+  GROQ_API_URL: process.env.GROQ_API_URL || 'https://api.groq.com/openai/v1',
+  GROQ_MODEL: process.env.GROQ_MODEL || 'openai/gpt-oss-20b',
   CODE_EXEC_URL: process.env.CODE_EXEC_URL || 'http://localhost:6000',
   CODE_EXEC_TIMEOUT_MS: parseInt(process.env.CODE_EXEC_TIMEOUT_MS || '5000', 10),
   CODE_EXEC_MEMORY_MB: parseInt(process.env.CODE_EXEC_MEMORY_MB || '256', 10),

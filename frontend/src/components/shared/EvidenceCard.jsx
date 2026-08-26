@@ -1,20 +1,19 @@
 // frontend/src/components/shared/EvidenceCard.jsx
-// Reusable evaluation display: Score → Evidence → Strength → Gap → Fix.
+// Reusable evaluation display: Score -> Evidence -> Strength -> Gap -> Fix.
 // Used by Behavioral (Day 2), Technical (Day 3), and Coding (Day 5).
+// Supports language-aware display with Urdu RTL text when language='urdu'.
 
-import React, { useState } from 'react';
+import React from 'react';
 import { Card, CardHeader, CardTitle, CardContent } from '../../design-system/Card';
 import { Badge } from '../../design-system/Badge';
-import { Button } from '../../design-system/Button';
-import { CheckCircle, AlertCircle, Lightbulb, Quote, ChevronDown, ChevronUp } from 'lucide-react';
+import { CheckCircle, AlertCircle, Lightbulb, Quote } from 'lucide-react';
 
-export const EvidenceCard = ({ evaluation, translatedEvaluation, onToggleUrdu }) => {
-  const [showUrdu, setShowUrdu] = useState(false);
-
+export const EvidenceCard = ({ evaluation, language = 'english' }) => {
   if (!evaluation) return null;
 
-  const display = showUrdu && translatedEvaluation ? translatedEvaluation : evaluation;
-  const { score, dimensions, evidence, strength, missing, improvement, confidenceLevel } = display;
+  const { score, dimensions, evidence, strength, missing, improvement, confidenceLevel } = evaluation;
+  const isUrdu = language === 'urdu';
+  const textClass = isUrdu ? 'urdu-text' : '';
 
   const confidenceVariant =
     confidenceLevel === 'high' ? 'success' : confidenceLevel === 'medium' ? 'warning' : 'destructive';
@@ -32,18 +31,6 @@ export const EvidenceCard = ({ evaluation, translatedEvaluation, onToggleUrdu })
               {confidenceLevel} confidence
             </Badge>
           </CardTitle>
-          {onToggleUrdu && (
-            <Button
-              variant="link"
-              size="sm"
-              onClick={() => {
-                setShowUrdu(!showUrdu);
-                onToggleUrdu?.(!showUrdu ? 'urdu' : 'english');
-              }}
-            >
-              {showUrdu ? 'Show in English' : 'Show in Urdu'}
-            </Button>
-          )}
         </div>
       </CardHeader>
       <CardContent className="space-y-4">
@@ -64,11 +51,11 @@ export const EvidenceCard = ({ evaluation, translatedEvaluation, onToggleUrdu })
           <div className="space-y-1.5">
             <div className="flex items-center gap-2 text-sm font-medium text-slate-300">
               <Quote size={14} className="text-indigo-400" />
-              Evidence
+              {isUrdu ? 'شواہد' : 'Evidence'}
             </div>
             <ul className="space-y-1 pl-5">
               {evidence.map((item, i) => (
-                <li key={i} className="text-sm text-slate-400 list-disc">
+                <li key={i} className={`text-sm text-slate-400 list-disc ${textClass}`}>
                   {item}
                 </li>
               ))}
@@ -81,8 +68,10 @@ export const EvidenceCard = ({ evaluation, translatedEvaluation, onToggleUrdu })
           <div className="flex items-start gap-2">
             <CheckCircle size={16} className="text-emerald-400 mt-0.5 shrink-0" />
             <div>
-              <div className="text-xs font-medium text-emerald-400 mb-0.5">Strength</div>
-              <div className="text-sm text-slate-300">{strength}</div>
+              <div className="text-xs font-medium text-emerald-400 mb-0.5">
+                {isUrdu ? 'طاقت' : 'Strength'}
+              </div>
+              <div className={`text-sm text-slate-300 ${textClass}`}>{strength}</div>
             </div>
           </div>
         )}
@@ -92,8 +81,10 @@ export const EvidenceCard = ({ evaluation, translatedEvaluation, onToggleUrdu })
           <div className="flex items-start gap-2">
             <AlertCircle size={16} className="text-amber-400 mt-0.5 shrink-0" />
             <div>
-              <div className="text-xs font-medium text-amber-400 mb-0.5">Gap</div>
-              <div className="text-sm text-slate-300">{missing}</div>
+              <div className="text-xs font-medium text-amber-400 mb-0.5">
+                {isUrdu ? 'خلا' : 'Gap'}
+              </div>
+              <div className={`text-sm text-slate-300 ${textClass}`}>{missing}</div>
             </div>
           </div>
         )}
@@ -103,8 +94,10 @@ export const EvidenceCard = ({ evaluation, translatedEvaluation, onToggleUrdu })
           <div className="flex items-start gap-2">
             <Lightbulb size={16} className="text-indigo-400 mt-0.5 shrink-0" />
             <div>
-              <div className="text-xs font-medium text-indigo-400 mb-0.5">How to improve</div>
-              <div className="text-sm text-slate-300">{improvement}</div>
+              <div className="text-xs font-medium text-indigo-400 mb-0.5">
+                {isUrdu ? 'بہتری کا طریقہ' : 'How to improve'}
+              </div>
+              <div className={`text-sm text-slate-300 ${textClass}`}>{improvement}</div>
             </div>
           </div>
         )}
