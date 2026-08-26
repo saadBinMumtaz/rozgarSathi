@@ -36,20 +36,12 @@ export const TechnicalInterview = ({ jdAnalysisId, onNavigate }) => {
 
   const MAX_QUESTIONS = 5;
 
-  // Resume from localStorage on mount
+  // Clear any previous session on mount — always start fresh
   useEffect(() => {
     try {
-      const stored = localStorage.getItem(TECHNICAL_SESSION_KEY);
-      if (stored) {
-        const data = JSON.parse(stored);
-        setSessionId(data.sessionId);
-        setCurrentQuestion(data.currentQuestion);
-        setEvaluations(data.evaluations || []);
-        setIsComplete(data.isComplete || false);
-        setQuestionCount(data.questionCount || 0);
-      }
+      localStorage.removeItem(TECHNICAL_SESSION_KEY);
     } catch (err) {
-      console.error('Failed to load technical session:', err);
+      console.error('Failed to clear technical session:', err);
     }
   }, []);
 
@@ -320,29 +312,41 @@ export const TechnicalInterview = ({ jdAnalysisId, onNavigate }) => {
 
         {/* Completion screen */}
         {isComplete && (
-          <Card className="border-emerald-700/50">
-            <CardContent className="text-center py-8 space-y-4">
-              <div className="text-2xl font-bold text-emerald-400">Technical Interview Complete!</div>
-              <div className="text-slate-400">
-                You answered {evaluations.length} questions.
-                Overall score:{' '}
-                <span className="text-white font-semibold">
-                  {evaluations.length > 0
-                    ? Math.round(evaluations.reduce((sum, e) => sum + e.score, 0) / evaluations.length)
-                    : 0}
-                  /100
-                </span>
+          <div className="space-y-6">
+            <Card className="border-emerald-700/50">
+              <CardContent className="text-center py-8 space-y-4">
+                <div className="text-2xl font-bold text-emerald-400">Technical Interview Complete!</div>
+                <div className="text-slate-400">
+                  You answered {evaluations.length} questions.
+                  Overall score:{' '}
+                  <span className="text-white font-semibold">
+                    {evaluations.length > 0
+                      ? Math.round(evaluations.reduce((sum, e) => sum + e.score, 0) / evaluations.length)
+                      : 0}
+                    /100
+                  </span>
+                </div>
+                <div className="flex justify-center gap-3 mt-4">
+                  <Button variant="primary" onClick={() => onNavigate('mode-selection')}>
+                    Try Another Mode
+                  </Button>
+                  <Button variant="secondary" onClick={resetSession}>
+                    Restart Technical
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Summary of all evaluations */}
+            {evaluations.length > 0 && (
+              <div className="space-y-4">
+                <h3 className="text-lg font-semibold text-slate-200">Question Feedback Summary</h3>
+                {evaluations.map((evaluation, idx) => (
+                  <EvidenceCard key={idx} evaluation={evaluation} />
+                ))}
               </div>
-              <div className="flex justify-center gap-3 mt-4">
-                <Button variant="primary" onClick={() => onNavigate('mode-selection')}>
-                  Try Another Mode
-                </Button>
-                <Button variant="secondary" onClick={resetSession}>
-                  Restart Technical
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
+            )}
+          </div>
         )}
 
         {/* Loading state */}
