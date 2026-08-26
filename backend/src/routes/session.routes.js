@@ -7,10 +7,7 @@ const router = express.Router();
 // POST /api/sessions
 router.post('/', createSession);
 
-// GET /api/sessions/:id
-router.get('/:id', getSessionById);
-
-// POST /api/sessions/translate — translate an evaluation object
+// POST /api/sessions/translate — translate an evaluation object (MUST be before /:id)
 router.post('/translate', async (req, res) => {
   try {
     const { evaluation, targetLanguage } = req.body;
@@ -23,5 +20,8 @@ router.post('/translate', async (req, res) => {
     return res.status(500).json({ error: err.message });
   }
 });
+
+// GET /api/sessions/:id
+router.get('/:id', getSessionById);
 
 export default router;
