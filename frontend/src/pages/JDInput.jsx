@@ -27,9 +27,22 @@ export const JDInput = ({ onAnalysisComplete, onNavigate, pendingSampleJD, onSam
     setIsLoading(true);
 
     try {
-      const result = await apiClient.analyzeJD(text, currentSampleId);
+      // Step 1: Analyze JD
+      const jdResult = await apiClient.analyzeJD(text, currentSampleId);
+
+      // Step 2: If résumé file attached, analyze it with linked JD
+      let resumeResult = null;
+      if (resumeFile) {
+        try {
+          resumeResult = await apiClient.analyzeResume(resumeFile, jdResult._id || jdResult.jdAnalysisId);
+        } catch (resumeErr) {
+          console.warn(`Résumé analysis failed: ${resumeErr.message}. Continuing without it.`);
+          // Don't block the flow if résumé analysis fails
+        }
+      }
+
       setIsLoading(false);
-      onAnalysisComplete(result);
+      onAnalysisComplete({ ...jdResult, resumeAnalysis: resumeResult });
     } catch (err) {
       setIsLoading(false);
       setError(err.message || 'Failed to analyze Job Description. Please try again.');

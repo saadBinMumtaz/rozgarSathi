@@ -1,9 +1,9 @@
 import express from 'express';
-import { analyzeResume } from '../controllers/resume.controller.js';
+import { analyzeResume, uploadMiddleware } from '../controllers/resume.controller.js';
 
 const router = express.Router();
 
-// POST /api/resume/analyze
-router.post('/analyze', analyzeResume);
+// POST /api/resume/analyze — accepts multipart/form-data (file) or JSON (text)
+router.post('/analyze', uploadMiddleware, analyzeResume);
 
 export default router;

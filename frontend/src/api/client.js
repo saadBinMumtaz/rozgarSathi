@@ -104,6 +104,28 @@ export const apiClient = {
 
     return res.json();
   },
+
+  async analyzeResume(file, linkedJDAnalysisId) {
+    const formData = new FormData();
+    if (file) {
+      formData.append('file', file);
+    }
+    if (linkedJDAnalysisId) {
+      formData.append('linkedJDAnalysisId', linkedJDAnalysisId);
+    }
+
+    const res = await fetch(`${API_BASE_URL}/resume/analyze`, {
+      method: 'POST',
+      body: formData,
+    });
+
+    if (!res.ok) {
+      const errorData = await res.json().catch(() => ({ error: 'Failed to analyze résumé' }));
+      throw new Error(errorData.error || `Server error: ${res.status}`);
+    }
+
+    return res.json();
+  },
 };
 
 export default apiClient;
