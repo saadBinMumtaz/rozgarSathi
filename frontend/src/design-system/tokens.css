@@ -1,0 +1,49 @@
+:root {
+  /* Color Palette - Executive Slate & Vibrant Accent */
+  --bg-dark: #0f172a;
+  --bg-card: #1e293b;
+  --bg-card-hover: #334155;
+  --bg-glass: rgba(30, 41, 59, 0.7);
+  
+  --text-main: #f8fafc;
+  --text-muted: #94a3b8;
+  --text-dim: #64748b;
+  
+  --primary: #6366f1;
+  --primary-hover: #4f46e5;
+  --primary-light: rgba(99, 102, 241, 0.15);
+  
+  --accent-cyan: #06b6d4;
+  --accent-emerald: #10b981;
+  --accent-amber: #f59e0b;
+  --accent-rose: #f43f5e;
+  
+  --border-subtle: rgba(255, 255, 255, 0.1);
+  --border-glow: rgba(99, 102, 241, 0.4);
+
+  /* Spacing Grid (4/8px base) */
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-6: 24px;
+  --space-8: 32px;
+  --space-12: 48px;
+  --space-16: 64px;
+
+  /* Typography Scale (Max 4 sizes) */
+  --font-xs: 0.75rem;    /* 12px */
+  --font-sm: 0.875rem;   /* 14px - Body Secondary */
+  --font-base: 1rem;     /* 16px - Body Main */
+  --font-heading: 1.5rem;/* 24px - Section Titles */
+  --font-hero: 2.25rem;  /* 36px - Page Headers */
+}
+
+body {
+  background-color: var(--bg-dark);
+  color: var(--text-main);
+  font-family: 'Inter', system-ui, -apple-system, sans-serif;
+  margin: 0;
+  padding: 0;
+  min-height: 100vh;
+}

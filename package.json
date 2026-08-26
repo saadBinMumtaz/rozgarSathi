@@ -1,0 +1,18 @@
+{
+  "name": "rozgar-sathi",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Rozgar Sathi — AI Interview Twin",
+  "scripts": {
+    "dev:backend": "npm run dev --prefix backend",
+    "dev:frontend": "npm run dev --prefix frontend",
+    "dev": "concurrently \"npm run dev:backend\" \"npm run dev:frontend\""
+  },
+  "workspaces": [
+    "backend",
+    "frontend"
+  ],
+  "devDependencies": {
+    "concurrently": "^8.2.2"
+  }
+}

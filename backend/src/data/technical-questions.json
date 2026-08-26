@@ -1,0 +1,282 @@
+[
+  {
+    "text": "Explain the virtual DOM in React. How does React's reconciliation algorithm (diffing) decide which DOM nodes to update, and what role do keys play in this process?",
+    "skill": "React",
+    "difficulty": "easy",
+    "rubric": {
+      "correctness": "Accurate description of virtual DOM and reconciliation",
+      "depth": "Understanding of diffing algorithm and key importance",
+      "communication": "Clear explanation with logical flow"
+    },
+    "followUpPrompts": [
+      "What happens when you use array indices as keys?",
+      "How does React batch multiple setState calls?"
+    ]
+  },
+  {
+    "text": "What is the difference between useEffect, useLayoutEffect, and useInsertionEffect in React? When would you choose one over the other?",
+    "skill": "React",
+    "difficulty": "medium",
+    "rubric": {
+      "correctness": "Accurate distinction between the three hooks",
+      "depth": "Understanding of browser paint cycle and timing",
+      "practical": "Real-world use cases for each hook"
+    },
+    "followUpPrompts": [
+      "Can you give an example where useLayoutEffect is necessary over useEffect?",
+      "What performance issues can arise from misuse of these hooks?"
+    ]
+  },
+  {
+    "text": "Describe how React Server Components differ from traditional client-side React components. What are the trade-offs in terms of bundle size, interactivity, and data fetching?",
+    "skill": "React",
+    "difficulty": "hard",
+    "rubric": {
+      "correctness": "Accurate understanding of RSC architecture",
+      "depth": "Trade-off analysis between server and client components",
+      "reasoning": "Clear reasoning about when to use each approach"
+    },
+    "followUpPrompts": [
+      "How do Server Components handle state and event handlers?",
+      "What is the 'use client' directive and when is it needed?"
+    ]
+  },
+  {
+    "text": "Explain the Node.js event loop and its phases. How does libuv manage asynchronous operations, and what is the difference between process.nextTick and setImmediate?",
+    "skill": "Node.js",
+    "difficulty": "medium",
+    "rubric": {
+      "correctness": "Accurate description of event loop phases",
+      "depth": "Understanding of libuv and async scheduling",
+      "practical": "Practical implications for Node.js performance"
+    },
+    "followUpPrompts": [
+      "What happens if you recursively call process.nextTick?",
+      "How does the worker thread pool handle CPU-intensive tasks?"
+    ]
+  },
+  {
+    "text": "What are Node.js Streams? Describe the four types of streams and explain how piping works. When would you use object mode?",
+    "skill": "Node.js",
+    "difficulty": "medium",
+    "rubric": {
+      "correctness": "Correct identification of stream types",
+      "depth": "Understanding of backpressure and piping mechanics",
+      "practical": "Real-world use cases for stream processing"
+    },
+    "followUpPrompts": [
+      "How do you handle errors in a piped stream chain?",
+      "What is the difference between readable.pipe() and stream.pipeline()?"
+    ]
+  },
+  {
+    "text": "How would you design a rate limiter middleware for an Express API that needs to work across multiple server instances behind a load balancer? Compare in-memory vs distributed approaches.",
+    "skill": "Node.js",
+    "difficulty": "hard",
+    "rubric": {
+      "correctness": "Sound rate limiting algorithm design",
+      "depth": "Understanding of distributed systems challenges",
+      "reasoning": "Clear trade-off analysis between approaches"
+    },
+    "followUpPrompts": [
+      "What are the consistency challenges with Redis-based sliding windows?",
+      "How would you handle rate limit bursts at the boundary of a time window?"
+    ]
+  },
+  {
+    "text": "Explain MongoDB's aggregation pipeline. How does it differ from a simple find query, and what are the performance implications of using $lookup for joins?",
+    "skill": "MongoDB",
+    "difficulty": "medium",
+    "rubric": {
+      "correctness": "Accurate description of aggregation stages",
+      "depth": "Understanding of pipeline optimization and indexing",
+      "practical": "When to use aggregation vs application-level processing"
+    },
+    "followUpPrompts": [
+      "How does the $match stage benefit from indexes when placed early vs late in the pipeline?",
+      "What is the difference between $merge and $out?"
+    ]
+  },
+  {
+    "text": "Describe MongoDB's replica set election process. What happens during a primary failure, and how does the consensus algorithm ensure data consistency?",
+    "skill": "MongoDB",
+    "difficulty": "hard",
+    "rubric": {
+      "correctness": "Accurate description of election mechanics",
+      "depth": "Understanding of Raft-like consensus and write concerns",
+      "reasoning": "Clear explanation of failure scenarios and recovery"
+    },
+    "followUpPrompts": [
+      "What is the difference between majority and linearizable write concern?",
+      "How do arbiter nodes participate in elections?"
+    ]
+  },
+  {
+    "text": "What is the difference between REST and GraphQL? When would you choose GraphQL over REST, and what are the trade-offs in terms of caching, complexity, and performance?",
+    "skill": "REST APIs",
+    "difficulty": "easy",
+    "rubric": {
+      "correctness": "Accurate comparison of both paradigms",
+      "depth": "Understanding of over-fetching and under-fetching problems",
+      "communication": "Clear articulation of trade-offs"
+    },
+    "followUpPrompts": [
+      "How does GraphQL handle file uploads?",
+      "What is N+1 query problem in GraphQL and how do you solve it?"
+    ]
+  },
+  {
+    "text": "Explain the concept of idempotency in REST APIs. Which HTTP methods are inherently idempotent, and how would you implement idempotency keys for POST requests?",
+    "skill": "REST APIs",
+    "difficulty": "medium",
+    "rubric": {
+      "correctness": "Correct understanding of idempotency",
+      "depth": "Practical implementation of idempotency keys",
+      "reasoning": "Clear reasoning about why idempotency matters"
+    },
+    "followUpPrompts": [
+      "How do you handle idempotency in a distributed system with multiple replicas?",
+      "What is the difference between idempotent and safe methods?"
+    ]
+  },
+  {
+    "text": "What are database transactions in SQL? Explain the ACID properties and describe a scenario where you would need to use a transaction with isolation level SERIALIZABLE.",
+    "skill": "SQL",
+    "difficulty": "medium",
+    "rubric": {
+      "correctness": "Accurate explanation of ACID properties",
+      "depth": "Understanding of isolation levels and their trade-offs",
+      "practical": "Real-world scenario demonstrating need for strict isolation"
+    },
+    "followUpPrompts": [
+      "What is the difference between pessimistic and optimistic locking?",
+      "How do deadlocks occur and how does the database detect them?"
+    ]
+  },
+  {
+    "text": "Explain the difference between clustered and non-clustered indexes in SQL. How does each affect read and write performance, and when would you use a composite index?",
+    "skill": "SQL",
+    "difficulty": "medium",
+    "rubric": {
+      "correctness": "Accurate distinction between index types",
+      "depth": "Understanding of B-tree structure and page organization",
+      "practical": "Clear guidance on index selection strategy"
+    },
+    "followUpPrompts": [
+      "What is a covering index and how does it eliminate table lookups?",
+      "How do included columns in a non-clustered index work?"
+    ]
+  },
+  {
+    "text": "Describe the CAP theorem. How does it apply to choosing between a SQL database and a NoSQL database like MongoDB for a distributed e-commerce application?",
+    "skill": "System Design",
+    "difficulty": "medium",
+    "rubric": {
+      "correctness": "Accurate statement of CAP theorem",
+      "depth": "Understanding of consistency-availability trade-offs",
+      "reasoning": "Sound reasoning applied to the e-commerce scenario"
+    },
+    "followUpPrompts": [
+      "Can a system really only guarantee two of the three CAP properties?",
+      "How does PACELC extend the CAP theorem?"
+    ]
+  },
+  {
+    "text": "How would you design a URL shortener service like bit.ly? Discuss the key components, database schema, hash collision strategy, and how you would handle analytics at scale.",
+    "skill": "System Design",
+    "difficulty": "hard",
+    "rubric": {
+      "correctness": "Sound high-level architecture",
+      "depth": "Consideration of scale, caching, and analytics pipeline",
+      "reasoning": "Clear trade-off analysis for encoding strategy"
+    },
+    "followUpPrompts": [
+      "How would you ensure the same long URL always maps to the same short URL?",
+      "What caching strategy would you use for frequently accessed short URLs?"
+    ]
+  },
+  {
+    "text": "What is the difference between authentication and authorization? Explain how JWT tokens work, where they should be stored on the client, and what are the security risks of storing them in localStorage vs httpOnly cookies.",
+    "skill": "REST APIs",
+    "difficulty": "easy",
+    "rubric": {
+      "correctness": "Clear distinction between authN and authZ",
+      "depth": "Understanding of JWT structure and security trade-offs",
+      "practical": "Awareness of XSS and CSRF attack vectors"
+    },
+    "followUpPrompts": [
+      "How do you handle JWT refresh tokens securely?",
+      "What happens when a JWT is compromised — how do you revoke it?"
+    ]
+  },
+  {
+    "text": "Explain MongoDB sharding. What is a shard key, how does the balancer distribute data, and what are the challenges of choosing a poor shard key?",
+    "skill": "MongoDB",
+    "difficulty": "hard",
+    "rubric": {
+      "correctness": "Accurate description of sharding architecture",
+      "depth": "Understanding of hashed vs ranged sharding",
+      "reasoning": "Clear analysis of shard key selection criteria"
+    },
+    "followUpPrompts": [
+      "What is a jumbo chunk and how does MongoDB handle it?",
+      "How do you perform a resharding operation in production?"
+    ]
+  },
+  {
+    "text": "What are React hooks under the hood? Explain how useState maintains state between renders and why the rules of hooks exist (no conditional calls, top-level only).",
+    "skill": "React",
+    "difficulty": "medium",
+    "rubric": {
+      "correctness": "Accurate explanation of hook internals",
+      "depth": "Understanding of fiber nodes and linked list structure",
+      "reasoning": "Clear reasoning about why rules of hooks exist"
+    },
+    "followUpPrompts": [
+      "How does useCallback differ from useMemo in terms of referential equality?",
+      "What is the purpose of the dependency array in useEffect?"
+    ]
+  },
+  {
+    "text": "Explain the concept of database normalization. Walk through 1NF, 2NF, 3NF, and BCNF with examples. When might you intentionally denormalize a database?",
+    "skill": "SQL",
+    "difficulty": "easy",
+    "rubric": {
+      "correctness": "Accurate description of each normal form",
+      "depth": "Understanding of functional dependencies",
+      "practical": "Clear reasoning about when denormalization is acceptable"
+    },
+    "followUpPrompts": [
+      "What are the read vs write performance trade-offs of normalization?",
+      "How do materialized views relate to denormalization?"
+    ]
+  },
+  {
+    "text": "How would you design a real-time notification system that needs to deliver messages to millions of concurrent users? Discuss WebSocket scaling, message ordering, and delivery guarantees.",
+    "skill": "System Design",
+    "difficulty": "hard",
+    "rubric": {
+      "correctness": "Sound architecture for real-time delivery",
+      "depth": "Understanding of WebSocket scaling challenges",
+      "reasoning": "Clear analysis of consistency vs availability for notifications"
+    },
+    "followUpPrompts": [
+      "How do you handle reconnection and missed messages?",
+      "What is the difference between at-least-once and exactly-once delivery?"
+    ]
+  },
+  {
+    "text": "What is middleware in Express.js? Explain the execution order, the difference between app-level and router-level middleware, and how error-handling middleware differs from regular middleware.",
+    "skill": "Node.js",
+    "difficulty": "easy",
+    "rubric": {
+      "correctness": "Accurate description of middleware pattern",
+      "depth": "Understanding of next() and error propagation",
+      "practical": "Real-world middleware examples"
+    },
+    "followUpPrompts": [
+      "What happens if you forget to call next() in a middleware?",
+      "How do you conditionally skip a middleware in the chain?"
+    ]
+  }
+]

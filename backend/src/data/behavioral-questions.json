@@ -1,0 +1,290 @@
+[
+  {
+    "text": "Tell me about a time when you had to work with a difficult team member. How did you handle the situation?",
+    "topic": "Teamwork",
+    "difficulty": "medium",
+    "rubric": {
+      "situation": "Describe the team context and the difficult behavior",
+      "task": "What was your role and responsibility in the situation",
+      "action": "Specific steps taken to address the issue",
+      "result": "Outcome and what you learned"
+    },
+    "followUpPrompts": [
+      "What specific actions did you take to improve the working relationship?",
+      "How did you ensure the team's goals weren't compromised?",
+      "What would you do differently if faced with a similar situation again?"
+    ]
+  },
+  {
+    "text": "Describe a situation where you had a conflict with a colleague or manager. How did you resolve it?",
+    "topic": "Conflict",
+    "difficulty": "hard",
+    "rubric": {
+      "situation": "Context of the disagreement or conflict",
+      "task": "Your role and what was at stake",
+      "action": "How you approached the conflict and communicated",
+      "result": "Resolution and impact on the relationship"
+    },
+    "followUpPrompts": [
+      "What was the root cause of the disagreement?",
+      "How did you balance your perspective with theirs?",
+      "What did this experience teach you about handling disagreements?"
+    ]
+  },
+  {
+    "text": "Give me an example of a time when you took initiative to lead a project or task without being asked.",
+    "topic": "Leadership",
+    "difficulty": "medium",
+    "rubric": {
+      "situation": "The context that needed leadership",
+      "task": "What needed to be done and why no one else was doing it",
+      "action": "How you stepped up and organized the work",
+      "result": "Outcome and how others responded"
+    },
+    "followUpPrompts": [
+      "How did you get buy-in from others to follow your lead?",
+      "What challenges did you face in taking ownership?",
+      "How did this experience shape your approach to leadership?"
+    ]
+  },
+  {
+    "text": "Tell me about a time when you failed at something important. What happened and what did you learn?",
+    "topic": "Failure",
+    "difficulty": "hard",
+    "rubric": {
+      "situation": "The context and what you were trying to achieve",
+      "task": "Your responsibility and what went wrong",
+      "action": "How you responded to the failure",
+      "result": "What you learned and how you applied it"
+    },
+    "followUpPrompts": [
+      "What was the immediate impact of the failure?",
+      "How did you take accountability for what happened?",
+      "What specific changes did you make based on this experience?"
+    ]
+  },
+  {
+    "text": "Describe a complex problem you solved at work. Walk me through your approach.",
+    "topic": "Problem Solving",
+    "difficulty": "medium",
+    "rubric": {
+      "situation": "The problem context and constraints",
+      "task": "What needed to be solved and why it was complex",
+      "action": "Your systematic approach to solving it",
+      "result": "The solution and its impact"
+    },
+    "followUpPrompts": [
+      "What alternatives did you consider before settling on your approach?",
+      "How did you validate that your solution was correct?",
+      "What would you do differently if you encountered a similar problem again?"
+    ]
+  },
+  {
+    "text": "Tell me about a time when you had to work under tight deadlines or high pressure. How did you manage?",
+    "topic": "Pressure",
+    "difficulty": "medium",
+    "rubric": {
+      "situation": "The high-pressure context and constraints",
+      "task": "What needed to be done and the stakes involved",
+      "action": "How you prioritized and managed your work",
+      "result": "Outcome and how you handled the stress"
+    },
+    "followUpPrompts": [
+      "How did you decide what to prioritize when time was limited?",
+      "What strategies did you use to stay focused and productive?",
+      "How did this experience affect your approach to deadlines going forward?"
+    ]
+  },
+  {
+    "text": "Give me an example of a new skill or technology you had to learn quickly. How did you approach it?",
+    "topic": "Learning",
+    "difficulty": "easy",
+    "rubric": {
+      "situation": "Why you needed to learn something new",
+      "task": "What you needed to learn and the timeline",
+      "action": "Your learning strategy and resources",
+      "result": "How quickly you became proficient and applied it"
+    },
+    "followUpPrompts": [
+      "What resources or methods were most effective for your learning?",
+      "How did you know when you had learned enough to apply it?",
+      "What would you do differently when learning something new in the future?"
+    ]
+  },
+  {
+    "text": "Describe a time when you had to explain a complex technical concept to a non-technical person.",
+    "topic": "Communication",
+    "difficulty": "medium",
+    "rubric": {
+      "situation": "The context and who you were communicating with",
+      "task": "What needed to be explained and why it mattered",
+      "action": "How you adapted your communication style",
+      "result": "Whether they understood and the outcome"
+    },
+    "followUpPrompts": [
+      "How did you gauge whether they understood your explanation?",
+      "What analogies or examples did you use to make it clearer?",
+      "How did this experience change how you communicate technical ideas?"
+    ]
+  },
+  {
+    "text": "Tell me about a time when you had to collaborate with people from different departments or backgrounds.",
+    "topic": "Teamwork",
+    "difficulty": "medium",
+    "rubric": {
+      "situation": "The cross-functional context",
+      "task": "The shared goal and different perspectives involved",
+      "action": "How you bridged gaps and aligned the team",
+      "result": "Outcome and what you learned about collaboration"
+    },
+    "followUpPrompts": [
+      "What challenges arose from the different perspectives?",
+      "How did you ensure everyone's voice was heard?",
+      "What made this collaboration successful or unsuccessful?"
+    ]
+  },
+  {
+    "text": "Describe a situation where you disagreed with a decision made by your team or manager. What did you do?",
+    "topic": "Conflict",
+    "difficulty": "hard",
+    "rubric": {
+      "situation": "The decision and why you disagreed",
+      "task": "Your role and what was at stake",
+      "action": "How you expressed your concerns",
+      "result": "Outcome and what you learned"
+    },
+    "followUpPrompts": [
+      "How did you balance speaking up with respecting the decision?",
+      "What was the impact of your input on the final outcome?",
+      "How did this affect your relationship with the decision-maker?"
+    ]
+  },
+  {
+    "text": "Give me an example of when you mentored or helped a colleague grow in their role.",
+    "topic": "Leadership",
+    "difficulty": "easy",
+    "rubric": {
+      "situation": "The context and your colleague's needs",
+      "task": "What you took on and why",
+      "action": "How you supported their development",
+      "result": "Their growth and what you learned"
+    },
+    "followUpPrompts": [
+      "How did you identify what they needed help with?",
+      "What approach did you take to guide them without taking over?",
+      "How did this experience influence your view on mentorship?"
+    ]
+  },
+  {
+    "text": "Tell me about a time when you made a mistake that affected your team or project. How did you handle it?",
+    "topic": "Failure",
+    "difficulty": "hard",
+    "rubric": {
+      "situation": "The context and what you were working on",
+      "task": "Your responsibility and what went wrong",
+      "action": "How you responded and communicated the issue",
+      "result": "How you fixed it and what you learned"
+    },
+    "followUpPrompts": [
+      "How soon did you realize there was a problem?",
+      "How did you communicate the mistake to others?",
+      "What systems or processes did you put in place to prevent it from happening again?"
+    ]
+  },
+  {
+    "text": "Describe a time when you identified an inefficiency in a process and improved it.",
+    "topic": "Problem Solving",
+    "difficulty": "medium",
+    "rubric": {
+      "situation": "The process and its problems",
+      "task": "What you noticed and why it mattered",
+      "action": "How you analyzed and redesigned the process",
+      "result": "The improvement and its measurable impact"
+    },
+    "followUpPrompts": [
+      "How did you measure the improvement?",
+      "What resistance did you face and how did you overcome it?",
+      "What did this teach you about process optimization?"
+    ]
+  },
+  {
+    "text": "Tell me about a time when you had to juggle multiple priorities with competing deadlines.",
+    "topic": "Pressure",
+    "difficulty": "hard",
+    "rubric": {
+      "situation": "The competing priorities and constraints",
+      "task": "What needed to be done and the stakes",
+      "action": "How you prioritized and managed your time",
+      "result": "Outcome and what you learned about prioritization"
+    },
+    "followUpPrompts": [
+      "How did you decide which tasks to focus on first?",
+      "Did you have to delegate or say no to anything? How did you handle that?",
+      "What strategies did you use to stay organized under pressure?"
+    ]
+  },
+  {
+    "text": "Give me an example of a time when you received constructive criticism. How did you respond?",
+    "topic": "Learning",
+    "difficulty": "medium",
+    "rubric": {
+      "situation": "The context and who gave the feedback",
+      "task": "What the feedback was about",
+      "action": "How you processed and acted on it",
+      "result": "What you changed and the outcome"
+    },
+    "followUpPrompts": [
+      "What was your initial reaction to the feedback?",
+      "How did you decide which parts to act on?",
+      "How has this feedback changed your work since then?"
+    ]
+  },
+  {
+    "text": "Describe a situation where you had to persuade others to adopt your idea or approach.",
+    "topic": "Communication",
+    "difficulty": "hard",
+    "rubric": {
+      "situation": "The context and resistance you faced",
+      "task": "What you were trying to convince others of",
+      "action": "How you built your case and addressed concerns",
+      "result": "Whether you succeeded and what you learned"
+    },
+    "followUpPrompts": [
+      "What was the main objection you had to overcome?",
+      "How did you tailor your message to different stakeholders?",
+      "What would you do differently if you had to persuade someone again?"
+    ]
+  },
+  {
+    "text": "Tell me about a time when you had to adapt to a significant change at work.",
+    "topic": "Learning",
+    "difficulty": "medium",
+    "rubric": {
+      "situation": "The change and its impact",
+      "task": "What you needed to adapt to",
+      "action": "How you approached the change",
+      "result": "Outcome and what you learned about adaptability"
+    },
+    "followUpPrompts": [
+      "What was most challenging about the change?",
+      "How did you stay motivated during the transition?",
+      "What did this experience teach you about handling change?"
+    ]
+  },
+  {
+    "text": "Describe a time when you went above and beyond what was expected of you.",
+    "topic": "Leadership",
+    "difficulty": "easy",
+    "rubric": {
+      "situation": "The context and what was expected",
+      "task": "What you chose to do beyond that",
+      "action": "The extra effort you put in",
+      "result": "The impact and how it was received"
+    },
+    "followUpPrompts": [
+      "What motivated you to go the extra mile?",
+      "How did you balance this with your other responsibilities?",
+      "What did this experience teach you about setting standards?"
+    ]
+  }
+]
