@@ -266,15 +266,8 @@ const fallbackExtractJD = (jdText) => {
   };
 };
 
-// Backward-compatible aliases — remove after all consumers are migrated
-export const callGrok = callAI;
-export const checkGrokHealth = checkAIHealth;
-
 export default {
   callAI,
   checkAIHealth,
   extractJDAnalysis,
-  // Backward-compatible aliases
-  callGrok: callAI,
-  checkGrokHealth: checkAIHealth,
 };

@@ -6,21 +6,21 @@
 
 import React, { useEffect } from 'react';
 import { useTextToSpeech } from '../../hooks/useTextToSpeech';
-import { Volume2, SkipForward } from 'lucide-react';
+import { Volume2, SkipForward, RefreshCw } from 'lucide-react';
 import { Button } from '../../design-system/Button';
 
-export const VoiceQuestionPlayer = ({ text, onSpeakingChange, language = 'english' }) => {
-  const { speak, cancel, isSpeaking, isSupported, urduVoiceUnavailable } = useTextToSpeech();
+export const VoiceQuestionPlayer = ({ text, fallbackText, onSpeakingChange, language = 'english' }) => {
+  const { speak, cancel, isSpeaking, isSupported, urduLoading, urduVoiceUnavailable } = useTextToSpeech();
 
   // Auto-speak when text changes
   useEffect(() => {
     if (text && isSupported) {
-      speak(text, language);
+      speak(text, language, fallbackText);
     }
     return () => {
       cancel();
     };
-  }, [text, isSupported, speak, cancel, language]);
+  }, [text, isSupported, speak, cancel, language, fallbackText]);
 
   // Notify parent of speaking state changes
   useEffect(() => {
@@ -43,7 +43,9 @@ export const VoiceQuestionPlayer = ({ text, onSpeakingChange, language = 'englis
         </div>
         <div className="flex-1">
           <div className="text-sm text-slate-300 mb-2">
-            {isSpeaking ? (
+            {urduLoading ? (
+              <span className="text-indigo-400 font-medium animate-pulse">Loading Urdu voice...</span>
+            ) : isSpeaking ? (
               <span className="text-indigo-400 font-medium">AI is speaking...</span>
             ) : (
               <span className="text-slate-400">Question:</span>
@@ -51,14 +53,31 @@ export const VoiceQuestionPlayer = ({ text, onSpeakingChange, language = 'englis
           </div>
           <div className={`text-slate-100 leading-relaxed ${language === 'urdu' ? 'urdu-text' : ''}`}>{text}</div>
 
-          {/* Urdu voice unavailable notice */}
+          {/* Only shown when BOTH local Urdu voice and cloud Urdu TTS fail — degrades to English */}
           {urduVoiceUnavailable && language === 'urdu' && (
             <div className="mt-2 text-xs text-amber-400 bg-amber-900/20 border border-amber-700/30 rounded px-2 py-1">
-              Urdu voice not available on this device. Question displayed in text.
+              Urdu voice unavailable — playing audio in English.
+            </div>
+          )}
+
+          {/* Repeat: re-trigger TTS of the currently shown text at any time (question,
+              nudge or follow-up), respecting the active language. Reuses the same speak(). */}
+          {isSupported && (
+            <div className="mt-3">
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => speak(text, language, fallbackText)}
+                className="flex items-center gap-1 text-slate-300"
+                aria-label="Repeat question"
+              >
+                <RefreshCw size={15} />
+                Repeat Question
+              </Button>
             </div>
           )}
         </div>
-        {isSpeaking && isSupported && (
+        {(isSpeaking || urduLoading) && isSupported && (
           <Button
             variant="secondary"
             size="sm"

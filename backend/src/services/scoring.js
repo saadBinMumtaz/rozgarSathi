@@ -251,13 +251,14 @@ Evaluate the answer and return JSON.`;
  * Imported by behavioral.controller.js — never constructed outside scoring.js.
  */
 export const INVALID_EVALUATION = Object.freeze({
-  score: 5,
+  score: 0,
   dimensions: {},
-  evidence: ['Response was not a usable answer'],
+  evidence: ['Invalid answer — random words or unrelated strings, not a substantive response'],
   strength: '',
-  missing: 'No specific example was provided for this question',
-  improvement: 'Answer with a real example structured as Situation, Task, Action, Result',
+  missing: 'No proper answer was provided for this question',
+  improvement: 'Answer with a real, specific example structured as Situation, Task, Action, Result',
   confidenceLevel: 'low',
+  invalid: true,
 });
 
 /**
@@ -408,6 +409,86 @@ Evaluate the technical answer and return JSON.`;
 };
 
 /**
+ * Evaluate a live-coding submission (Day 4). Fully deterministic — test
+ * results drive the score so a hallucinated high score can never override a
+ * failed test suite (Master Context §10 guardrails).
+ * @param {Object} params
+ * @param {Array<{ passed: boolean }>} params.hiddenResults - per-hidden-test outcomes
+ * @param {Array<{ passed: boolean }>} [params.publicResults] - last public run outcomes
+ * @param {string} [params.code=''] - candidate source for quality signals
+ * @returns {Object} Evaluation object matching Section 7 schema
+ */
+export const evaluateCodingSubmission = ({ hiddenResults = [], publicResults = [], code = '' }) => {
+  const hiddenTotal = hiddenResults.length;
+  const hiddenPassed = hiddenResults.filter((r) => r && r.passed).length;
+  const hiddenRate = hiddenTotal > 0 ? hiddenPassed / hiddenTotal : 0;
+
+  // Deterministic floor: no code means no score.
+  if (!code || !code.trim()) {
+    return {
+      score: 0,
+      dimensions: { correctness: 0, completeness: 0, codeQuality: 0 },
+      evidence: ['No code was submitted'],
+      strength: '',
+      missing: 'A working solution is needed',
+      improvement: 'Write the solution function and submit it to run the hidden tests',
+      confidenceLevel: 'high',
+    };
+  }
+
+  // Code-quality signals (deterministic, cheap heuristics).
+  let quality = 5;
+  if (code.length >= 80) quality += 2;
+  if (/\/\/|\/\*/.test(code)) quality += 1;
+  if (!/\bvar\s/.test(code)) quality += 1;
+  if (/for\s*\(|while\s*\(|\.map\(|\.reduce\(|\.forEach\(/.test(code)) quality += 1;
+  quality = Math.max(0, Math.min(10, quality));
+
+  const publicTotal = publicResults.length;
+  const publicPassed = publicResults.filter((r) => r && r.passed).length;
+
+  // Score: hidden tests dominate (80%), code quality is the remainder (20%).
+  const score = Math.round(hiddenRate * 80 + (quality / 10) * 20);
+
+  const evidence = [`Passed ${hiddenPassed}/${hiddenTotal} hidden tests`];
+  if (publicTotal > 0) evidence.push(`Passed ${publicPassed}/${publicTotal} public tests`);
+  if (hiddenPassed < hiddenTotal) {
+    evidence.push(`${hiddenTotal - hiddenPassed} hidden test(s) failed — edge cases were missed`);
+  }
+
+  const strength =
+    hiddenRate === 1
+      ? 'Solution passed every hidden test case'
+      : hiddenRate >= 0.5
+        ? 'Solution handled the core hidden test cases'
+        : '';
+  const missing =
+    hiddenRate === 1
+      ? ''
+      : hiddenRate === 0
+        ? 'No hidden test case passed — the core logic needs rework'
+        : 'Some hidden edge cases failed';
+  const improvement =
+    hiddenRate === 1
+      ? 'Walk through your time and space complexity explicitly for the interviewer'
+      : 'Trace your code by hand against a failing edge case before re-submitting';
+
+  return {
+    score: Math.max(0, Math.min(100, score)),
+    dimensions: {
+      correctness: Math.round(hiddenRate * 10),
+      completeness: Math.round(hiddenRate * 10),
+      codeQuality: quality,
+    },
+    evidence,
+    strength,
+    missing,
+    improvement,
+    confidenceLevel: hiddenTotal > 0 ? 'high' : 'low',
+  };
+};
+
+/**
  * Stub evaluation for coding submissions (Day 4 — full coding scoring not yet wired).
  * Imported by coding.controller.js — never constructed outside scoring.js.
  */
@@ -425,5 +506,6 @@ export default {
   evaluateBehavioralAnswer,
   evaluateTechnicalAnswer,
   INVALID_EVALUATION,
+  evaluateCodingSubmission,
   createCodingStubEvaluation,
 };

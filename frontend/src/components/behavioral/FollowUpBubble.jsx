@@ -5,7 +5,7 @@
 import React from 'react';
 import { MessageCircleQuestion } from 'lucide-react';
 
-export const FollowUpBubble = ({ text }) => {
+export const FollowUpBubble = ({ text, language = 'english' }) => {
   if (!text) return null;
 
   return (
@@ -16,7 +16,7 @@ export const FollowUpBubble = ({ text }) => {
         </div>
         <div className="flex-1">
           <div className="text-sm text-indigo-300 mb-2 font-medium">Follow-up question:</div>
-          <div className="text-slate-100 leading-relaxed">{text}</div>
+          <div className={`text-slate-100 leading-relaxed ${language === 'urdu' ? 'urdu-text text-right' : ''}`}>{text}</div>
         </div>
       </div>
     </div>

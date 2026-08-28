@@ -28,6 +28,11 @@ export const env = Object.freeze({
   CODE_EXEC_TIMEOUT_MS: parseInt(process.env.CODE_EXEC_TIMEOUT_MS || '5000', 10),
   CODE_EXEC_MEMORY_MB: parseInt(process.env.CODE_EXEC_MEMORY_MB || '256', 10),
   STT_PROVIDER_KEY: process.env.STT_PROVIDER_KEY || '',
+  // Azure Neural TTS (cloud Urdu voice fallback). Optional — when unset, the
+  // frontend degrades to local English TTS instead of cloud Urdu audio.
+  AZURE_TTS_KEY: process.env.AZURE_TTS_KEY || '',
+  AZURE_TTS_REGION: process.env.AZURE_TTS_REGION || '',
+  AZURE_TTS_VOICE: process.env.AZURE_TTS_VOICE || 'ur-PK-UzmaNeural',
   JWT_SECRET: process.env.JWT_SECRET || 'rozgar-sathi-jwt-secret',
   NODE_ENV: process.env.NODE_ENV || 'development',
   VITE_API_BASE_URL: process.env.VITE_API_BASE_URL || 'http://localhost:5000/api',

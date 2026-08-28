@@ -40,18 +40,22 @@ export const BehavioralInterview = ({ jdAnalysisId, onNavigate, language = 'engl
   const [micTranscript, setMicTranscript] = useState('');
   const [useTypedFallback, setUseTypedFallback] = useState(false);
   const [urduQuestionText, setUrduQuestionText] = useState(null);
+  const [urduNudge, setUrduNudge] = useState(null);
+  const [urduFollowUp, setUrduFollowUp] = useState(null);
   const [isTranslatingUrdu, setIsTranslatingUrdu] = useState(false);
   const [urduEvaluations, setUrduEvaluations] = useState([]);
   const [questionCount, setQuestionCount] = useState(0);
   const [terminationMessage, setTerminationMessage] = useState(null);
 
   // Initialize / resume session whenever the session id changes.
+  // BUT skip resume if interview is already complete (prevents overwriting local state).
   useEffect(() => {
     if (!sessionId) {
       createSession('behavioral', jdAnalysisId).catch((err) => {
         console.error('Failed to create session:', err);
       });
-    } else {
+    } else if (!isComplete) {
+      // Only resume if interview is NOT already complete
       resume().catch((err) => {
         console.error('Failed to resume session:', err);
         resetSession();
@@ -64,6 +68,21 @@ export const BehavioralInterview = ({ jdAnalysisId, onNavigate, language = 'engl
   useEffect(() => {
     setQuestionCount(evaluations.length + (currentQuestion ? 1 : 0));
   }, [evaluations.length, currentQuestion]);
+
+  // Cleanup: stop TTS and speech synthesis when component unmounts or navigating away
+  useEffect(() => {
+    return () => {
+      // Stop any ongoing speech synthesis
+      if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
+        window.speechSynthesis.cancel();
+      }
+      // Stop any audio playback
+      document.querySelectorAll('audio').forEach(audio => {
+        audio.pause();
+        audio.currentTime = 0;
+      });
+    };
+  }, []);
 
   // Auto-translate question to Urdu when language is Urdu and question changes
   useEffect(() => {
@@ -86,6 +105,42 @@ export const BehavioralInterview = ({ jdAnalysisId, onNavigate, language = 'engl
       .finally(() => setIsTranslatingUrdu(false));
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [currentQuestion?.questionId, currentQuestion?.questionText, isUrdu]);
+
+  // Auto-translate the short-answer nudge to Urdu (display + speak) in Urdu mode.
+  // Mirrors the question flow: reuse translateQuestion; gate on ready text so the
+  // English nudge is never spoken before its Urdu translation arrives.
+  useEffect(() => {
+    if (!isUrdu || !nudge) {
+      setUrduNudge(null);
+      return;
+    }
+    setUrduNudge(null);
+    setIsTranslatingUrdu(true);
+    let cancelled = false;
+    apiClient
+      .translateQuestion(nudge, [], 'urdu')
+      .then((result) => { if (!cancelled) setUrduNudge(result.questionText); })
+      .catch(() => { if (!cancelled) setUrduNudge(nudge); })
+      .finally(() => { if (!cancelled) setIsTranslatingUrdu(false); });
+    return () => { cancelled = true; };
+  }, [nudge, isUrdu]);
+
+  // Auto-translate the context-aware STAR follow-up to Urdu (display + speak).
+  useEffect(() => {
+    if (!isUrdu || !followUp) {
+      setUrduFollowUp(null);
+      return;
+    }
+    setUrduFollowUp(null);
+    setIsTranslatingUrdu(true);
+    let cancelled = false;
+    apiClient
+      .translateQuestion(followUp, [], 'urdu')
+      .then((result) => { if (!cancelled) setUrduFollowUp(result.questionText); })
+      .catch(() => { if (!cancelled) setUrduFollowUp(followUp); })
+      .finally(() => { if (!cancelled) setIsTranslatingUrdu(false); });
+    return () => { cancelled = true; };
+  }, [followUp, isUrdu]);
 
   // Auto-translate evaluations when interview completes in Urdu mode
   useEffect(() => {
@@ -118,10 +173,10 @@ export const BehavioralInterview = ({ jdAnalysisId, onNavigate, language = 'engl
 
     try {
       const result = await answerQuestion(currentQuestion.questionId, transcript, language);
-      if (result?.nextAction !== 'nudge') {
-        setTypedAnswer('');
-        setMicTranscript('');
-      }
+      // Clear the (possibly invalid) answer so the candidate starts fresh on the
+      // re-ask after a nudge, and on every normal transition.
+      setTypedAnswer('');
+      setMicTranscript('');
       // Clear Urdu translation when moving to next question
       setUrduQuestionText(null);
       // Handle termination
@@ -133,11 +188,19 @@ export const BehavioralInterview = ({ jdAnalysisId, onNavigate, language = 'engl
     }
   };
 
-  // Determine which text to speak and display
-  const speakText = nudge || followUp || (isUrdu && urduQuestionText ? urduQuestionText : currentQuestion?.questionText);
+  // Determine which text to speak and display (precedence: follow-up > question).
+  // The nudge feedback is shown separately in the amber box below, not in VoiceQuestionPlayer.
+  // In Urdu mode, use the translated Urdu text; while its translation is still in-flight
+  // the value is null so VoiceQuestionPlayer stays silent instead of speaking English.
+  let speakText;
+  if (followUp) speakText = isUrdu ? urduFollowUp : followUp;
+  else speakText = isUrdu && urduQuestionText ? urduQuestionText : currentQuestion?.questionText;
+
   const displayQuestionText = isUrdu && urduQuestionText
     ? urduQuestionText
     : currentQuestion?.questionText;
+  const displayNudge = (isUrdu && urduNudge) || nudge;
+  const displayFollowUp = (isUrdu && urduFollowUp) || followUp;
 
   const displayCount = Math.min(questionCount, MAX_QUESTIONS);
   const progress = (displayCount / MAX_QUESTIONS) * 100;
@@ -151,9 +214,17 @@ export const BehavioralInterview = ({ jdAnalysisId, onNavigate, language = 'engl
   }
 
   if (isComplete) {
+    // Calculate summary statistics
+    const totalScore = evaluations.length > 0
+      ? evaluations.reduce((sum, e) => sum + (typeof e?.score === 'number' ? e.score : 0), 0)
+      : 0;
+    const avgScore = evaluations.length > 0 ? Math.round(totalScore / evaluations.length) : 0;
+    const highScores = evaluations.filter(e => e?.score >= 70).length;
+    const lowScores = evaluations.filter(e => e?.score < 40).length;
+
     return (
       <div className="min-h-screen bg-slate-950 p-6">
-        <div className="max-w-2xl mx-auto space-y-6">
+        <div className="max-w-3xl mx-auto space-y-6">
           <Card className={terminationMessage ? 'border-rose-700/50' : 'border-emerald-700/50'}>
             <CardContent className="text-center py-8 space-y-4">
               {terminationMessage ? (
@@ -164,16 +235,39 @@ export const BehavioralInterview = ({ jdAnalysisId, onNavigate, language = 'engl
               ) : (
                 <>
                   <CheckCircle2 className="text-emerald-500 mx-auto" size={48} />
-                  <div className="text-2xl font-bold text-emerald-400">Interview Complete!</div>
-                  <div className="text-slate-400">
-                    You answered {evaluations.length} questions.
-                    Overall score:{' '}
-                    <span className="text-white font-semibold">
-                      {evaluations.length > 0
-                        ? Math.round(evaluations.reduce((sum, e) => sum + (e.score || 0), 0) / evaluations.length)
-                        : 0}
-                      /100
-                    </span>
+                  <div className="text-2xl font-bold text-emerald-400">Behavioral Interview Complete!</div>
+                  
+                  {/* Overall Score Display */}
+                  <div className="inline-flex items-center gap-4 bg-slate-800/50 rounded-xl px-6 py-4 border border-slate-700">
+                    <div className="text-center">
+                      <div className={`text-4xl font-bold ${avgScore >= 70 ? 'text-emerald-400' : avgScore >= 40 ? 'text-amber-400' : 'text-rose-400'}`}>
+                        {avgScore}
+                      </div>
+                      <div className="text-xs text-slate-400 uppercase tracking-wide">Overall Score</div>
+                    </div>
+                    <div className="h-12 w-px bg-slate-700"></div>
+                    <div className="text-left space-y-1">
+                      <div className="text-sm text-slate-300">
+                        <span className="text-slate-400">Questions:</span> {evaluations.length}
+                      </div>
+                      <div className="text-sm text-slate-300">
+                        <span className="text-emerald-400">✓ {highScores}</span> strong answers
+                      </div>
+                      {lowScores > 0 && (
+                        <div className="text-sm text-slate-300">
+                          <span className="text-rose-400">⚠ {lowScores}</span> need improvement
+                        </div>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Performance Summary */}
+                  <div className="text-sm text-slate-400 max-w-md mx-auto">
+                    {avgScore >= 70 
+                      ? 'Great performance! Your answers demonstrated strong behavioral competencies.'
+                      : avgScore >= 40
+                      ? 'Good effort! Review the feedback below to strengthen your answers.'
+                      : 'Review the detailed feedback below to improve your STAR method responses.'}
                   </div>
                 </>
               )}
@@ -189,8 +283,11 @@ export const BehavioralInterview = ({ jdAnalysisId, onNavigate, language = 'engl
           </Card>
 
           {evaluations.length > 0 && (
-            <div className="space-y-4">
-              <h3 className="text-lg font-semibold text-slate-200">Question Feedback Summary</h3>
+            <div className="space-y-6">
+              <h3 className="text-lg font-semibold text-slate-200 flex items-center gap-2">
+                <span>Detailed Feedback</span>
+                <span className="text-sm font-normal text-slate-400">({evaluations.length} questions)</span>
+              </h3>
               {evaluations.map((evaluation, idx) => (
                 <EvidenceCard
                   key={idx}
@@ -247,7 +344,12 @@ export const BehavioralInterview = ({ jdAnalysisId, onNavigate, language = 'engl
 
         {/* Voice question player */}
         {speakText && (
-          <VoiceQuestionPlayer text={speakText} onSpeakingChange={setIsSpeaking} language={language} />
+          <VoiceQuestionPlayer
+            text={speakText}
+            fallbackText={followUp ? followUp : currentQuestion?.questionText}
+            onSpeakingChange={setIsSpeaking}
+            language={language}
+          />
         )}
 
         {/* Urdu translation indicator */}
@@ -266,12 +368,12 @@ export const BehavioralInterview = ({ jdAnalysisId, onNavigate, language = 'engl
         )}
 
         {/* Follow-up bubble */}
-        {followUp && <FollowUpBubble text={followUp} />}
+        {followUp && <FollowUpBubble text={displayFollowUp} language={language} />}
 
-        {/* Nudge */}
+        {/* Invalid-answer / nudge feedback — shown + spoken in the active language */}
         {nudge && (
-          <div className="mb-4 p-3 bg-amber-900/30 border border-amber-700 rounded-md text-amber-300 text-sm">
-            <strong>Nudge:</strong> {nudge}
+          <div className={`mb-4 p-3 bg-amber-900/30 border border-amber-700 rounded-md text-amber-300 text-sm ${isUrdu ? 'urdu-text text-right' : ''}`}>
+            {!isUrdu && <strong>⚠️ Answer needed:</strong>} {displayNudge}
           </div>
         )}
 

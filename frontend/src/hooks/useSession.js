@@ -3,54 +3,69 @@
 // Exposes: createSession, loadSession, answerQuestion, currentQuestion, evaluations, etc.
 // Persists to localStorage for page refresh recovery.
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { apiClient } from '../api/client';
 
 const SESSION_STORAGE_KEY = 'rozgar-sathi-behavioral-session-v2';
 
+// Load initial state from localStorage synchronously to prevent race conditions
+const loadInitialState = () => {
+  try {
+    const stored = localStorage.getItem(SESSION_STORAGE_KEY);
+    if (stored) {
+      const data = JSON.parse(stored);
+      return {
+        sessionId: data.sessionId || null,
+        currentQuestion: data.currentQuestion || null,
+        evaluations: data.evaluations || [],
+        isComplete: data.isComplete || false,
+      };
+    }
+  } catch (err) {
+    console.error('Failed to load session from localStorage:', err);
+  }
+  return { sessionId: null, currentQuestion: null, evaluations: [], isComplete: false };
+};
+
 export const useSession = () => {
-  const [sessionId, setSessionId] = useState(null);
-  const [currentQuestion, setCurrentQuestion] = useState(null);
-  const [evaluations, setEvaluations] = useState([]);
+  const initialState = loadInitialState();
+  const [sessionId, setSessionId] = useState(initialState.sessionId);
+  const [currentQuestion, setCurrentQuestion] = useState(initialState.currentQuestion);
+  const [evaluations, setEvaluations] = useState(initialState.evaluations);
   const [followUp, setFollowUp] = useState(null);
   const [nudge, setNudge] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
-  const [isComplete, setIsComplete] = useState(false);
+  const [isComplete, setIsComplete] = useState(initialState.isComplete);
   const [error, setError] = useState(null);
 
-  // Load session from localStorage on mount
-  useEffect(() => {
-    try {
-      const stored = localStorage.getItem(SESSION_STORAGE_KEY);
-      if (stored) {
-        const data = JSON.parse(stored);
-        setSessionId(data.sessionId);
-        setCurrentQuestion(data.currentQuestion);
-        setEvaluations(data.evaluations || []);
-        setIsComplete(data.isComplete || false);
-      }
-    } catch (err) {
-      console.error('Failed to load session from localStorage:', err);
-    }
-  }, []);
-
-  // Save session to localStorage on state change
+  // Save session to localStorage with debounce to avoid excessive writes
+  const saveTimerRef = useRef(null);
   useEffect(() => {
     if (sessionId) {
-      try {
-        localStorage.setItem(
-          SESSION_STORAGE_KEY,
-          JSON.stringify({
-            sessionId,
-            currentQuestion,
-            evaluations,
-            isComplete,
-          })
-        );
-      } catch (err) {
-        console.error('Failed to save session to localStorage:', err);
+      if (saveTimerRef.current) {
+        clearTimeout(saveTimerRef.current);
       }
+      saveTimerRef.current = setTimeout(() => {
+        try {
+          localStorage.setItem(
+            SESSION_STORAGE_KEY,
+            JSON.stringify({
+              sessionId,
+              currentQuestion,
+              evaluations,
+              isComplete,
+            })
+          );
+        } catch (err) {
+          console.error('Failed to save session to localStorage:', err);
+        }
+      }, 150); // 150ms debounce
     }
+    return () => {
+      if (saveTimerRef.current) {
+        clearTimeout(saveTimerRef.current);
+      }
+    };
   }, [sessionId, currentQuestion, evaluations, isComplete]);
 
   const createSession = useCallback(async (mode, jdAnalysisId) => {
@@ -117,6 +132,11 @@ export const useSession = () => {
           setEvaluations((prev) => [...prev, result.evaluation]);
         }
         setCurrentQuestion(result.nextQuestion);
+        setFollowUp(null); // Clear any prior follow-up (especially after invalid input)
+        // If the server flagged the previous answer as invalid, show the feedback message.
+        if (result.nudge) {
+          setNudge(result.nudge);
+        }
       } else if (result.nextAction === 'complete') {
         if (result.evaluation) {
           setEvaluations((prev) => [...prev, result.evaluation]);

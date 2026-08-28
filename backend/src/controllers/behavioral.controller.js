@@ -7,9 +7,13 @@ import JDAnalysis from '../models/JDAnalysis.model.js';
 import { retrieveBehavioralQuestions, getRandomQuestion } from '../services/retrieval.js';
 import { evaluateBehavioralAnswer, INVALID_EVALUATION } from '../services/scoring.js';
 import { detectAnswerLanguage, translateQuestionText } from '../services/bilingual.js';
+import {
+  INVALID_ANSWER_MESSAGE,
+  MAX_INVALID_ATTEMPTS,
+  isInvalidAnswer,
+} from '../services/answerQuality.js';
 import logger from '../utils/logger.js';
 
-const MIN_WORDS_FOR_NUDGE = 10;
 const FOLLOW_UP_SCORE_THRESHOLD = 50;
 const MAX_QUESTIONS = 5; // behavioral interview length
 
@@ -28,20 +32,19 @@ const detectProfanity = (transcript) => {
 };
 
 /**
- * Detect low-quality / non-answer submissions (too short, profanity,
- * repeated characters, repeated words, vowel-less gibberish).
+ * Record the answer-quality attempt counter on session metadata and return
+ * the updated count. Shared by the main-answer and follow-up paths so invalid
+ * inputs are re-asked with the same direct message instead of being scored.
  */
-const isLowQualityAnswer = (transcript) => {
-  const words = transcript.trim().split(/\s+/).filter(Boolean);
-  if (words.length < MIN_WORDS_FOR_NUDGE) return true;
-  const lower = transcript.toLowerCase();
-  if (PROFANITY_LIST.some((p) => lower.includes(p))) return true;
-  if (/(.)\1{5,}/.test(lower.replace(/\s+/g, ''))) return true; // "aaaaaa..."
-  const uniqueRatio = new Set(words.map((w) => w.toLowerCase())).size / words.length;
-  if (uniqueRatio < 0.3) return true; // same words repeated
-  const noVowelRatio = words.filter((w) => !/[aeiou]/i.test(w)).length / words.length;
-  if (noVowelRatio > 0.5) return true; // "asdf qwer tyui"
-  return false;
+const bumpInvalidAttempts = async (session) => {
+  if (!session.metadata) session.metadata = {};
+  session.metadata.invalidAttempts = (session.metadata.invalidAttempts || 0) + 1;
+  await session.save();
+  return session.metadata.invalidAttempts;
+};
+
+const resetInvalidAttempts = (session) => {
+  if (session.metadata) session.metadata.invalidAttempts = 0;
 };
 
 const STAR_FOLLOWUPS = {
@@ -132,8 +135,15 @@ const completeSession = async (session, evaluation, res) => {
 
 /**
  * Close the current question and advance to the next one (or complete).
+ * @param {Object} extra - Optional extra fields to include in the response (e.g., nudge message)
  */
-const finalizeQuestion = async (session, evaluation, res) => {
+const finalizeQuestion = async (session, evaluation, res, extra = {}) => {
+  resetInvalidAttempts(session);
+
+  // IMPORTANT: Save the session BEFORE pushing the new question to ensure
+  // the current question's evaluation is persisted correctly.
+  await session.save();
+
   if (session.questions.length >= MAX_QUESTIONS) {
     return completeSession(session, evaluation, res);
   }
@@ -153,7 +163,7 @@ const finalizeQuestion = async (session, evaluation, res) => {
     evaluation: null,
   });
 
-  await session.save(); // Incremental save
+  await session.save(); // Save again with the new question
 
   // Auto-translate next question if language is Urdu
   let translatedQuestion = null;
@@ -179,6 +189,7 @@ const finalizeQuestion = async (session, evaluation, res) => {
       difficulty: nextQ.difficulty,
       matchedTerms: nextQ.matchedTerms || [],
     },
+    ...extra,
     detectedLanguage: sessionLanguage,
     languageConfidence: 1,
   });
@@ -328,24 +339,8 @@ export const answerBehavioral = async (req, res, next) => {
       currentQuestion.followUps.length > 0 &&
       String(lastFollowUp).startsWith('Q:');
 
-    // Follow-up answer path: record the answer and move on.
-    if (isFollowUpPending) {
-      currentQuestion.followUps.push(`A: ${transcript}`);
-      await session.save(); // Incremental save
-      return finalizeQuestion(session, currentQuestion.evaluation, res);
-    }
-
-    // Defensive: question already closed (stale client state) — advance, don't error.
-    if (currentQuestion.evaluation) {
-      return finalizeQuestion(session, currentQuestion.evaluation, res);
-    }
-
-    // Main answer path with low-quality / non-answer detection.
-    const lowQuality = isLowQualityAnswer(transcript);
-    const alreadyNudged = Boolean(currentQuestion.transcript);
+    // Profanity (main answer OR follow-up) — terminate immediately.
     const profaneWord = detectProfanity(transcript);
-
-    // Profanity detected — give strong warning and end interview
     if (profaneWord) {
       session.status = 'terminated';
       session.overallScore = 0;
@@ -358,35 +353,49 @@ export const answerBehavioral = async (req, res, next) => {
       });
     }
 
-    if (lowQuality && !alreadyNudged) {
-      // Nudge once politely (spoken aloud by the client) before scoring.
-      currentQuestion.transcript = transcript; // marks that a nudge was issued
-      await session.save();
-      return res.json({
-        evaluation: null,
-        nextAction: 'nudge',
-        nudge:
-          "I didn't quite catch a proper answer there. Could you share a real example from your experience?",
-      });
+    // Follow-up answer path — validate before accepting.
+    if (isFollowUpPending) {
+      if (isInvalidAnswer(transcript)) {
+        // Flag invalid and move to next question with the feedback message.
+        currentQuestion.followUps.push('A: (No valid answer provided)');
+        await session.save();
+        return finalizeQuestion(session, currentQuestion.evaluation, res, { nudge: INVALID_ANSWER_MESSAGE });
+      }
+      currentQuestion.followUps.push(`A: ${transcript}`);
+      await session.save(); // Incremental save
+      return finalizeQuestion(session, currentQuestion.evaluation, res);
     }
 
-    let evaluation;
-    if (lowQuality && alreadyNudged) {
-      // Second invalid attempt: mark as invalid and move on (no deep scoring).
-      evaluation = INVALID_EVALUATION;
-    } else {
-      const questionData = {
-        text: currentQuestion.questionText,
-        topic: currentQuestion.topic,
-        rubric: {
-          situation: 'Describe the context and background',
-          task: 'Explain your role and responsibility',
-          action: 'Detail the specific actions you took',
-          result: 'Share the outcome and what you learned',
-        },
-      };
-      evaluation = await evaluateBehavioralAnswer({ question: questionData, transcript, language: activeLanguage });
+    // Defensive: question already closed (stale client state) — advance, don't error.
+    if (currentQuestion.evaluation) {
+      return finalizeQuestion(session, currentQuestion.evaluation, res);
     }
+
+    // Main answer path — no scoring until a valid, substantive answer arrives.
+    if (isInvalidAnswer(transcript)) {
+      // Flag invalid immediately and move to next question with the feedback message.
+      const evaluation = INVALID_EVALUATION;
+      currentQuestion.transcript = transcript;
+      currentQuestion.evaluation = evaluation;
+      // Mark the nested evaluation as modified so Mongoose persists it correctly
+      session.markModified(`questions.${session.questions.length - 1}.evaluation`);
+      await session.save();
+      return finalizeQuestion(session, evaluation, res, { nudge: INVALID_ANSWER_MESSAGE });
+    }
+
+    // Valid answer — reset counter and score normally.
+    resetInvalidAttempts(session);
+    const questionData = {
+      text: currentQuestion.questionText,
+      topic: currentQuestion.topic,
+      rubric: {
+        situation: 'Describe the context and background',
+        task: 'Explain your role and responsibility',
+        action: 'Detail the specific actions you took',
+        result: 'Share the outcome and what you learned',
+      },
+    };
+    const evaluation = await evaluateBehavioralAnswer({ question: questionData, transcript, language: activeLanguage });
 
     // Detect answer language for Urdu auto-translation
     const langDetection = detectAnswerLanguage(transcript);
@@ -395,10 +404,11 @@ export const answerBehavioral = async (req, res, next) => {
 
     currentQuestion.transcript = transcript;
     currentQuestion.evaluation = evaluation;
+    // Mark the nested evaluation as modified so Mongoose persists it correctly
+    session.markModified(`questions.${session.questions.length - 1}.evaluation`);
 
     // Adaptive follow-up (once): low score -> STAR coaching folded into a follow-up.
     if (
-      !lowQuality &&
       evaluation.score < FOLLOW_UP_SCORE_THRESHOLD &&
       currentQuestion.followUps.length === 0
     ) {

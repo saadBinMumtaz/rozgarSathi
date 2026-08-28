@@ -236,22 +236,22 @@ const retrieveFromIndex = ({ index, bank, queryText, excludeIds = [], filters = 
     candidates = allScored;
   }
 
-  // If randomize is enabled, pick from top-K (K=8) with weighted randomness
-  if (randomize && candidates.length > limit) {
+  // If randomize is enabled and we have multiple candidates, shuffle for variety
+  if (randomize && candidates.length > 1) {
     const topK = candidates.slice(0, Math.max(limit * 4, 8));
-    // Weighted shuffle: higher-ranked items have higher probability
-    const weighted = topK.map((c, i) => ({
-      ...c,
-      weight: (topK.length - i) * (1 + sessionSeed * 0.1),
-    }));
-    // Fisher-Yates with weight bias
-    for (let i = weighted.length - 1; i > 0; i--) {
+    // Use sessionSeed to influence selection, but rely on Math.random for true variety
+    const shuffled = [...topK];
+    // Fisher-Yates shuffle — pure random for maximum variety
+    for (let i = shuffled.length - 1; i > 0; i--) {
       const j = Math.floor(Math.random() * (i + 1));
-      if (weighted[i].weight < weighted[j].weight && Math.random() > 0.6) {
-        [weighted[i], weighted[j]] = [weighted[j], weighted[i]];
-      }
+      [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
     }
-    return weighted.slice(0, limit).map((c) => ({
+    // If sessionSeed is high, bias towards higher-ranked items; otherwise use shuffled order
+    if (sessionSeed > 50) {
+      // Re-sort by score but with some randomness preserved
+      shuffled.sort((a, b) => (b.score + Math.random() * 0.2) - (a.score + Math.random() * 0.2));
+    }
+    return shuffled.slice(0, limit).map((c) => ({
       ...c.question,
       matchedTerms: c.matchedTerms,
       relevanceScore: c.score,

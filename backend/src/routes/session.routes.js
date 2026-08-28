@@ -1,6 +1,12 @@
 import express from 'express';
-import { createSession, getSessionById } from '../controllers/session.controller.js';
-import { translateEvaluation, translateQuestionText } from '../services/bilingual.js';
+import {
+  createSession,
+  getSessionById,
+  translateEvaluationHandler,
+  translateQuestionHandler,
+  synthesizeSpeechHandler,
+  synthesizeSpeechGoogleHandler,
+} from '../controllers/session.controller.js';
 
 const router = express.Router();
 
@@ -8,32 +14,16 @@ const router = express.Router();
 router.post('/', createSession);
 
 // POST /api/sessions/translate — translate an evaluation object (MUST be before /:id)
-router.post('/translate', async (req, res) => {
-  try {
-    const { evaluation, targetLanguage } = req.body;
-    if (!evaluation) {
-      return res.status(400).json({ error: 'Evaluation is required' });
-    }
-    const translated = await translateEvaluation(evaluation, targetLanguage || 'urdu');
-    return res.json({ evaluation: translated });
-  } catch (err) {
-    return res.status(500).json({ error: err.message });
-  }
-});
+router.post('/translate', translateEvaluationHandler);
 
 // POST /api/sessions/translate-question — translate question text + follow-ups
-router.post('/translate-question', async (req, res) => {
-  try {
-    const { questionText, followUpPrompts, targetLanguage } = req.body;
-    if (!questionText) {
-      return res.status(400).json({ error: 'questionText is required' });
-    }
-    const translated = await translateQuestionText(questionText, followUpPrompts || [], targetLanguage || 'urdu');
-    return res.json(translated);
-  } catch (err) {
-    return res.status(500).json({ error: err.message });
-  }
-});
+router.post('/translate-question', translateQuestionHandler);
+
+// POST /api/sessions/tts — cloud Urdu speech (Azure) fallback
+router.post('/tts', synthesizeSpeechHandler);
+
+// POST /api/sessions/tts-google — Google Translate TTS proxy (free Urdu fallback)
+router.post('/tts-google', synthesizeSpeechGoogleHandler);
 
 // GET /api/sessions/:id
 router.get('/:id', getSessionById);

@@ -33,6 +33,9 @@ export const TechnicalInterview = ({ jdAnalysisId, onNavigate, language = 'engli
   const [difficultyInfo, setDifficultyInfo] = useState({ current: 'medium', previous: null, ratingDelta: 0 });
   const [questionCount, setQuestionCount] = useState(0);
   const [urduQuestionText, setUrduQuestionText] = useState(null);
+  const [urduFollowUp, setUrduFollowUp] = useState(null);
+  const [nudge, setNudge] = useState(null);
+  const [urduNudge, setUrduNudge] = useState(null);
   const [isTranslatingUrdu, setIsTranslatingUrdu] = useState(false);
   const [urduEvaluations, setUrduEvaluations] = useState([]);
   const [terminationMessage, setTerminationMessage] = useState(null);
@@ -62,6 +65,21 @@ export const TechnicalInterview = ({ jdAnalysisId, onNavigate, language = 'engli
     }
   }, [sessionId, currentQuestion, evaluations, isComplete, questionCount]);
 
+  // Cleanup: stop TTS and speech synthesis when component unmounts or navigating away
+  useEffect(() => {
+    return () => {
+      // Stop any ongoing speech synthesis
+      if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
+        window.speechSynthesis.cancel();
+      }
+      // Stop any audio playback
+      document.querySelectorAll('audio').forEach(audio => {
+        audio.pause();
+        audio.currentTime = 0;
+      });
+    };
+  }, []);
+
   // Auto-translate question to Urdu when language is Urdu and question changes
   useEffect(() => {
     if (!isUrdu || !currentQuestion?.questionText) {
@@ -82,6 +100,43 @@ export const TechnicalInterview = ({ jdAnalysisId, onNavigate, language = 'engli
       .finally(() => setIsTranslatingUrdu(false));
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [currentQuestion?.questionId, currentQuestion?.questionText, isUrdu]);
+
+  // Auto-translate the follow-up prompt to Urdu (display + speak) in Urdu mode.
+  // Reuses translateQuestion; the null-while-pending gate prevents speaking English first.
+  useEffect(() => {
+    if (!isUrdu || !followUp) {
+      setUrduFollowUp(null);
+      return;
+    }
+    setUrduFollowUp(null);
+    setIsTranslatingUrdu(true);
+    let cancelled = false;
+    apiClient
+      .translateQuestion(followUp, [], 'urdu')
+      .then((result) => { if (!cancelled) setUrduFollowUp(result.questionText); })
+      .catch(() => { if (!cancelled) setUrduFollowUp(followUp); })
+      .finally(() => { if (!cancelled) setIsTranslatingUrdu(false); });
+    return () => { cancelled = true; };
+  }, [followUp, isUrdu]);
+
+  // Auto-translate the invalid-answer nudge to Urdu (display + speak) in Urdu mode.
+  // Mirrors the follow-up flow; the null-while-pending gate prevents speaking English
+  // before the Urdu translation arrives.
+  useEffect(() => {
+    if (!isUrdu || !nudge) {
+      setUrduNudge(null);
+      return;
+    }
+    setUrduNudge(null);
+    setIsTranslatingUrdu(true);
+    let cancelled = false;
+    apiClient
+      .translateQuestion(nudge, [], 'urdu')
+      .then((result) => { if (!cancelled) setUrduNudge(result.questionText); })
+      .catch(() => { if (!cancelled) setUrduNudge(nudge); })
+      .finally(() => { if (!cancelled) setIsTranslatingUrdu(false); });
+    return () => { cancelled = true; };
+  }, [nudge, isUrdu]);
 
   // Auto-translate evaluations when interview completes in Urdu mode
   useEffect(() => {
@@ -107,35 +162,16 @@ export const TechnicalInterview = ({ jdAnalysisId, onNavigate, language = 'engli
     return () => { cancelled = true; };
   }, [isUrdu, isComplete, evaluations]);
 
-  // Create a new technical session
-  const createSession = useCallback(async () => {
-    setIsLoading(true);
-    setError(null);
-    try {
-      const result = await apiClient.createSession('technical', jdAnalysisId);
-      setSessionId(result.sessionId);
-      // Fetch first question
-      const answerResult = await apiClient.answerTechnical(result.sessionId, null, '');
-      handleAnswerResult(answerResult);
-    } catch (err) {
-      setError(err.message || 'Failed to create session');
-    } finally {
-      setIsLoading(false);
-    }
-  }, [jdAnalysisId]);
-
-  // Start the interview
-  useEffect(() => {
-    if (!sessionId && jdAnalysisId && !isComplete) {
-      createSession();
-    }
-  }, []);
-
-  const handleAnswerResult = (result) => {
+  const handleAnswerResult = useCallback((result) => {
+    // Clear any prior invalid-answer feedback; only re-set it for a 'nudge'.
+    setNudge(null);
     if (result.nextAction === 'first_question') {
       setCurrentQuestion(result.nextQuestion);
       setQuestionCount(1);
       setDifficultyInfo({ current: result.nextQuestion.difficulty, previous: null, ratingDelta: 0 });
+    } else if (result.nextAction === 'nudge') {
+      // Direct invalid-answer feedback — re-asks the SAME question/follow-up.
+      setNudge(result.nudge);
     } else if (result.nextAction === 'followup') {
       setFollowUp(result.followUp);
     } else if (result.nextAction === 'next_question') {
@@ -146,6 +182,10 @@ export const TechnicalInterview = ({ jdAnalysisId, onNavigate, language = 'engli
       setQuestionCount((prev) => prev + 1);
       setFollowUp(null);
       setUrduQuestionText(null); // Clear for auto-translate of new question
+      // If the server flagged the previous answer as invalid, show the feedback message.
+      if (result.nudge) {
+        setNudge(result.nudge);
+      }
       if (result.difficultyChange) {
         setDifficultyInfo({
           current: result.difficultyChange.to,
@@ -163,7 +203,31 @@ export const TechnicalInterview = ({ jdAnalysisId, onNavigate, language = 'engli
       setIsComplete(true);
       setCurrentQuestion(null);
     }
-  };
+  }, []);
+
+  // Create a new technical session
+  const createSession = useCallback(async () => {
+    setIsLoading(true);
+    setError(null);
+    try {
+      const result = await apiClient.createSession('technical', jdAnalysisId);
+      setSessionId(result.sessionId);
+      // Fetch first question
+      const answerResult = await apiClient.answerTechnical(result.sessionId, null, '');
+      handleAnswerResult(answerResult);
+    } catch (err) {
+      setError(err.message || 'Failed to create session');
+    } finally {
+      setIsLoading(false);
+    }
+  }, [jdAnalysisId, handleAnswerResult]);
+
+  // Start the interview
+  useEffect(() => {
+    if (!sessionId && jdAnalysisId && !isComplete) {
+      createSession();
+    }
+  }, []);
 
   const submitAnswer = useCallback(async () => {
     // Strict limit: prevent submitting more than MAX_QUESTIONS
@@ -189,13 +253,15 @@ export const TechnicalInterview = ({ jdAnalysisId, onNavigate, language = 'engli
     } finally {
       setIsLoading(false);
     }
-  }, [sessionId, currentQuestion, micTranscript, typedTranscript, useTypedFallback]);
+  }, [sessionId, currentQuestion, micTranscript, typedTranscript, useTypedFallback, handleAnswerResult, language, questionCount]);
 
   const resetSession = () => {
     setSessionId(null);
     setCurrentQuestion(null);
     setEvaluations([]);
     setFollowUp(null);
+    setNudge(null);
+    setUrduNudge(null);
     setIsLoading(false);
     setIsComplete(false);
     setError(null);
@@ -248,12 +314,14 @@ export const TechnicalInterview = ({ jdAnalysisId, onNavigate, language = 'engli
           </div>
         )}
 
-        {/* Voice question player */}
+        {/* Voice question player — shows the current question (or follow-up if active).
+            The nudge feedback is shown separately in the amber box below. */}
         {currentQuestion && (
           <VoiceQuestionPlayer
-            text={isUrdu && urduQuestionText
-              ? urduQuestionText
-              : (followUp || currentQuestion.questionText)}
+            text={followUp
+              ? (isUrdu ? urduFollowUp : followUp)
+              : (isUrdu && urduQuestionText ? urduQuestionText : currentQuestion.questionText)}
+            fallbackText={followUp || currentQuestion.questionText}
             onSpeakingChange={setIsSpeaking}
             language={language}
           />
@@ -278,7 +346,14 @@ export const TechnicalInterview = ({ jdAnalysisId, onNavigate, language = 'engli
         {followUp && !currentQuestion?.evaluation && (
           <div className="bg-indigo-900/20 border border-indigo-700/50 rounded-lg p-4">
             <div className="text-xs text-indigo-400 font-medium mb-1">Follow-up question</div>
-            <div className="text-slate-200">{followUp}</div>
+            <div className={`text-slate-200 ${isUrdu ? 'urdu-text text-right' : ''}`}>{(isUrdu && urduFollowUp) || followUp}</div>
+          </div>
+        )}
+
+        {/* Invalid-answer / nudge feedback — shown + spoken in the active language */}
+        {nudge && (
+          <div className={`mb-4 p-3 bg-amber-900/30 border border-amber-700 rounded-md text-amber-300 text-sm ${isUrdu ? 'urdu-text text-right' : ''}`}>
+            {!isUrdu && <strong>⚠️ Answer needed:</strong>} {(isUrdu && urduNudge) || nudge}
           </div>
         )}
 
@@ -316,14 +391,33 @@ export const TechnicalInterview = ({ jdAnalysisId, onNavigate, language = 'engli
 
               {/* Mic recorder */}
               {!useTypedFallback && (
-                <MicRecorder
-                  isSpeaking={isSpeaking}
-                  onTranscriptChange={setMicTranscript}
-                  resetKey={`${currentQuestion?.questionId || ''}|${followUp || ''}`}
-                  onUnsupported={() => setUseTypedFallback(true)}
-                  autoStart={!isSpeaking}
-                  language={language}
-                />
+                <div className="space-y-4">
+                  <MicRecorder
+                    isSpeaking={isSpeaking}
+                    onTranscriptChange={setMicTranscript}
+                    resetKey={`${currentQuestion?.questionId || ''}|${followUp || ''}`}
+                    onUnsupported={() => setUseTypedFallback(true)}
+                    autoStart={!isSpeaking}
+                    language={language}
+                  />
+                  <div className="flex gap-2">
+                    <Button
+                      variant="primary"
+                      onClick={submitAnswer}
+                      disabled={isLoading || isSpeaking || !micTranscript?.trim()}
+                      className="flex-1"
+                    >
+                      {isLoading ? 'Processing...' : 'Submit Answer'}
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      onClick={() => setUseTypedFallback(true)}
+                      disabled={isLoading || isSpeaking}
+                    >
+                      Switch to typing
+                    </Button>
+                  </div>
+                </div>
               )}
 
               {/* Typed fallback */}
@@ -332,6 +426,7 @@ export const TechnicalInterview = ({ jdAnalysisId, onNavigate, language = 'engli
                   value={typedTranscript}
                   onChange={setTypedTranscript}
                   onSubmit={submitAnswer}
+                  isSpeaking={isSpeaking}
                   disabled={isLoading}
                 />
               )}
@@ -344,75 +439,97 @@ export const TechnicalInterview = ({ jdAnalysisId, onNavigate, language = 'engli
                   </Button>
                 </div>
               )}
-
-              {/* Submit button (for voice mode) */}
-              {!useTypedFallback && micTranscript.trim() && (
-                <div className="mt-4 flex justify-end">
-                  <Button
-                    variant="primary"
-                    onClick={submitAnswer}
-                    disabled={isLoading || !micTranscript.trim()}
-                    isLoading={isLoading}
-                  >
-                    Submit Answer
-                  </Button>
-                </div>
-              )}
             </CardContent>
           </Card>
         )}
 
         {/* Completion screen */}
-        {isComplete && (
-          <div className="space-y-6">
-            <Card className={terminationMessage ? 'border-rose-700/50' : 'border-emerald-700/50'}>
-              <CardContent className="text-center py-8 space-y-4">
-                {terminationMessage ? (
-                  <>
-                    <div className="text-2xl font-bold text-rose-400">Interview Terminated</div>
-                    <div className="text-rose-300 text-sm max-w-md mx-auto">{terminationMessage}</div>
-                  </>
-                ) : (
-                  <>
-                    <div className="text-2xl font-bold text-emerald-400">Technical Interview Complete!</div>
-                    <div className="text-slate-400">
-                      You answered {evaluations.length} questions.
-                      Overall score:{' '}
-                      <span className="text-white font-semibold">
-                        {evaluations.length > 0
-                          ? Math.round(evaluations.reduce((sum, e) => sum + e.score, 0) / evaluations.length)
-                          : 0}
-                        /100
-                      </span>
-                    </div>
-                  </>
-                )}
-                <div className="flex justify-center gap-3 mt-4">
-                  <Button variant="primary" onClick={() => onNavigate('mode-selection')}>
-                    Try Another Mode
-                  </Button>
-                  <Button variant="secondary" onClick={resetSession}>
-                    Restart Technical
-                  </Button>
-                </div>
-              </CardContent>
-            </Card>
+        {isComplete && (() => {
+          // Calculate summary statistics
+          const totalScore = evaluations.length > 0
+            ? evaluations.reduce((sum, e) => sum + (typeof e?.score === 'number' ? e.score : 0), 0)
+            : 0;
+          const avgScore = evaluations.length > 0 ? Math.round(totalScore / evaluations.length) : 0;
+          const highScores = evaluations.filter(e => e?.score >= 70).length;
+          const lowScores = evaluations.filter(e => e?.score < 40).length;
 
-            {/* Summary of all evaluations */}
-            {evaluations.length > 0 && (
-              <div className="space-y-4">
-                <h3 className="text-lg font-semibold text-slate-200">Question Feedback Summary</h3>
-                {evaluations.map((evaluation, idx) => (
-                  <EvidenceCard
-                    key={idx}
-                    evaluation={urduEvaluations[idx] || evaluation}
-                    language={language}
-                  />
-                ))}
-              </div>
-            )}
-          </div>
-        )}
+          return (
+            <div className="space-y-6">
+              <Card className={terminationMessage ? 'border-rose-700/50' : 'border-emerald-700/50'}>
+                <CardContent className="text-center py-8 space-y-4">
+                  {terminationMessage ? (
+                    <>
+                      <div className="text-2xl font-bold text-rose-400">Interview Terminated</div>
+                      <div className="text-rose-300 text-sm max-w-md mx-auto">{terminationMessage}</div>
+                    </>
+                  ) : (
+                    <>
+                      <div className="text-2xl font-bold text-emerald-400">Technical Interview Complete!</div>
+                      
+                      {/* Overall Score Display */}
+                      <div className="inline-flex items-center gap-4 bg-slate-800/50 rounded-xl px-6 py-4 border border-slate-700">
+                        <div className="text-center">
+                          <div className={`text-4xl font-bold ${avgScore >= 70 ? 'text-emerald-400' : avgScore >= 40 ? 'text-amber-400' : 'text-rose-400'}`}>
+                            {avgScore}
+                          </div>
+                          <div className="text-xs text-slate-400 uppercase tracking-wide">Overall Score</div>
+                        </div>
+                        <div className="h-12 w-px bg-slate-700"></div>
+                        <div className="text-left space-y-1">
+                          <div className="text-sm text-slate-300">
+                            <span className="text-slate-400">Questions:</span> {evaluations.length}
+                          </div>
+                          <div className="text-sm text-slate-300">
+                            <span className="text-emerald-400">✓ {highScores}</span> strong answers
+                          </div>
+                          {lowScores > 0 && (
+                            <div className="text-sm text-slate-300">
+                              <span className="text-rose-400">⚠ {lowScores}</span> need improvement
+                            </div>
+                          )}
+                        </div>
+                      </div>
+
+                      {/* Performance Summary */}
+                      <div className="text-sm text-slate-400 max-w-md mx-auto">
+                        {avgScore >= 70 
+                          ? 'Great performance! Your technical knowledge and explanations were solid.'
+                          : avgScore >= 40
+                          ? 'Good effort! Review the feedback below to deepen your technical understanding.'
+                          : 'Review the detailed feedback below to strengthen your technical answers.'}
+                      </div>
+                    </>
+                  )}
+                  <div className="flex justify-center gap-3 mt-4">
+                    <Button variant="primary" onClick={() => onNavigate('mode-selection')}>
+                      Try Another Mode
+                    </Button>
+                    <Button variant="secondary" onClick={resetSession}>
+                      Restart Technical
+                    </Button>
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* Summary of all evaluations */}
+              {evaluations.length > 0 && (
+                <div className="space-y-6">
+                  <h3 className="text-lg font-semibold text-slate-200 flex items-center gap-2">
+                    <span>Detailed Feedback</span>
+                    <span className="text-sm font-normal text-slate-400">({evaluations.length} questions)</span>
+                  </h3>
+                  {evaluations.map((evaluation, idx) => (
+                    <EvidenceCard
+                      key={idx}
+                      evaluation={urduEvaluations[idx] || evaluation}
+                      language={language}
+                    />
+                  ))}
+                </div>
+              )}
+            </div>
+          );
+        })()}
 
         {/* Loading state */}
         {isLoading && !currentQuestion && !isComplete && (

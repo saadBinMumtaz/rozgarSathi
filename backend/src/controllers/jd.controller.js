@@ -19,7 +19,7 @@ export const analyzeJD = async (req, res, next) => {
       }
     }
 
-    // Call single Qwen AI service (or deterministic fallback wrapper)
+    // Call single Groq AI service (or deterministic fallback wrapper)
     const analysisResult = await extractJDAnalysis(text);
 
     // Save analysis to MongoDB

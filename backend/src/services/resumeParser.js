@@ -50,7 +50,7 @@ export const extractTextFromFile = async (fileBuffer, mimetype, originalname) =>
 };
 
 /**
- * Extract structured candidate information from résumé text using Qwen.
+ * Extract structured candidate information from résumé text using Groq.
  * Returns { claimedSkills, yearsExperience, projectsSummary }.
  */
 export const extractResumeInfo = async (resumeText) => {
@@ -71,13 +71,13 @@ Focus on technical skills explicitly mentioned. For yearsExperience, look for da
   try {
     return await callAI({ systemPrompt, userPrompt, requiredFields });
   } catch (err) {
-    logger.warn(`Qwen résumé extraction failed (${err.message}). Using deterministic fallback.`);
+    logger.warn(`Groq résumé extraction failed (${err.message}). Using deterministic fallback.`);
     return fallbackExtractResume(resumeText);
   }
 };
 
 /**
- * Deterministic fallback for résumé extraction when Qwen is unavailable.
+ * Deterministic fallback for résumé extraction when Groq is unavailable.
  */
 const fallbackExtractResume = (text) => {
   const lower = text.toLowerCase();

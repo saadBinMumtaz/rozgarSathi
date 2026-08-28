@@ -273,9 +273,9 @@ Build each endpoint below in the named route file, delegating to the named contr
 | POST | `/api/sessions` | `session.routes.js` | `session.controller.js` | `{ mode, jdAnalysisId }` | `{ sessionId }` |
 | GET | `/api/sessions/:id` | `session.routes.js` | `session.controller.js` | — | full `Session` object |
 | POST | `/api/sessions/:id/answer` | `behavioral.routes.js` / `technical.routes.js` | matching controller | `{ questionId, transcript }` | `{ evaluation, nextAction: "followup" \| "next_question" \| "complete", nextQuestion? }` |
-| POST | `/api/coding/questions` | `coding.routes.js` | `coding.controller.js` | `{ topic?, difficulty? }` | `CodingQuestion` object |
-| POST | `/api/coding/run` | `coding.routes.js` | `coding.controller.js` | `{ sessionId, code, language }` | `{ publicTestResults: [{input, expected, actual, passed}] }` |
-| POST | `/api/coding/submit` | `coding.routes.js` | `coding.controller.js` | `{ sessionId, code, language }` | `{ hiddenTestResults, evaluation }` |
+| POST | `/api/coding/questions` | `coding.routes.js` | `coding.controller.js` | `{ topic?, difficulty?, questionId?, sessionId? }` | `CodingQuestion` object (linked to session when `sessionId` given) |
+| POST | `/api/coding/run` | `coding.routes.js` | `coding.controller.js` | `{ sessionId, code, language }` | `{ publicTestResults: [{input, expected, actual, passed}], executionError: { type, message } \| null }` |
+| POST | `/api/coding/submit` | `coding.routes.js` | `coding.controller.js` | `{ sessionId, code, language }` | `{ hiddenTestResults, evaluation, executionError: { type, message } \| null }` |
 | GET | `/api/dashboard/:userId` | `dashboard.routes.js` | `dashboard.controller.js` | — | `{ overallReadiness, perMode, weakestCompetency, trend, crossModeInsight }` |
 | GET | `/api/health` | `health.routes.js` | inline | — | `{ status: "ok", mongo: bool, qwen: bool }` |
 

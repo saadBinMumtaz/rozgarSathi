@@ -1,15 +1,16 @@
 import express from 'express';
-import { getQuestions, runCode, submitCode } from '../controllers/coding.controller.js';
+import { getCodingQuestion, runTests, submitSolution } from '../controllers/coding.controller.js';
+import { codingRunLimiter, codingSubmitLimiter } from '../middleware/rateLimiter.js';
 
 const router = express.Router();
 
 // POST /api/coding/questions
-router.post('/questions', getQuestions);
+router.post('/questions', getCodingQuestion);
 
-// POST /api/coding/run
-router.post('/run', runCode);
+// POST /api/coding/run — rate limited per session (judge executions are costly)
+router.post('/run', codingRunLimiter, runTests);
 
-// POST /api/coding/submit
-router.post('/submit', submitCode);
+// POST /api/coding/submit — rate limited per session
+router.post('/submit', codingSubmitLimiter, submitSolution);
 
 export default router;

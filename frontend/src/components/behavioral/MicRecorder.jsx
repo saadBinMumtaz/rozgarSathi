@@ -34,11 +34,23 @@ export const MicRecorder = ({ isSpeaking, onTranscriptChange, resetKey, onUnsupp
     }
   }, [autoStart, checked, isSupported, isSpeaking, error, start, reset]);
 
+  // Hard gate: whenever the AI starts speaking (question, follow-up or nudge),
+  // stop any in-progress recognition immediately so the AI's voice is never
+  // transcribed as the candidate's answer. Centralized in this shared recorder
+  // so it applies identically to every voice interview page (Behavioral + Technical).
+  useEffect(() => {
+    if (isSpeaking && isListening) {
+      stop();
+    }
+  }, [isSpeaking, isListening, stop]);
+
   // Clear the captured transcript (and stop recording) when the active
   // question/follow-up changes, so stale audio never leaks into the next answer.
+  // Also re-arm auto-start so the mic turns back on once the new question's audio ends.
   useEffect(() => {
     if (isListening) stop();
     reset();
+    autoStartedRef.current = false;
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [resetKey]);
 
