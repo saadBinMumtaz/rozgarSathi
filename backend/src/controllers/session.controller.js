@@ -8,7 +8,7 @@ export const createSession = async (req, res, next) => {
       return res.status(400).json({ error: 'Session mode is required' });
     }
     const newSession = await Session.create({
-      userId: userId || 'guest_' + Date.now(),
+      userId: userId || 'guest',
       mode,
       jdSnapshot: jdAnalysisId ? { jdAnalysisId } : {},
       status: 'in_progress',

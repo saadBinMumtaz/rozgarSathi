@@ -11,6 +11,7 @@ export const ProbePanel = ({
   probes = [],
   activeProbeIndex = -1,
   persona = 'friendly',
+  questionTitle = '',
 }) => {
   const [isExpanded, setIsExpanded] = useState(true);
 
@@ -38,6 +39,11 @@ export const ProbePanel = ({
         <div className="flex items-center gap-2">
           <MessageSquare size={15} className={personaAccent} />
           <span className="text-sm font-semibold text-slate-200">Interviewer</span>
+          {questionTitle && (
+            <span className="text-xs text-slate-500 hidden sm:inline">
+              — {questionTitle}
+            </span>
+          )}
           {activeProbe && !isExpanded && (
             <span className="text-xs text-slate-400 truncate max-w-md ml-2">
               {activeProbe}

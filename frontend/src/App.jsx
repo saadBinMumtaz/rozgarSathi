@@ -10,6 +10,7 @@ import Toast from './design-system/Toast';
 import { useLanguage } from './hooks/useLanguage';
 
 const APP_STATE_KEY = 'rozgar-sathi-app-state-v1';
+const USER_ID_KEY = 'rozgar-sathi-user-id';
 
 // Pages that should trigger full cleanup (TTS, speech, timers) when navigating away
 const INTERVIEW_PAGES = new Set(['behavioral-interview', 'technical-interview', 'coding-interview']);
@@ -34,6 +35,18 @@ const stopAllInterviewMedia = () => {
 };
 
 export const App = () => {
+  // Persistent userId — generated once, stored in localStorage, reused across all sessions
+  const [userId] = useState(() => {
+    let id = localStorage.getItem(USER_ID_KEY);
+    if (!id) {
+      id = 'user_' + (typeof crypto !== 'undefined' && crypto.randomUUID
+        ? crypto.randomUUID()
+        : Date.now().toString(36) + Math.random().toString(36).slice(2));
+      localStorage.setItem(USER_ID_KEY, id);
+    }
+    return id;
+  });
+
   // Restore page from localStorage on mount (survives page reload)
   const [currentPage, setCurrentPage] = useState(() => {
     try {
@@ -234,6 +247,7 @@ export const App = () => {
             onNavigate={navigateTo}
             language={language}
             isUrdu={isUrdu}
+            userId={userId}
           />
         )}
       </div>
@@ -245,6 +259,7 @@ export const App = () => {
             onNavigate={navigateTo}
             language={language}
             isUrdu={isUrdu}
+            userId={userId}
           />
         )}
       </div>
@@ -254,6 +269,7 @@ export const App = () => {
           <CodingInterview
             jdAnalysisId={jdAnalysis?._id || jdAnalysis?.id}
             onNavigate={navigateTo}
+            userId={userId}
           />
         )}
       </div>
@@ -261,6 +277,7 @@ export const App = () => {
       <div className={currentPage === 'results' ? '' : 'hidden'}>
         {shouldRender('results') && (
           <Results
+            userId={userId}
             onNavigate={navigateTo}
           />
         )}

@@ -18,7 +18,7 @@ import { apiClient } from '../api/client';
 
 const TECHNICAL_SESSION_KEY = 'rozgar-sathi-technical-session-v1';
 
-export const TechnicalInterview = ({ jdAnalysisId, onNavigate, language = 'english', isUrdu = false }) => {
+export const TechnicalInterview = ({ jdAnalysisId, onNavigate, language = 'english', isUrdu = false, userId }) => {
   const [sessionId, setSessionId] = useState(null);
   const [currentQuestion, setCurrentQuestion] = useState(null);
   const [evaluations, setEvaluations] = useState([]);
@@ -210,7 +210,7 @@ export const TechnicalInterview = ({ jdAnalysisId, onNavigate, language = 'engli
     setIsLoading(true);
     setError(null);
     try {
-      const result = await apiClient.createSession('technical', jdAnalysisId);
+      const result = await apiClient.createSession('technical', jdAnalysisId, userId);
       setSessionId(result.sessionId);
       // Fetch first question
       const answerResult = await apiClient.answerTechnical(result.sessionId, null, '');

@@ -29,7 +29,7 @@ const formatElapsed = (seconds) => {
   return `${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
 };
 
-export const CodingInterview = ({ jdAnalysisId, onNavigate }) => {
+export const CodingInterview = ({ jdAnalysisId, onNavigate, userId }) => {
   const [sessionId, setSessionId] = useState(null);
   const [question, setQuestion] = useState(null);
   const [code, setCode] = useState('');
@@ -44,6 +44,7 @@ export const CodingInterview = ({ jdAnalysisId, onNavigate }) => {
   const [showConfirmModal, setShowConfirmModal] = useState(false);
   const [showReviewCode, setShowReviewCode] = useState(false);
   const [resetToast, setResetToast] = useState(false);
+  const [submitError, setSubmitError] = useState(null);
   const timerRef = useRef(null);
   const probeTimerRef = useRef(null);
   const autosaveTimerRef = useRef(null);
@@ -75,7 +76,7 @@ export const CodingInterview = ({ jdAnalysisId, onNavigate }) => {
       setIsSettingUp(true);
       setSetupError(null);
       try {
-        const session = await apiClient.createSession('coding', jdAnalysisId);
+        const session = await apiClient.createSession('coding', jdAnalysisId, userId);
         if (cancelled) return;
         const q = await apiClient.getCodingQuestion({ sessionId: session.sessionId });
         if (cancelled) return;
@@ -122,17 +123,20 @@ export const CodingInterview = ({ jdAnalysisId, onNavigate }) => {
 
   // --- Submit handler (called after confirmation) ---
   const handleConfirmSubmit = useCallback(async () => {
-    setShowConfirmModal(false);
+    setSubmitError(null);
     try {
       const result = await submitSolution(sessionId, code, language);
-      if (!result.executionError) {
-        setIsSubmitted(true);
-        submittedCodeRef.current = code;
-        if (result.codingReport) setCodingReport(result.codingReport);
-        // Clear auto-saved code
-        try { localStorage.removeItem(AUTOSAVE_KEY_PREFIX + sessionId); } catch {}
-      }
-    } catch { /* surfaced via hook */ }
+      // Mark submitted regardless of executionError so user sees results/error screen
+      setIsSubmitted(true);
+      submittedCodeRef.current = code;
+      if (result.codingReport) setCodingReport(result.codingReport);
+      try { localStorage.removeItem(AUTOSAVE_KEY_PREFIX + sessionId); } catch {}
+      setShowConfirmModal(false);
+    } catch (err) {
+      // Network or server error — keep modal open so user can retry
+      console.error('[CodingInterview] Submit failed:', err);
+      setSubmitError(err.message || 'Submission failed. Please try again.');
+    }
   }, [sessionId, code, language, submitSolution]);
 
   // --- Reset code to starter ---
@@ -226,8 +230,8 @@ export const CodingInterview = ({ jdAnalysisId, onNavigate }) => {
     );
   }
 
-  // --- Completion screen ---
-  if (isSubmitted && evaluation) {
+  // --- Completion screen (shown after submission regardless of evaluation) ---
+  if (isSubmitted) {
     return (
       <div className="min-h-screen p-6 max-w-4xl mx-auto space-y-6">
         {/* Success header */}
@@ -249,7 +253,17 @@ export const CodingInterview = ({ jdAnalysisId, onNavigate }) => {
           solution was judged on hidden test cases.
         </p>
 
-        <EvidenceCard evaluation={evaluation} />
+        {evaluation ? (
+          <EvidenceCard evaluation={evaluation} />
+        ) : (
+          <div className="bg-slate-900/50 border border-slate-700 rounded-lg p-4 text-center">
+            <p className="text-sm text-slate-400">
+              {executionError
+                ? 'Your solution encountered an error during evaluation. See details below.'
+                : 'Submission recorded. Evaluation is being processed.'}
+            </p>
+          </div>
+        )}
 
         {/* Coding report dimensions */}
         {codingReport && (
@@ -527,6 +541,7 @@ export const CodingInterview = ({ jdAnalysisId, onNavigate }) => {
         probes={question?.interviewerProbes || []}
         activeProbeIndex={activeProbeIndex}
         persona={persona}
+        questionTitle={question?.title || ''}
       />
 
       {/* Submit confirmation modal */}
@@ -549,8 +564,18 @@ export const CodingInterview = ({ jdAnalysisId, onNavigate }) => {
               </div>
             )}
 
+            {submitError && (
+              <div role="alert" className="rounded-lg border border-rose-500/40 bg-rose-500/10 px-3 py-2 text-sm text-rose-200">
+                {submitError}
+              </div>
+            )}
+
             <div className="flex gap-3 justify-end">
-              <Button variant="ghost" onClick={() => setShowConfirmModal(false)}>
+              <Button
+                variant="ghost"
+                onClick={() => { setShowConfirmModal(false); setSubmitError(null); }}
+                disabled={isSubmitting}
+              >
                 <X size={14} className="mr-1" /> Cancel
               </Button>
               <Button variant="primary" onClick={handleConfirmSubmit} isLoading={isSubmitting}>

@@ -40,13 +40,13 @@ export const apiClient = {
     return res.json();
   },
 
-  async createSession(mode, jdAnalysisId) {
+  async createSession(mode, jdAnalysisId, userId) {
     const res = await fetch(`${API_BASE_URL}/sessions`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify({ mode, jdAnalysisId }),
+      body: JSON.stringify({ mode, jdAnalysisId, userId }),
     });
 
     if (!res.ok) {

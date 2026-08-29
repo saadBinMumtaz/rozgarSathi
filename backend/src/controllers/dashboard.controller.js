@@ -98,8 +98,19 @@ export const getDashboardData = async (req, res, next) => {
   try {
     const { userId } = req.params;
 
-    // Fetch all sessions for this user
-    const sessions = await Session.find({ userId }).lean().catch((err) => {
+    // Fetch all sessions for this user.
+    // For single-user hackathon mode: include ALL guest sessions (both the exact
+    // 'guest' string and legacy 'guest_<timestamp>' orphans) plus any user_ sessions.
+    // This ensures the dashboard always shows data regardless of userId generation.
+    const query = {
+      $or: [
+        { userId },
+        { userId: 'guest' },
+        { userId: { $regex: /^guest_/ } },
+        ...(userId.startsWith('user_') ? [{ userId: { $regex: /^user_/ } }] : []),
+      ],
+    };
+    const sessions = await Session.find(query).lean().catch((err) => {
       logger.error(`Dashboard DB query failed: ${err.message}`);
       return [];
     });

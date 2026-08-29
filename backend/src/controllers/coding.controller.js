@@ -31,6 +31,10 @@ try {
  * Link the selected question to the coding session so /run and /submit can
  * resolve it. Persists the question entry (incremental save, per Master
  * Context §7 "save on every step").
+ *
+ * Uses direct mutation + markModified to ensure Mongoose tracks the change
+ * on the Mixed-type metadata field, and findOneAndUpdate as a fallback if
+ * save() fails (e.g. version-key conflict).
  */
 const linkQuestionToSession = async (sessionId, question) => {
   console.log('[linkQuestionToSession] sessionId:', sessionId, 'question.id:', question?.id);
@@ -43,11 +47,12 @@ const linkQuestionToSession = async (sessionId, question) => {
     console.log('[linkQuestionToSession] SKIP: session not found');
     return;
   }
-  // Mongoose Mixed type fix: replace entire metadata object to ensure change tracking
-  session.metadata = {
-    ...(session.metadata || {}),
-    codingQuestionId: question.id,
-  };
+
+  // Directly mutate the metadata object so Mongoose's internal reference
+  // sees the change, then explicitly mark it modified for save().
+  if (!session.metadata) session.metadata = {};
+  session.metadata.codingQuestionId = question.id;
+  session.markModified('metadata');
 
   const existing = session.questions.find((q) => q.questionId === question.id);
   if (!existing) {
@@ -61,12 +66,36 @@ const linkQuestionToSession = async (sessionId, question) => {
       evaluation: null,
     });
   }
+
   try {
     await session.save();
     console.log('[linkQuestionToSession] SUCCESS: linked', question.id, 'to session', sessionId);
   } catch (err) {
-    console.error('[linkQuestionToSession] SAVE FAILED:', err.message);
-    throw err;
+    console.error('[linkQuestionToSession] SAVE FAILED:', err.message, '— trying findOneAndUpdate fallback');
+    // Fallback: use atomic update to guarantee persistence
+    try {
+      await Session.findOneAndUpdate(
+        { _id: sessionId },
+        {
+          $set: { 'metadata.codingQuestionId': question.id },
+          $addToSet: {
+            questions: {
+              questionId: question.id,
+              questionText: question.title,
+              topic: question.topic,
+              difficulty: question.difficulty,
+              transcript: '',
+              followUps: [],
+              evaluation: null,
+            },
+          },
+        }
+      );
+      console.log('[linkQuestionToSession] FALLBACK SUCCESS');
+    } catch (fallbackErr) {
+      console.error('[linkQuestionToSession] FALLBACK FAILED:', fallbackErr.message);
+      throw fallbackErr;
+    }
   }
 };
 
@@ -148,13 +177,15 @@ const loadSessionQuestion = async (req, res) => {
     return null;
   }
   const questionId = session.metadata?.codingQuestionId;
-  console.log('[loadSessionQuestion] session.metadata:', session.metadata);
+  console.log('[loadSessionQuestion] session.metadata:', JSON.stringify(session.metadata));
   console.log('[loadSessionQuestion] questionId:', questionId);
   const question = codingBank.find((q) => q.id === questionId);
   if (!question) {
+    console.error('[loadSessionQuestion] FAILED: questionId', questionId, 'not found in codingBank (size:', codingBank.length, ')');
     res.status(400).json({ error: 'No coding question linked to this session — fetch one via POST /api/coding/questions first.' });
     return null;
   }
+  console.log('[loadSessionQuestion] SUCCESS: loaded question', question.id, '(' + question.title + ')');
   return { session, question };
 };
 

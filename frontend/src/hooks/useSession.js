@@ -68,7 +68,7 @@ export const useSession = () => {
     };
   }, [sessionId, currentQuestion, evaluations, isComplete]);
 
-  const createSession = useCallback(async (mode, jdAnalysisId) => {
+  const createSession = useCallback(async (mode, jdAnalysisId, userId) => {
     setIsLoading(true);
     setError(null);
     // Reset state so stale data from a previous session doesn't carry over
@@ -79,7 +79,7 @@ export const useSession = () => {
     setIsComplete(false);
     localStorage.removeItem(SESSION_STORAGE_KEY);
     try {
-      const result = await apiClient.createSession(mode, jdAnalysisId);
+      const result = await apiClient.createSession(mode, jdAnalysisId, userId);
       setSessionId(result.sessionId);
       setIsLoading(false);
       return result.sessionId;

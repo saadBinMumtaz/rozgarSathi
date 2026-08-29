@@ -19,7 +19,7 @@ import { apiClient } from '../api/client';
 
 const MAX_QUESTIONS = 5;
 
-export const BehavioralInterview = ({ jdAnalysisId, onNavigate, language = 'english', isUrdu = false }) => {
+export const BehavioralInterview = ({ jdAnalysisId, onNavigate, language = 'english', isUrdu = false, userId }) => {
   const {
     sessionId,
     currentQuestion,
@@ -51,7 +51,7 @@ export const BehavioralInterview = ({ jdAnalysisId, onNavigate, language = 'engl
   // BUT skip resume if interview is already complete (prevents overwriting local state).
   useEffect(() => {
     if (!sessionId) {
-      createSession('behavioral', jdAnalysisId).catch((err) => {
+      createSession('behavioral', jdAnalysisId, userId).catch((err) => {
         console.error('Failed to create session:', err);
       });
     } else if (!isComplete) {
@@ -334,7 +334,7 @@ export const BehavioralInterview = ({ jdAnalysisId, onNavigate, language = 'engl
               className="shrink-0 underline text-rose-300 hover:text-rose-200"
               onClick={() => {
                 if (!sessionId) {
-                  createSession('behavioral', jdAnalysisId).catch(() => {});
+                  createSession('behavioral', jdAnalysisId, userId).catch(() => {});
                 } else {
                   resetSession();
                 }
