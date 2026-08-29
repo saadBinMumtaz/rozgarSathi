@@ -45,6 +45,14 @@ export const CodingInterview = ({ jdAnalysisId, onNavigate, userId }) => {
   const [showReviewCode, setShowReviewCode] = useState(false);
   const [resetToast, setResetToast] = useState(false);
   const [submitError, setSubmitError] = useState(null);
+  // Practice mode state
+  const [practiceMode, setPracticeMode] = useState(false);
+  const [practiceProbeIndex, setPracticeProbeIndex] = useState(-1);
+  const [practiceAnswer, setPracticeAnswer] = useState('');
+  const [practiceFeedback, setPracticeFeedback] = useState({});
+  const [isEvaluatingProbe, setIsEvaluatingProbe] = useState(false);
+  // Auto-accelerate state
+  const [autoAccelerate, setAutoAccelerate] = useState(false);
   const timerRef = useRef(null);
   const probeTimerRef = useRef(null);
   const autosaveTimerRef = useRef(null);
@@ -148,6 +156,49 @@ export const CodingInterview = ({ jdAnalysisId, onNavigate, userId }) => {
     }
   }, [question]);
 
+  // --- Practice mode handlers ---
+  const handleTogglePractice = useCallback(() => {
+    setPracticeMode(prev => !prev);
+  }, []);
+
+  const handleSelectProbe = useCallback((idx) => {
+    setPracticeProbeIndex(idx);
+    setPracticeAnswer('');
+  }, []);
+
+  const handleAnswerChange = useCallback((val) => {
+    setPracticeAnswer(val);
+  }, []);
+
+  const handleSubmitPractice = useCallback(async (probeIdx) => {
+    if (!practiceAnswer.trim()) return;
+    setIsEvaluatingProbe(true);
+    try {
+      const result = await apiClient.evaluateProbeAnswer({
+        sessionId,
+        probeText: question.interviewerProbes[probeIdx],
+        answer: practiceAnswer,
+        questionTitle: question.title || '',
+        language: 'english',
+      });
+      if (result.evaluation) {
+        setPracticeFeedback(prev => ({ ...prev, [probeIdx]: result.evaluation }));
+      }
+    } catch (err) {
+      console.error('[CodingInterview] Probe evaluation failed:', err);
+    } finally {
+      setIsEvaluatingProbe(false);
+    }
+  }, [sessionId, practiceAnswer, question]);
+
+  const handleClearFeedback = useCallback(() => {
+    setPracticeFeedback({});
+  }, []);
+
+  const handleToggleAccelerate = useCallback(() => {
+    setAutoAccelerate(prev => !prev);
+  }, []);
+
   // --- Keyboard shortcuts ---
   useEffect(() => {
     const handleKeyDown = (e) => {
@@ -167,23 +218,26 @@ export const CodingInterview = ({ jdAnalysisId, onNavigate, userId }) => {
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [handleRun, isSubmitted, isSettingUp]);
 
-  // --- Probe timing: first at 30s, then every 60s ---
+  // --- Probe timing: first at 30s (15s accelerated), then every 60s (15s/30s accelerated) ---
+  // Paused when practice mode is active so user can focus on answering.
   useEffect(() => {
-    if (!question?.interviewerProbes?.length || isSubmitted) return undefined;
-    const startTimer = setTimeout(() => setActiveProbeIndex(0), 30000);
+    if (!question?.interviewerProbes?.length || isSubmitted || practiceMode) return undefined;
+    const delay = autoAccelerate ? 15000 : 30000;
+    const startTimer = setTimeout(() => setActiveProbeIndex(0), delay);
     return () => clearTimeout(startTimer);
-  }, [question?.interviewerProbes, isSubmitted]);
+  }, [question?.interviewerProbes, isSubmitted, practiceMode, autoAccelerate]);
 
   useEffect(() => {
-    if (activeProbeIndex < 0 || isSubmitted) return undefined;
+    if (activeProbeIndex < 0 || isSubmitted || practiceMode) return undefined;
     const probes = question?.interviewerProbes || [];
     if (activeProbeIndex >= probes.length - 1) return undefined;
+    const interval = autoAccelerate ? 15000 : 60000;
     const timer = setTimeout(() => {
       setActiveProbeIndex((prev) => Math.min(prev + 1, probes.length - 1));
-    }, 60000);
+    }, interval);
     probeTimerRef.current = timer;
     return () => clearTimeout(timer);
-  }, [activeProbeIndex, question?.interviewerProbes, isSubmitted]);
+  }, [activeProbeIndex, question?.interviewerProbes, isSubmitted, practiceMode, autoAccelerate]);
 
   // --- Cleanup on navigation away ---
   useEffect(() => {
@@ -542,6 +596,18 @@ export const CodingInterview = ({ jdAnalysisId, onNavigate, userId }) => {
         activeProbeIndex={activeProbeIndex}
         persona={persona}
         questionTitle={question?.title || ''}
+        practiceMode={practiceMode}
+        onTogglePractice={handleTogglePractice}
+        autoAccelerate={autoAccelerate}
+        onToggleAccelerate={handleToggleAccelerate}
+        practiceProbeIndex={practiceProbeIndex}
+        onSelectProbe={handleSelectProbe}
+        practiceAnswer={practiceAnswer}
+        onAnswerChange={handleAnswerChange}
+        onSubmitPractice={handleSubmitPractice}
+        isEvaluating={isEvaluatingProbe}
+        practiceFeedback={practiceFeedback}
+        onClearFeedback={handleClearFeedback}
       />
 
       {/* Submit confirmation modal */}

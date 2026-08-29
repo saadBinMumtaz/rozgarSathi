@@ -9,7 +9,7 @@ import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import Session from '../models/Session.model.js';
-import { evaluateCodingSubmission } from '../services/scoring.js';
+import { evaluateCodingSubmission, evaluateProbeAnswer } from '../services/scoring.js';
 import { runCode, withSessionQueue } from '../services/codeExecutor.js';
 import logger from '../utils/logger.js';
 
@@ -281,4 +281,31 @@ export const submitSolution = async (req, res, next) => {
   }
 };
 
-export default { getCodingQuestion, runTests, submitSolution, getProbes };
+/**
+ * POST /api/coding/probes/evaluate
+ * Evaluate a candidate's answer to a probe question during practice mode.
+ * Request: { sessionId, probeText, answer, questionTitle?, language? }
+ * Response: evaluation object (constructed by scoring.js per Rules §5)
+ */
+export const evaluateProbe = async (req, res, next) => {
+  try {
+    const { probeText, answer, questionTitle, language } = req.body || {};
+    if (!probeText || !answer) {
+      return res.status(400).json({ error: 'probeText and answer are required' });
+    }
+
+    const evaluation = await evaluateProbeAnswer({
+      probeText,
+      answer,
+      questionTitle: questionTitle || '',
+      language: language || 'english',
+    });
+
+    return res.json({ evaluation });
+  } catch (err) {
+    logger.error(`Coding probe evaluation error: ${err.message}`);
+    next(err);
+  }
+};
+
+export default { getCodingQuestion, runTests, submitSolution, getProbes, evaluateProbe };

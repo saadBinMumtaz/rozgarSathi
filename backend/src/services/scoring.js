@@ -582,6 +582,116 @@ export const createCodingStubEvaluation = () => ({
   confidenceLevel: 'high',
 });
 
+/**
+ * Evaluate a probe answer during coding interview practice.
+ * Probes are follow-up questions about the candidate's coding solution
+ * (e.g. "What is the time complexity of your approach?").
+ * @param {Object} params
+ * @param {string} params.probeText - The probe question text
+ * @param {string} params.answer - The candidate's answer transcript
+ * @param {string} [params.questionTitle] - The coding question title for context
+ * @param {string} [params.language='english'] - 'english' | 'urdu'
+ * @returns {Promise<Object>} Evaluation object matching Section 7 schema
+ */
+export const evaluateProbeAnswer = async ({ probeText, answer, questionTitle = '', language = 'english' }) => {
+  const wordCount = countWords(answer);
+
+  // Deterministic floor: empty or whitespace-only
+  if (wordCount === 0) {
+    return {
+      score: 0,
+      dimensions: { clarity: 0, reasoning: 0, depth: 0 },
+      evidence: ['No response provided for this probe'],
+      strength: '',
+      missing: 'An answer is needed for this follow-up question',
+      improvement: 'Explain your reasoning out loud — even a brief explanation helps',
+      confidenceLevel: 'low',
+    };
+  }
+
+  // Deterministic floor: very short answer
+  if (wordCount < MIN_WORDS_FOR_SCORING) {
+    return {
+      score: Math.min(wordCount * 3, 30),
+      dimensions: { clarity: 3, reasoning: 3, depth: 2 },
+      evidence: ['Response was too brief to evaluate thoroughly'],
+      strength: '',
+      missing: 'More explanation is needed for this follow-up',
+      improvement: 'Expand your answer with specific reasoning about your code',
+      confidenceLevel: 'low',
+    };
+  }
+
+  const systemPrompt = `You are an expert coding interviewer evaluating a candidate's answer to a follow-up probe question about their coding solution.
+The coding question was: "${questionTitle}"
+The follow-up probe was: "${probeText}"
+
+Score the answer on these dimensions (0-10 each):
+- clarity: How clearly is the answer expressed?
+- reasoning: How sound is the technical reasoning?
+- depth: How deeply does the answer address the probe?
+
+${language === 'urdu' ? 'IMPORTANT: Return all feedback fields in Urdu (اردو). Keep technical terms like React, API, Node.js etc. in English.' : ''}
+Return ONLY valid JSON:
+{
+  "dimensions": { "clarity": 0-10, "reasoning": 0-10, "depth": 0-10 },
+  "evidence": ["Array of 2-3 specific quotes or points from the answer"],
+  "strength": "One sentence describing what the candidate explained well",
+  "missing": "One sentence describing what was missing or could be improved",
+  "improvement": "One actionable suggestion for a better answer"
+}`;
+
+  const userPrompt = `Probe question: "${probeText}"
+
+Candidate's answer:
+"""
+${answer}
+"""
+
+Evaluate the answer and return JSON.`;
+
+  try {
+    const llmResult = await callAI({
+      systemPrompt,
+      userPrompt,
+      requiredFields: ['dimensions', 'evidence', 'strength', 'missing', 'improvement'],
+    });
+
+    const dimensionScores = Object.values(llmResult.dimensions || {});
+    const avgDimensionScore = dimensionScores.length > 0
+      ? dimensionScores.reduce((sum, s) => sum + (typeof s === 'number' ? s : 0), 0) / dimensionScores.length
+      : 0;
+    const score = Math.round(avgDimensionScore * 10);
+
+    const evidence = Array.isArray(llmResult.evidence)
+      ? llmResult.evidence.filter((e) => typeof e === 'string')
+      : [];
+
+    return {
+      score: Math.max(0, Math.min(100, score)),
+      dimensions: llmResult.dimensions || {},
+      evidence,
+      strength: llmResult.strength || '',
+      missing: llmResult.missing || '',
+      improvement: llmResult.improvement || '',
+      confidenceLevel: wordCount >= SHORT_ANSWER_WORD_LIMIT ? 'high' : 'medium',
+    };
+  } catch (err) {
+    logger.warn(`Probe evaluation LLM failed: ${err.message}. Using deterministic fallback.`);
+    const analysis = analyzeTranscriptForFallback(answer, ['clarity', 'reasoning', 'depth']);
+    const baseScore = Math.min(wordCount * 2, 55);
+    return {
+      score: baseScore,
+      dimensions: { clarity: Math.round(baseScore / 10), reasoning: Math.round(baseScore / 10), depth: Math.round(baseScore / 12) },
+      evidence: analysis.evidence,
+      strength: analysis.strength,
+      missing: analysis.missing,
+      improvement: analysis.improvement,
+      confidenceLevel: 'low',
+    };
+  }
+};
+
 export default {
   evaluateBehavioralAnswer,
   evaluateTechnicalAnswer,
@@ -589,4 +699,5 @@ export default {
   evaluateCodingSubmission,
   createCodingStubEvaluation,
   analyzeTranscriptForFallback,
+  evaluateProbeAnswer,
 };

@@ -278,6 +278,21 @@ export const apiClient = {
 
     return res.json();
   },
+
+  async evaluateProbeAnswer({ sessionId, probeText, answer, questionTitle, language }) {
+    const res = await fetch(`${API_BASE_URL}/coding/probes/evaluate`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ sessionId, probeText, answer, questionTitle, language }),
+    });
+
+    if (!res.ok) {
+      const errorData = await res.json().catch(() => ({ error: 'Failed to evaluate probe answer' }));
+      throw new Error(errorData.error || `Server error: ${res.status}`);
+    }
+
+    return res.json();
+  },
 };
 
 export default apiClient;
