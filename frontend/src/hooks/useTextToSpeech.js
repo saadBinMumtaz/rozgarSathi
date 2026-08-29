@@ -82,6 +82,22 @@ export const useTextToSpeech = () => {
     }
   }, []);
 
+  // Listen for app-level cleanup event (dispatched when navigating away
+  // from interview pages). Stops cloud TTS audio objects (new Audio())
+  // that aren't in the DOM and can't be caught by querySelectorAll('audio').
+  useEffect(() => {
+    const handleCleanup = () => {
+      stopCloudAudio();
+      if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
+        window.speechSynthesis.cancel();
+      }
+      setIsSpeaking(false);
+      setUrduLoading(false);
+    };
+    window.addEventListener('rozgar:interview-cleanup', handleCleanup);
+    return () => window.removeEventListener('rozgar:interview-cleanup', handleCleanup);
+  }, [stopCloudAudio]);
+
   // Local SpeechSynthesis utterance (English, or Urdu when a local Urdu voice exists).
   const speakWithUtterance = useCallback((text, { lang, voice, rate = 0.9 }, requestId) => {
     const utterance = new SpeechSynthesisUtterance(text);

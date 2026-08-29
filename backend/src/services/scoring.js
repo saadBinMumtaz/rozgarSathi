@@ -30,6 +30,69 @@ const BUZZWORD_PATTERNS = [
 ];
 
 /**
+ * Analyze a transcript for deterministic fallback feedback.
+ * Produces transcript-specific evidence/strength/missing/improvement strings
+ * so that when LLM scoring fails, the evaluation still contains genuinely
+ * specific content referencing the actual answer — not generic filler.
+ */
+const analyzeTranscriptForFallback = (transcript, rubricKeys = []) => {
+  const text = transcript.toLowerCase();
+  const words = text.split(/\s+/).filter(Boolean);
+  const wordCount = words.length;
+
+  // Detect concrete markers (specific examples, metrics)
+  const concreteMarkers = CONCRETE_MARKERS.filter((m) => text.includes(m));
+  const hasMetrics = /\d+%|\d+\s*(users|requests|seconds|minutes|hours|days|weeks|months|years)/i.test(transcript);
+  const hasYears = /\b\d{4}\b/.test(transcript);
+
+  // Detect STAR structure keywords
+  const starKeywords = { situation: ['when', 'time', 'project', 'role', 'team'], task: ['needed to', 'responsible', 'had to', 'my goal'], action: ['i did', 'i built', 'i implemented', 'we decided', 'i led'], result: ['result', 'outcome', 'improved', 'reduced', 'increased', 'achieved', 'delivered'] };
+  const starHits = Object.entries(starKeywords).filter(([, kws]) => kws.some((kw) => text.includes(kw))).map(([k]) => k);
+
+  // Detect rubric keyword coverage
+  const rubricHits = rubricKeys.filter((key) => {
+    const keywords = (key || '').toLowerCase().split(/\s+/);
+    return keywords.some((kw) => text.includes(kw));
+  });
+
+  // Build evidence from first meaningful sentence fragment
+  const sentences = transcript.split(/[.!?]+/).filter((s) => s.trim().length > 15);
+  const firstEvidence = sentences.length > 0 ? sentences[0].trim().substring(0, 120) : '';
+
+  // Build specific evidence array
+  const evidence = [];
+  if (firstEvidence) evidence.push(`Candidate stated: "${firstEvidence}${sentences[0].trim().length > 120 ? '...' : ''}"`);
+  if (hasMetrics) evidence.push('Included specific metrics or numbers in the response');
+  if (concreteMarkers.length > 0) evidence.push(`Used concrete language (${concreteMarkers.slice(0, 2).join(', ')})`);
+  if (starHits.length >= 2) evidence.push(`Demonstrated ${starHits.join(' and ')} structure`);
+  if (evidence.length === 0) evidence.push(`Response was ${wordCount} words — ${wordCount < 30 ? 'too brief for detailed analysis' : 'sufficient length for evaluation'}`);
+
+  // Build strength
+  let strength = '';
+  if (starHits.length >= 3) strength = 'Answer followed a clear STAR structure with situation, action, and result';
+  else if (hasMetrics) strength = 'Answer included specific metrics or quantified outcomes';
+  else if (concreteMarkers.length >= 2) strength = 'Answer used concrete language referencing real experiences';
+  else if (rubricHits.length >= Math.ceil(rubricKeys.length / 2)) strength = `Answer addressed key topics: ${rubricHits.slice(0, 3).join(', ')}`;
+  else if (wordCount >= 50) strength = `Answer was substantive at ${wordCount} words with relevant content`;
+  else strength = 'A brief answer was provided but lacked depth';
+
+  // Build missing
+  let missing = '';
+  if (!hasMetrics && !hasYears) missing = 'No specific metrics, numbers, or timeframes were mentioned';
+  else if (starHits.length < 2) missing = 'Answer did not follow a clear STAR structure (situation, task, action, result)';
+  else missing = 'Answer could benefit from more depth on the outcome and lessons learned';
+
+  // Build improvement
+  let improvement = '';
+  if (!hasMetrics) improvement = 'Add specific numbers: "It improved performance by 30%" or "We served 1000+ users."';
+  else if (starHits.length < 2) improvement = 'Structure your answer as Situation → Task → Action → Result for clarity.';
+  else if (concreteMarkers.length < 2) improvement = 'Reference a specific project by name and describe your personal contribution.';
+  else improvement = 'Expand on the measurable impact and what you learned from the experience.';
+
+  return { evidence, strength, missing, improvement, wordCount, hasMetrics, starHits, concreteMarkers: concreteMarkers.length };
+};
+
+/**
  * Detect if an answer is mostly buzzwords without concrete examples.
  * Returns an object with:
  * - isBuzzwordHeavy: boolean
@@ -231,16 +294,19 @@ Evaluate the answer and return JSON.`;
     const structureBonus = hasStructure ? 20 : 0;
     const score = Math.min(baseScore + structureBonus, 80);
 
+    // Transcript-aware fallback feedback (not generic filler)
+    const analysis = analyzeTranscriptForFallback(transcript, rubricKeys);
+
     return {
       score,
       dimensions: rubricKeys.reduce((acc, key) => {
         acc[key] = Math.round(score / 10);
         return acc;
       }, {}),
-      evidence: ['Answer provided but detailed evaluation unavailable'],
-      strength: hasStructure ? 'Answer addressed key points' : 'Answer was provided',
-      missing: 'More detailed feedback unavailable',
-      improvement: 'Provide specific examples and quantify results where possible',
+      evidence: analysis.evidence,
+      strength: analysis.strength,
+      missing: analysis.missing,
+      improvement: analysis.improvement,
       confidenceLevel: 'low',
     };
   }
@@ -393,16 +459,30 @@ Evaluate the technical answer and return JSON.`;
     const baseScore = Math.min(wordCount * 2, 60);
     const score = Math.min(baseScore, 70);
 
+    // Transcript-aware fallback feedback (not generic filler)
+    const analysis = analyzeTranscriptForFallback(transcript, rubricKeys);
+
+    // For technical mode, adjust strength/missing to be technically oriented
+    const techStrength = analysis.hasMetrics || analysis.starHits.length >= 2
+      ? analysis.strength
+      : `Answer covered technical concepts at ${analysis.wordCount} words`;
+    const techMissing = analysis.hasMetrics
+      ? analysis.missing
+      : 'Did not include specific technical examples, trade-offs, or performance considerations';
+    const techImprovement = analysis.hasMetrics
+      ? analysis.improvement
+      : 'Include specific technical concepts, trade-offs, and real-world examples with measurable outcomes';
+
     return {
       score,
       dimensions: rubricKeys.reduce((acc, key) => {
         acc[key] = Math.round(score / 10);
         return acc;
       }, {}),
-      evidence: ['Answer provided but detailed technical evaluation unavailable'],
-      strength: 'A technical answer was provided',
-      missing: 'More detailed technical feedback unavailable',
-      improvement: 'Include specific technical concepts, trade-offs, and examples',
+      evidence: analysis.evidence,
+      strength: techStrength,
+      missing: techMissing,
+      improvement: techImprovement,
       confidenceLevel: 'low',
     };
   }
@@ -508,4 +588,5 @@ export default {
   INVALID_EVALUATION,
   evaluateCodingSubmission,
   createCodingStubEvaluation,
+  analyzeTranscriptForFallback,
 };

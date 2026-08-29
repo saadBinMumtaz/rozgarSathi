@@ -71,6 +71,29 @@ const linkQuestionToSession = async (sessionId, question) => {
 };
 
 /**
+ * POST /api/coding/probes
+ * Return the scripted interviewerProbes for the session's linked question.
+ * Probes are pulled from coding-questions.json — never freestyle-generated
+ * by an LLM mid-session (Master Context §11 Day 5).
+ * Request: { sessionId, persona? }
+ * Response: { probes: [String], persona: String }
+ */
+export const getProbes = async (req, res, next) => {
+  try {
+    const pair = await loadSessionQuestion(req, res);
+    if (!pair) return;
+    const { question } = pair;
+    const persona = req.body?.persona || 'friendly';
+
+    const probes = question.interviewerProbes || [];
+    return res.json({ probes, persona });
+  } catch (err) {
+    logger.error(`Coding probes error: ${err.message}`);
+    next(err);
+  }
+};
+
+/**
  * POST /api/coding/questions
  * Request: { topic?, difficulty?, questionId?, sessionId? }
  * Response: CodingQuestion object (Section 7 schema)
@@ -206,11 +229,25 @@ export const submitSolution = async (req, res, next) => {
     session.overallScore = evaluation.score;
     await session.save();
 
-    return res.json({ hiddenTestResults: outcome.results, evaluation, executionError: null });
+    // Build the enhanced coding report (Day 5 — correctness/complexity/code quality/reasoning)
+    const dims = evaluation.dimensions || {};
+    const codingReport = {
+      correctness: dims.correctness ?? 0,
+      complexity: dims.completeness ?? 0,
+      codeQuality: dims.codeQuality ?? 0,
+      reasoning: Math.round((dims.correctness + dims.codeQuality) / 2) || 0,
+    };
+
+    return res.json({
+      hiddenTestResults: outcome.results,
+      evaluation,
+      executionError: null,
+      codingReport,
+    });
   } catch (err) {
     logger.error(`Coding submit error: ${err.message}`);
     next(err);
   }
 };
 
-export default { getCodingQuestion, runTests, submitSolution };
+export default { getCodingQuestion, runTests, submitSolution, getProbes };

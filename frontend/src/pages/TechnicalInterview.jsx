@@ -501,6 +501,9 @@ export const TechnicalInterview = ({ jdAnalysisId, onNavigate, language = 'engli
                     </>
                   )}
                   <div className="flex justify-center gap-3 mt-4">
+                    <Button variant="secondary" onClick={() => onNavigate('results')}>
+                      View Results
+                    </Button>
                     <Button variant="primary" onClick={() => onNavigate('mode-selection')}>
                       Try Another Mode
                     </Button>

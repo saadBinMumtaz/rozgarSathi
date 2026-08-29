@@ -5,10 +5,33 @@ import ModeSelection from './pages/ModeSelection';
 import BehavioralInterview from './pages/BehavioralInterview';
 import TechnicalInterview from './pages/TechnicalInterview';
 import CodingInterview from './pages/CodingInterview';
+import Results from './pages/Results';
 import Toast from './design-system/Toast';
 import { useLanguage } from './hooks/useLanguage';
 
 const APP_STATE_KEY = 'rozgar-sathi-app-state-v1';
+
+// Pages that should trigger full cleanup (TTS, speech, timers) when navigating away
+const INTERVIEW_PAGES = new Set(['behavioral-interview', 'technical-interview', 'coding-interview']);
+
+/**
+ * Centralized cleanup: stops TTS, speech synthesis, audio, and dispatches a
+ * custom event so interview hooks can stop speech recognition / probe timers.
+ * Called when navigating away from any interview page.
+ */
+const stopAllInterviewMedia = () => {
+  // Stop browser speech synthesis (TTS)
+  if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
+    window.speechSynthesis.cancel();
+  }
+  // Pause all audio elements (cloud TTS MP3 players, etc.)
+  document.querySelectorAll('audio').forEach((audio) => {
+    audio.pause();
+    audio.currentTime = 0;
+  });
+  // Signal speech recognition hooks and probe timers to stop
+  window.dispatchEvent(new CustomEvent('rozgar:interview-cleanup'));
+};
 
 export const App = () => {
   // Restore page from localStorage on mount (survives page reload)
@@ -27,6 +50,63 @@ export const App = () => {
   const [toastMessage, setToastMessage] = useState(null);
   const [pendingSampleJD, setPendingSampleJD] = useState(null);
   const { language, setLanguage, isUrdu } = useLanguage();
+
+  // Track previous page to detect navigation away from interviews
+  const prevPageRef = useRef(currentPage);
+  // Flag: skip pushState when the page change came from browser back/forward (popstate)
+  const skipPushRef = useRef(false);
+
+  // --- Browser history integration (back/forward button support) ---
+  // Push state on page changes so browser back/forward works within the app.
+  // Guard: only pushState when the current history state doesn't already match
+  // the target page. This prevents duplicate entries from React StrictMode
+  // double-firing effects, or any other re-render that re-triggers this effect.
+  useEffect(() => {
+    const stateObj = { page: currentPage };
+    if (skipPushRef.current) {
+      // This page change came from popstate (browser back/forward) —
+      // don't create a new history entry, just update the ref.
+      skipPushRef.current = false;
+    } else if (window.history.state?.page === currentPage) {
+      // History already points to this page — nothing to do.
+    } else if (!window.history.state?.page) {
+      // Initial mount or no state yet — replace (no extra history entry).
+      window.history.replaceState(stateObj, '', '');
+    } else {
+      // Genuine forward navigation — push a new history entry.
+      window.history.pushState(stateObj, '', '');
+    }
+    prevPageRef.current = currentPage;
+  }, [currentPage]);
+
+  // Listen for browser back/forward (popstate) and sync React state
+  useEffect(() => {
+    const handlePopState = (event) => {
+      const page = event.state?.page;
+      if (page) {
+        skipPushRef.current = true; // Don't pushState for this change
+        setCurrentPage(page);
+      } else {
+        // No state — user went before the app, navigate to landing
+        skipPushRef.current = true;
+        setCurrentPage('landing');
+      }
+    };
+    window.addEventListener('popstate', handlePopState);
+    return () => window.removeEventListener('popstate', handlePopState);
+  }, []);
+
+  // --- Cleanup when navigating away from interview pages ---
+  // Because App.jsx uses CSS hidden (not unmount), interview components stay
+  // mounted and their cleanup effects never fire. This effect detects navigation
+  // away from interview pages and triggers centralized cleanup.
+  useEffect(() => {
+    const wasInterview = INTERVIEW_PAGES.has(prevPageRef.current);
+    const isInterview = INTERVIEW_PAGES.has(currentPage);
+    if (wasInterview && currentPage !== prevPageRef.current) {
+      stopAllInterviewMedia();
+    }
+  }, [currentPage]);
 
   // Persist current page to localStorage with debounce to avoid excessive writes
   const localStorageTimerRef = useRef(null);
@@ -105,7 +185,12 @@ export const App = () => {
         localStorage.removeItem(APP_STATE_KEY);
         // Clear visited pages to unmount all components and free memory
         setVisitedPages(new Set(['landing']));
+        // Cleanup any running interview media before going home
+        stopAllInterviewMedia();
       } catch {}
+    } else if (INTERVIEW_PAGES.has(prevPageRef.current) && !INTERVIEW_PAGES.has(page)) {
+      // Navigating away from an interview to a non-interview page
+      stopAllInterviewMedia();
     }
     setCurrentPage(page);
   };
@@ -168,6 +253,14 @@ export const App = () => {
         {shouldRender('coding-interview') && (
           <CodingInterview
             jdAnalysisId={jdAnalysis?._id || jdAnalysis?.id}
+            onNavigate={navigateTo}
+          />
+        )}
+      </div>
+
+      <div className={currentPage === 'results' ? '' : 'hidden'}>
+        {shouldRender('results') && (
+          <Results
             onNavigate={navigateTo}
           />
         )}

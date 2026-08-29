@@ -276,7 +276,7 @@ Build each endpoint below in the named route file, delegating to the named contr
 | POST | `/api/coding/questions` | `coding.routes.js` | `coding.controller.js` | `{ topic?, difficulty? }` | `CodingQuestion` object |
 | POST | `/api/coding/run` | `coding.routes.js` | `coding.controller.js` | `{ sessionId, code, language }` | `{ publicTestResults: [{input, expected, actual, passed}] }` |
 | POST | `/api/coding/submit` | `coding.routes.js` | `coding.controller.js` | `{ sessionId, code, language }` | `{ hiddenTestResults, evaluation }` |
-| GET | `/api/dashboard/:userId` | `dashboard.routes.js` | `dashboard.controller.js` | — | `{ overallReadiness, perMode, weakestCompetency, trend, crossModeInsight }` |
+| GET | `/api/dashboard/:userId` | `dashboard.routes.js` | `dashboard.controller.js` | — | `{ overallReadiness, perMode, weakestCompetency, trend, crossModeInsight, weights, weightsReason }` |
 | GET | `/api/health` | `health.routes.js` | inline | — | `{ status: "ok", mongo: bool, qwen: bool }` |
 
 Keep route files thin: validate the request shape, then call the matching controller. Do not put business logic directly inside a route file.

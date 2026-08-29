@@ -248,6 +248,36 @@ export const apiClient = {
 
     return res.json();
   },
+
+  // --- Dashboard (Day 5) -------------------------------------------------
+
+  async getDashboardData(userId) {
+    const res = await fetch(`${API_BASE_URL}/dashboard/${userId}`);
+
+    if (!res.ok) {
+      const errorData = await res.json().catch(() => ({ error: 'Failed to fetch dashboard data' }));
+      throw new Error(errorData.error || `Server error: ${res.status}`);
+    }
+
+    return res.json();
+  },
+
+  // --- Coding probes (Day 5) ---------------------------------------------
+
+  async getCodingProbes({ sessionId, persona = 'friendly' }) {
+    const res = await fetch(`${API_BASE_URL}/coding/probes`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ sessionId, persona }),
+    });
+
+    if (!res.ok) {
+      const errorData = await res.json().catch(() => ({ error: 'Failed to fetch coding probes' }));
+      throw new Error(errorData.error || `Server error: ${res.status}`);
+    }
+
+    return res.json();
+  },
 };
 
 export default apiClient;

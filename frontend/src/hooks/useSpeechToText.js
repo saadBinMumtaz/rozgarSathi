@@ -78,7 +78,20 @@ export const useSpeechToText = (language = 'english') => {
     }
     setChecked(true);
 
+    // Listen for app-level cleanup event (dispatched when navigating away
+    // from interview pages). Stops recognition so the mic doesn't keep
+    // listening in the background even though the component stays mounted
+    // (App.jsx uses CSS hidden, not unmount).
+    const handleCleanup = () => {
+      if (recognitionRef.current) {
+        try { recognitionRef.current.stop(); } catch {}
+      }
+      setIsListening(false);
+    };
+    window.addEventListener('rozgar:interview-cleanup', handleCleanup);
+
     return () => {
+      window.removeEventListener('rozgar:interview-cleanup', handleCleanup);
       if (recognitionRef.current) {
         recognitionRef.current.stop();
       }

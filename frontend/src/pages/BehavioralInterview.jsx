@@ -272,6 +272,9 @@ export const BehavioralInterview = ({ jdAnalysisId, onNavigate, language = 'engl
                 </>
               )}
               <div className="flex justify-center gap-3 mt-4">
+                <Button variant="secondary" onClick={() => onNavigate('results')}>
+                  View Results
+                </Button>
                 <Button variant="primary" onClick={() => { resetSession(); onNavigate('mode-selection'); }}>
                   Try Another Mode
                 </Button>
