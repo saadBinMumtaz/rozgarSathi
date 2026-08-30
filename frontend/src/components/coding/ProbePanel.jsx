@@ -51,11 +51,11 @@ export const ProbePanel = ({
     persona === 'strict' ? 'bg-warning/10' : 'bg-success/10';
 
   return (
-    <div className={`border ${personaColor} rounded-lg overflow-hidden surface-text bg-surface/60`}>
+    <div className={`border ${personaColor} rounded-lg overflow-hidden surface-text bg-surface`}>
       {/* Collapsible header bar */}
       <button
         onClick={() => setIsExpanded((prev) => !prev)}
-        className="w-full flex items-center justify-between px-4 py-2.5 hover:surface-text bg-surface-hover/40 transition-colors"
+        className="w-full flex items-center justify-between px-4 py-2.5 hover:surface-text bg-surface-hover transition-colors"
       >
         <div className="flex items-center gap-2">
           <MessageSquare size={15} className={personaAccent} />
@@ -81,7 +81,7 @@ export const ProbePanel = ({
             className={`flex items-center gap-1 px-2 py-0.5 rounded-full text-xs transition-all ${
               autoAccelerate
                 ? 'bg-warning/20 text-warning ring-1 ring-warning/30'
-                : 'surface-text bg-surface-hover/50 text-text-muted hover:text-text-muted'
+                : 'surface-text bg-surface-hover text-text-muted hover:text-text-muted'
             }`}
             title={autoAccelerate ? 'Probes appear faster (click to slow down)' : 'Speed up probe timing'}
           >
@@ -95,7 +95,7 @@ export const ProbePanel = ({
             className={`flex items-center gap-1 px-2 py-0.5 rounded-full text-xs transition-all ${
               practiceMode
                 ? 'bg-text-primary/20 text-text-primary ring-1 ring-border-theme'
-                : 'surface-text bg-surface-hover/50 text-text-muted hover:text-text-muted'
+                : 'surface-text bg-surface-hover text-text-muted hover:text-text-muted'
             }`}
             title={practiceMode ? 'Exit practice mode' : 'Practice probes manually'}
           >
@@ -141,7 +141,7 @@ export const ProbePanel = ({
                           ? 'bg-text-primary/20 text-text-primary ring-1 ring-border-theme font-medium'
                           : isDone
                             ? 'bg-success/10 text-success ring-1 ring-success/20'
-                            : 'surface-text bg-surface-hover/40 text-text-muted hover:surface-text bg-surface-hover/60 hover:text-text-muted'
+                            : 'surface-text bg-surface-hover text-text-muted hover:surface-text bg-surface-hover hover:text-text-muted'
                       }`}
                     >
                       {isDone ? (
@@ -169,7 +169,7 @@ export const ProbePanel = ({
                     value={practiceAnswer}
                     onChange={(e) => onAnswerChange(e.target.value)}
                     placeholder="Type your answer here... Explain your reasoning, approach, or thought process."
-                    className="w-full h-24 px-3 py-2 surface-text bg-surface-hover/60  rounded-lg text-sm text-text-primary placeholder-text-muted focus:outline-none focus:ring-1 focus:ring-border-strong focus:border-border-strong resize-none"
+                    className="w-full h-24 px-3 py-2 surface-text bg-surface-hover rounded-lg text-sm text-text-primary placeholder-text-muted focus:outline-none focus:ring-1 focus:ring-border-strong focus:border-border-strong resize-none"
                     disabled={isEvaluating}
                   />
                   <div className="flex items-center justify-between">
@@ -233,8 +233,8 @@ export const ProbePanel = ({
                         isActive
                           ? `${personaBg} ${personaAccent} font-medium ring-1 ${personaColor}`
                           : isPast
-                            ? 'surface-text bg-surface-hover/60 text-text-muted'
-                            : 'surface-text bg-surface-hover/30 text-text-muted'
+                            ? 'surface-text bg-surface-hover text-text-muted'
+                            : 'surface-text bg-surface-hover text-text-muted'
                       }`}
                     >
                       {isPast ? (

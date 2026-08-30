@@ -1,5 +1,18 @@
 const API_BASE_URL = import.meta.env?.VITE_API_BASE_URL || 'http://localhost:5000/api';
 
+const TOKEN_KEY = 'rozgar-sathi-auth-token';
+
+// Get auth token from localStorage
+const getAuthToken = () => localStorage.getItem(TOKEN_KEY);
+
+// Build headers with optional auth token
+const authHeaders = () => {
+  const headers = { 'Content-Type': 'application/json' };
+  const token = getAuthToken();
+  if (token) headers['Authorization'] = `Bearer ${token}`;
+  return headers;
+};
+
 // Request deduplication cache — prevents duplicate in-flight requests
 const pendingRequests = new Map();
 
@@ -19,6 +32,62 @@ export const apiClient = {
     const res = await fetch(`${API_BASE_URL}/health`);
     if (!res.ok) {
       throw new Error(`Health check failed with status ${res.status}`);
+    }
+    return res.json();
+  },
+
+  // --- Authentication -------------------------------------------------------
+
+  async signup(username, email, password, guestId) {
+    const res = await fetch(`${API_BASE_URL}/auth/signup`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ username, email, password, guestId: guestId || null }),
+    });
+    if (!res.ok) {
+      const errorData = await res.json().catch(() => ({ error: 'Signup failed' }));
+      throw new Error(errorData.error || `Signup failed: ${res.status}`);
+    }
+    const data = await res.json();
+    // Store token immediately so subsequent requests are authenticated
+    localStorage.setItem(TOKEN_KEY, data.token);
+    return data;
+  },
+
+  async signin(username, password) {
+    const res = await fetch(`${API_BASE_URL}/auth/signin`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ username, password }),
+    });
+    if (!res.ok) {
+      const errorData = await res.json().catch(() => ({ error: 'Sign in failed' }));
+      throw new Error(errorData.error || `Sign in failed: ${res.status}`);
+    }
+    const data = await res.json();
+    localStorage.setItem(TOKEN_KEY, data.token);
+    return data;
+  },
+
+  async getMe() {
+    const res = await fetch(`${API_BASE_URL}/auth/me`, {
+      headers: authHeaders(),
+    });
+    if (!res.ok) {
+      throw new Error('Not authenticated');
+    }
+    return res.json();
+  },
+
+  async migrateGuestSessions(guestId) {
+    const res = await fetch(`${API_BASE_URL}/auth/migrate-guest`, {
+      method: 'POST',
+      headers: authHeaders(),
+      body: JSON.stringify({ guestId }),
+    });
+    if (!res.ok) {
+      const errorData = await res.json().catch(() => ({ error: 'Migration failed' }));
+      throw new Error(errorData.error || `Migration failed: ${res.status}`);
     }
     return res.json();
   },
@@ -252,7 +321,9 @@ export const apiClient = {
   // --- Dashboard (Day 5) -------------------------------------------------
 
   async getDashboardData(userId) {
-    const res = await fetch(`${API_BASE_URL}/dashboard/${userId}`);
+    const res = await fetch(`${API_BASE_URL}/dashboard/${userId}`, {
+      headers: authHeaders(),
+    });
 
     if (!res.ok) {
       const errorData = await res.json().catch(() => ({ error: 'Failed to fetch dashboard data' }));
@@ -297,7 +368,9 @@ export const apiClient = {
   // --- Day 6: Session History + Trend ----------------------------------------
 
   async getSessionHistory(userId) {
-    const res = await fetch(`${API_BASE_URL}/dashboard/${userId}/history`);
+    const res = await fetch(`${API_BASE_URL}/dashboard/${userId}/history`, {
+      headers: authHeaders(),
+    });
     if (!res.ok) {
       const errorData = await res.json().catch(() => ({ error: 'Failed to fetch session history' }));
       throw new Error(errorData.error || `Server error: ${res.status}`);
@@ -306,7 +379,9 @@ export const apiClient = {
   },
 
   async getSessionTrend(userId) {
-    const res = await fetch(`${API_BASE_URL}/dashboard/${userId}/trend`);
+    const res = await fetch(`${API_BASE_URL}/dashboard/${userId}/trend`, {
+      headers: authHeaders(),
+    });
     if (!res.ok) {
       const errorData = await res.json().catch(() => ({ error: 'Failed to fetch session trend' }));
       throw new Error(errorData.error || `Server error: ${res.status}`);

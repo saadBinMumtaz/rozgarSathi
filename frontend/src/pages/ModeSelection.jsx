@@ -82,7 +82,7 @@ export const ModeSelection = ({ jdAnalysis, onSelectMode, onNavigate, language, 
             View Results
           </Button>
           {/* Language Toggle */}
-          <div className="flex items-center gap-2 surface-text bg-surface/90  rounded-lg px-3 py-1.5">
+          <div className="flex items-center gap-2 surface-text bg-surface  rounded-lg px-3 py-1.5">
             <span className="text-xs text-text-muted">
               {language === 'urdu' ? 'زبان' : 'Language'}
             </span>
@@ -128,7 +128,7 @@ export const ModeSelection = ({ jdAnalysis, onSelectMode, onNavigate, language, 
               <p className="text-xs text-text-muted">Extracted & Persisted in MongoDB</p>
             </div>
 
-            <div className="flex items-center gap-4 surface-text bg-surface/90 p-4 rounded-xl ">
+            <div className="flex items-center gap-4 surface-text bg-surface p-4 rounded-xl ">
               <ScoreRing score={10} max={10} size={50} strokeWidth={5} label="" />
               <div>
                 <div className="text-xs font-semibold text-text-muted">Target Skills Extracted</div>
@@ -167,7 +167,7 @@ export const ModeSelection = ({ jdAnalysis, onSelectMode, onNavigate, language, 
                 <Card
                   className={`h-full flex flex-col justify-between ${
                     isSelected
-                      ? 'border-border-strong surface-text bg-surface-hover ring-2 ring-surface-hover shadow-2xl'
+                      ? 'border-border-strong surface-text bg-surface-hover ring-2 ring-border-strong shadow-2xl'
                       : 'hover:border-border-theme'
                   }`}
                 >
@@ -192,7 +192,7 @@ export const ModeSelection = ({ jdAnalysis, onSelectMode, onNavigate, language, 
                           {m.focusList.map((f, i) => (
                             <span
                               key={i}
-                              className="px-2 py-0.5 surface-text bg-surface-hover/80 text-[10px] text-text-muted rounded"
+                              className="px-2 py-0.5 surface-text bg-surface-hover text-[10px] text-text-muted rounded"
                             >
                               {f}
                             </span>
@@ -202,7 +202,7 @@ export const ModeSelection = ({ jdAnalysis, onSelectMode, onNavigate, language, 
                     )}
                   </CardContent>
 
-                  <div className="mt-4 pt-4 border-t/60">
+                  <div className="mt-4 pt-4 border-t">
                     <Button
                       variant={isSelected ? 'primary' : 'secondary'}
                       className="w-full text-xs"

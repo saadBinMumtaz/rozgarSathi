@@ -99,7 +99,7 @@ export const JDInput = ({ onAnalysisComplete, onNavigate, pendingSampleJD, onSam
 
         {/* Demo Score Ring & Progress Bar Component Audit Card */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <Card className="flex items-center gap-4 surface-text bg-surface/40">
+          <Card className="flex items-center gap-4 surface-text bg-surface">
             <ScoreRing score={9.0} max={10} size={55} strokeWidth={6} label="Target Fit" />
             <div>
               <h4 className="text-sm font-bold text-text-primary">Personalized Twin Engine</h4>
@@ -107,7 +107,7 @@ export const JDInput = ({ onAnalysisComplete, onNavigate, pendingSampleJD, onSam
             </div>
           </Card>
 
-          <Card className="flex flex-col justify-center surface-text bg-surface/40">
+          <Card className="flex flex-col justify-center surface-text bg-surface">
             <div className="flex justify-between items-center mb-2">
               <span className="text-xs font-semibold text-text-muted">Extraction Pipeline</span>
               <Badge variant="success">Ready</Badge>
@@ -131,7 +131,7 @@ export const JDInput = ({ onAnalysisComplete, onNavigate, pendingSampleJD, onSam
                   onChange={handleSampleSelect}
                   disabled={isLoading}
                   aria-label="Load a sample job description"
-                  className="text-xs bg-bg-primary  rounded-md px-2 py-1.5 text-text-primary hover:border-border-strong focus:outline-none focus:border-border-strong cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="text-xs bg-surface rounded-md px-2 py-1.5 text-surface-text hover:border-border-strong focus:outline-none focus:border-border-strong cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   <option value="" disabled>
                     ✨ Try a sample JD…
@@ -157,7 +157,7 @@ export const JDInput = ({ onAnalysisComplete, onNavigate, pendingSampleJD, onSam
                 }}
                 placeholder="Paste the full job description text here..."
                 rows={10}
-                className="w-full bg-bg-primary  rounded-lg p-4 text-sm text-text-primary placeholder-text-muted focus:outline-none focus:border-border-strong focus:ring-1 focus:ring-border-strong transition-all font-mono"
+                className="w-full bg-surface rounded-lg p-4 text-sm text-surface-text placeholder-surface-text-muted focus:outline-none focus:border-border-strong focus:ring-1 focus:ring-border-strong transition-all font-mono"
               />
             </div>
 
@@ -169,19 +169,19 @@ export const JDInput = ({ onAnalysisComplete, onNavigate, pendingSampleJD, onSam
                 </label>
                 <Badge variant="secondary">Day 3 Gap Analysis</Badge>
               </div>
-              <div className="flex items-center gap-4 bg-bg-primary  rounded-lg p-3">
+              <div className="flex items-center gap-4 bg-surface rounded-lg p-3">
                 <input
                   type="file"
                   accept=".pdf,.txt,.doc,.docx"
                   onChange={(e) => setResumeFile(e.target.files?.[0] || null)}
-                  className="text-xs text-text-muted file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-xs file:font-semibold file:surface-text bg-surface-hover file:text-text-muted hover:file:bg-bg-hover"
+                  className="text-xs text-surface-text file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-xs file:font-semibold file:surface-text file:bg-surface-hover file:text-surface-text hover:file:bg-surface-hover"
                 />
                 {resumeFile && <span className="text-xs text-success font-medium">✓ {resumeFile.name} attached</span>}
               </div>
             </div>
 
             {error && (
-              <div className="p-3 bg-danger/10  rounded-lg text-xs text-danger">
+              <div className="p-3 bg-danger/10 rounded-lg text-xs text-danger">
                 {error}
               </div>
             )}

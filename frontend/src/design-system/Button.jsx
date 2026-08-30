@@ -16,12 +16,12 @@ export const Button = ({
   const variants = {
     // Primary: solid button — dark bg + light text (works on any surface)
     primary: 'bg-text-primary text-bg-primary hover:opacity-90',
-    // Secondary: light bg + dark text (uses text-surface which isn't overridden by surface-text)
-    secondary: 'bg-bg-hover text-surface hover:bg-bg-active',
-    // Ghost: transparent + dark text
-    ghost: 'bg-transparent hover:bg-bg-hover text-surface hover:text-surface',
-    // Link: text only + dark color
-    link: 'bg-transparent hover:underline text-surface hover:text-surface p-0 shadow-none border-none',
+    // Secondary: light bg + dark text — visible on both light and dark surfaces
+    secondary: 'bg-surface-text text-surface hover:opacity-80',
+    // Ghost: transparent + theme-adaptive text
+    ghost: 'bg-transparent hover:bg-bg-hover text-text-primary hover:text-text-primary',
+    // Link: text only + theme-adaptive color
+    link: 'bg-transparent hover:underline text-text-primary hover:text-text-primary p-0 shadow-none border-none',
     // Destructive: red background + white text
     destructive: 'bg-danger text-white hover:opacity-90',
   };

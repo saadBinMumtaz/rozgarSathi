@@ -11,8 +11,10 @@ import behavioralRoutes from './routes/behavioral.routes.js';
 import technicalRoutes from './routes/technical.routes.js';
 import codingRoutes from './routes/coding.routes.js';
 import dashboardRoutes from './routes/dashboard.routes.js';
+import authRoutes from './routes/auth.routes.js';
 
 import errorHandler from './middleware/errorHandler.js';
+import { authMiddleware } from './middleware/authMiddleware.js';
 import logger from './utils/logger.js';
 
 const app = express();
@@ -25,6 +27,7 @@ app.use(express.json({ limit: '1mb' }));
 
 // Mount API routes (Section 8 API Contract)
 app.use('/api/health', healthRoutes);
+app.use('/api/auth', authRoutes);
 app.use('/api/jd', jdRoutes);
 app.use('/api/resume', resumeRoutes);
 app.use('/api/sessions', sessionRoutes);
@@ -34,7 +37,8 @@ app.use('/api/sessions', sessionRoutes);
 app.use('/api/sessions', behavioralRoutes);
 app.use('/api/sessions', technicalRoutes);
 app.use('/api/coding', codingRoutes);
-app.use('/api/dashboard', dashboardRoutes);
+// Auth middleware on dashboard — attaches req.user but doesn't block guests
+app.use('/api/dashboard', authMiddleware, dashboardRoutes);
 
 // Root endpoint
 app.get('/', (_req, res) => {

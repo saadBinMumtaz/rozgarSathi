@@ -28,7 +28,7 @@ const ERROR_STATE_CONFIG = {
   empty_code: {
     icon: FileWarning,
     heading: 'Nothing to run',
-    tone: 'border-border-theme surface-text bg-surface-hover/60 text-text-muted',
+    tone: 'border-border-theme surface-text bg-surface-hover text-text-muted',
     iconColor: 'text-text-muted',
   },
   syntax_error: {
@@ -65,7 +65,7 @@ const ERROR_STATE_CONFIG = {
   service_unavailable: {
     icon: ServerCrash,
     heading: 'Judge unavailable',
-    tone: 'border-border-theme surface-text bg-surface-hover/60 text-text-muted',
+    tone: 'border-border-theme surface-text bg-surface-hover text-text-muted',
     iconColor: 'text-text-muted',
   },
 };
@@ -159,7 +159,7 @@ export const TestResultPanel = memo(({
   isExecuting = false,
 }) => {
   return (
-    <Card className="border-border-theme surface-text bg-surface/80">
+    <Card className="border-border-theme surface-text bg-surface">
       <CardHeader className="pb-3">
         <div className="flex items-center justify-between">
           <CardTitle className="text-base">{title}</CardTitle>

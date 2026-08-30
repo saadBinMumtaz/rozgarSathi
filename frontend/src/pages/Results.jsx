@@ -148,7 +148,7 @@ export const Results = ({ userId = 'guest', onNavigate }) => {
       {/* Overall Readiness + Per-Mode Breakdown */}
       <div className="grid md:grid-cols-4 gap-4">
         {/* Overall readiness — large ring */}
-        <Card className="md:col-span-1 surface-text bg-surface/80">
+        <Card className="md:col-span-1 surface-text bg-surface">
           <CardContent className="pt-6 flex flex-col items-center">
             <ScoreRing
               score={overallReadiness}
@@ -164,7 +164,7 @@ export const Results = ({ userId = 'guest', onNavigate }) => {
         </Card>
 
         {/* Per-mode scores */}
-        <Card className="md:col-span-3 surface-text bg-surface/80">
+        <Card className="md:col-span-3 surface-text bg-surface">
           <CardHeader>
             <CardTitle className="text-base flex items-center gap-2">
               <BarChart3 size={16} className="text-text-muted" />
@@ -195,7 +195,7 @@ export const Results = ({ userId = 'guest', onNavigate }) => {
 
       {/* Weakest Competency + Weights */}
       <div className="grid md:grid-cols-2 gap-4">
-        <Card className="border-border-theme surface-text bg-surface/80">
+        <Card className="border-border-theme surface-text bg-surface">
           <CardHeader>
             <CardTitle className="text-base flex items-center gap-2">
               <Target size={16} className="text-warning" />
@@ -218,7 +218,7 @@ export const Results = ({ userId = 'guest', onNavigate }) => {
         </Card>
 
         {/* Weights transparency */}
-        <Card className="border-border-theme surface-text bg-surface/80">
+        <Card className="border-border-theme surface-text bg-surface">
           <CardHeader>
             <CardTitle className="text-base flex items-center gap-2">
               <Award size={16} className="text-icon-active" />
@@ -272,7 +272,7 @@ export const Results = ({ userId = 'guest', onNavigate }) => {
 
       {/* Trend */}
       {trend && trend.length > 0 && (
-        <Card className="border-border-theme surface-text bg-surface/80">
+        <Card className="border-border-theme surface-text bg-surface">
           <CardHeader>
             <CardTitle className="text-base flex items-center gap-2">
               <TrendingUp size={16} className="text-success" />

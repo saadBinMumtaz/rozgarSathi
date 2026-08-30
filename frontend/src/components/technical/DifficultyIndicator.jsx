@@ -36,7 +36,7 @@ export const DifficultyIndicator = ({ current, previous, ratingDelta }) => {
   }
 
   return (
-    <div className="flex items-center gap-3 surface-text bg-surface-hover/50  rounded-lg px-4 py-2">
+    <div className="flex items-center gap-3 surface-text bg-surface-hover  rounded-lg px-4 py-2">
       <div className="flex items-center gap-2">
         <span className="text-xs text-text-muted uppercase tracking-wide">Difficulty</span>
         <Badge variant={config.variant} size="sm">

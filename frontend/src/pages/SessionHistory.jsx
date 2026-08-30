@@ -52,11 +52,11 @@ const SessionCard = ({ session }) => {
   const scoreLabel = getScoreLabel(session.overallScore);
 
   return (
-    <Card className={`border-border-theme surface-text bg-surface/80 transition-colors ${expanded ? 'ring-1 ring-border-theme' : ''}`}>
+    <Card className={`border-border-theme surface-text bg-surface transition-colors ${expanded ? 'ring-1 ring-border-theme' : ''}`}>
       {/* Summary row — always visible */}
       <button
         onClick={() => setExpanded(!expanded)}
-        className="w-full text-left px-4 pt-4 pb-3 flex items-center justify-between gap-3 hover:surface-text bg-surface-hover/30 transition-colors rounded-t-lg focus:outline-none focus:ring-2 focus:ring-border-strong focus:ring-inset"
+        className="w-full text-left px-4 pt-4 pb-3 flex items-center justify-between gap-3 hover:surface-text bg-surface-hover transition-colors rounded-t-lg focus:outline-none focus:ring-2 focus:ring-border-strong focus:ring-inset"
         aria-expanded={expanded}
         aria-label={`${config.label} interview on ${formatDate(session.date)}, score ${session.overallScore ?? 'unknown'}. ${expanded ? 'Collapse' : 'Expand'} details.`}
       >
@@ -96,7 +96,7 @@ const SessionCard = ({ session }) => {
         <CardContent className="space-y-4 border-t pt-4">
           {/* JD snapshot */}
           {session.jdSnapshot && (
-            <div className="surface-text bg-surface-hover/40 rounded-lg p-3">
+            <div className="surface-text bg-surface-hover rounded-lg p-3">
               <p className="text-xs font-medium text-text-muted mb-1 flex items-center gap-1">
                 <FileText size={11} aria-hidden="true" /> Job Description
               </p>
@@ -115,7 +115,7 @@ const SessionCard = ({ session }) => {
                 Questions & Feedback
               </h4>
               {session.questions.map((q, idx) => (
-                <div key={idx} className="surface-text bg-surface-hover/30 rounded-lg p-3 space-y-2">
+                <div key={idx} className="surface-text bg-surface-hover rounded-lg p-3 space-y-2">
                   {/* Question header */}
                   <div className="flex items-start justify-between gap-2">
                     <div className="min-w-0">
@@ -135,7 +135,7 @@ const SessionCard = ({ session }) => {
 
                   {/* Transcript */}
                   {q.transcript && (
-                    <div className="surface-text bg-surface/80 rounded p-2">
+                    <div className="surface-text bg-surface rounded p-2">
                       <p className="text-xs text-text-muted mb-1">Your answer:</p>
                       <p className="text-xs text-text-muted italic line-clamp-3">{q.transcript}</p>
                     </div>
@@ -260,7 +260,7 @@ export const SessionHistory = ({ userId = 'guest', onNavigate }) => {
               className={`px-3 py-1.5 rounded-full text-xs font-medium transition-all focus:outline-none focus:ring-2 focus:ring-border-strong ${
                 isActive
                   ? 'bg-text-primary/20 text-text-primary ring-1 ring-border-theme'
-                  : 'surface-text bg-surface-hover/40 text-text-muted hover:surface-text bg-surface-hover/60 hover:text-text-muted'
+                  : 'surface-text bg-surface-hover text-text-muted hover:surface-text bg-surface-hover hover:text-text-muted'
               }`}
               aria-pressed={isActive}
             >
@@ -272,7 +272,7 @@ export const SessionHistory = ({ userId = 'guest', onNavigate }) => {
 
       {/* Session list */}
       {filteredSessions.length === 0 ? (
-        <Card className="border-border-theme surface-text bg-surface/80">
+        <Card className="border-border-theme surface-text bg-surface">
           <CardContent className="pt-6 text-center space-y-3">
             <Clock size={32} className="text-text-muted mx-auto" aria-hidden="true" />
             <p className="text-sm text-text-muted">

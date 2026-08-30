@@ -97,19 +97,13 @@ const buildTrend = (sessions) => {
 export const getDashboardData = async (req, res, next) => {
   try {
     const { userId } = req.params;
+    const authenticatedUser = req.user || null;
 
-    // Fetch all sessions for this user.
-    // For single-user hackathon mode: include ALL guest sessions (both the exact
-    // 'guest' string and legacy 'guest_<timestamp>' orphans) plus any user_ sessions.
-    // This ensures the dashboard always shows data regardless of userId generation.
-    const query = {
-      $or: [
-        { userId },
-        { userId: 'guest' },
-        { userId: { $regex: /^guest_/ } },
-        ...(userId.startsWith('user_') ? [{ userId: { $regex: /^user_/ } }] : []),
-      ],
-    };
+    // For authenticated users, use their real userId
+    const effectiveUserId = authenticatedUser ? String(authenticatedUser._id) : userId;
+
+    // Fetch all sessions for this user
+    const query = buildUserQuery(effectiveUserId, authenticatedUser);
     const sessions = await Session.find(query).lean().catch((err) => {
       logger.error(`Dashboard DB query failed: ${err.message}`);
       return [];
@@ -189,16 +183,23 @@ export default { getDashboardData };
 // ─── Day 6: Session History + Trend ───────────────────────────────────────
 
 /**
- * Helper: build the inclusive userId query (same logic as getDashboardData).
+ * Build the userId query for session lookups.
+ * For authenticated users: only their own sessions.
+ * For guests: broad query including guest/orphan sessions.
  */
-const buildUserQuery = (userId) => ({
-  $or: [
-    { userId },
-    { userId: 'guest' },
-    { userId: { $regex: /^guest_/ } },
-    ...(userId.startsWith('user_') ? [{ userId: { $regex: /^user_/ } }] : []),
-  ],
-});
+const buildUserQuery = (userId, authenticatedUser) => {
+  if (authenticatedUser) {
+    return { userId: String(authenticatedUser._id) };
+  }
+  return {
+    $or: [
+      { userId },
+      { userId: 'guest' },
+      { userId: { $regex: /^guest_/ } },
+      ...(userId.startsWith('user_') ? [{ userId: { $regex: /^user_/ } }] : []),
+    ],
+  };
+};
 
 /**
  * GET /api/dashboard/:userId/history
@@ -207,7 +208,9 @@ const buildUserQuery = (userId) => ({
 export const getSessionHistory = async (req, res, next) => {
   try {
     const { userId } = req.params;
-    const sessions = await Session.find(buildUserQuery(userId))
+    const authenticatedUser = req.user || null;
+    const effectiveUserId = authenticatedUser ? String(authenticatedUser._id) : userId;
+    const sessions = await Session.find(buildUserQuery(effectiveUserId, authenticatedUser))
       .sort({ updatedAt: -1 })
       .lean();
 
@@ -261,7 +264,9 @@ export const getSessionHistory = async (req, res, next) => {
 export const getSessionTrend = async (req, res, next) => {
   try {
     const { userId } = req.params;
-    const sessions = await Session.find(buildUserQuery(userId))
+    const authenticatedUser = req.user || null;
+    const effectiveUserId = authenticatedUser ? String(authenticatedUser._id) : userId;
+    const sessions = await Session.find(buildUserQuery(effectiveUserId, authenticatedUser))
       .sort({ updatedAt: -1 })
       .lean();
 

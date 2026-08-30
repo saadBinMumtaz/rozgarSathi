@@ -155,7 +155,7 @@ export const Dashboard = ({ userId = 'guest', onNavigate }) => {
       {/* Overall Readiness + Per-Mode Breakdown */}
       <div className="grid md:grid-cols-4 gap-4">
         {/* Overall readiness ring */}
-        <Card className="md:col-span-1 surface-text bg-surface/80">
+        <Card className="md:col-span-1 surface-text bg-surface">
           <CardContent className="pt-6 flex flex-col items-center">
             <ScoreRing score={overallReadiness} max={100} label="Overall Readiness" size={120} strokeWidth={10} />
             <div className={`mt-2 text-sm font-semibold ${readiness.color}`} aria-label={`Readiness: ${readiness.text}`}>
@@ -168,7 +168,7 @@ export const Dashboard = ({ userId = 'guest', onNavigate }) => {
         </Card>
 
         {/* Per-mode scores */}
-        <Card className="md:col-span-3 surface-text bg-surface/80">
+        <Card className="md:col-span-3 surface-text bg-surface">
           <CardHeader>
             <CardTitle className="text-base flex items-center gap-2">
               <BarChart3 size={16} className="text-text-muted" aria-hidden="true" />
@@ -199,7 +199,7 @@ export const Dashboard = ({ userId = 'guest', onNavigate }) => {
 
       {/* Weakest Competency + Recommendation */}
       <div className="grid md:grid-cols-2 gap-4">
-        <Card className="border-border-theme surface-text bg-surface/80">
+        <Card className="border-border-theme surface-text bg-surface">
           <CardHeader>
             <CardTitle className="text-base flex items-center gap-2">
               <Target size={16} className="text-warning" aria-hidden="true" />
@@ -220,7 +220,7 @@ export const Dashboard = ({ userId = 'guest', onNavigate }) => {
         </Card>
 
         {/* Recommended Next Interview */}
-        <Card className="border-border-theme surface-text bg-surface/80">
+        <Card className="border-border-theme surface-text bg-surface">
           <CardHeader>
             <CardTitle className="text-base flex items-center gap-2">
               <Award size={16} className="text-icon-active" aria-hidden="true" />
@@ -291,7 +291,7 @@ export const Dashboard = ({ userId = 'guest', onNavigate }) => {
 
       {/* Latest Session Snapshot */}
       {latestSession && (
-        <Card className="border-border-theme surface-text bg-surface/80">
+        <Card className="border-border-theme surface-text bg-surface">
           <CardHeader>
             <CardTitle className="text-base flex items-center gap-2">
               <Clock size={16} className="text-text-muted" aria-hidden="true" />
@@ -335,7 +335,7 @@ export const Dashboard = ({ userId = 'guest', onNavigate }) => {
 
       {/* Weights Transparency */}
       {weights && (
-        <Card className="border-border-theme surface-text bg-surface/80">
+        <Card className="border-border-theme surface-text bg-surface">
           <CardHeader>
             <CardTitle className="text-base flex items-center gap-2">
               <TrendingUp size={16} className="text-icon-active" aria-hidden="true" />

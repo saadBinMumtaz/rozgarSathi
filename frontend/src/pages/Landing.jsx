@@ -1,131 +1,210 @@
-import React from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { Button } from '../design-system/Button';
-import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '../design-system/Card';
-import { Badge } from '../design-system/Badge';
-import { ProgressBar } from '../design-system/ProgressBar';
-import { ScoreRing } from '../design-system/ScoreRing';
 import { sampleJDs, sampleSeniorityOrder } from '../data/sampleJD';
-import { BarChart3 } from 'lucide-react';
+import { BarChart3, LogIn, LogOut, Sparkles } from 'lucide-react';
+import { useAuth } from '../context/AuthContext';
 
-export const Landing = ({ onNavigate, onTrySampleJD }) => {
+/* ─── TypeWriter Hook ─── */
+const useTypeWriter = (words, typingSpeed = 70, deletingSpeed = 40, pauseDuration = 1500) => {
+  const [displayed, setDisplayed] = useState('');
+  const [wordIndex, setWordIndex] = useState(0);
+  const [isDeleting, setIsDeleting] = useState(false);
+
+  useEffect(() => {
+    const currentWord = words[wordIndex];
+    let timeout;
+
+    if (!isDeleting && displayed === currentWord) {
+      // Pause at end of word, then start deleting
+      timeout = setTimeout(() => setIsDeleting(true), pauseDuration);
+    } else if (isDeleting && displayed === '') {
+      // Move to next word
+      setIsDeleting(false);
+      setWordIndex((prev) => (prev + 1) % words.length);
+    } else if (isDeleting) {
+      timeout = setTimeout(() => {
+        setDisplayed((prev) => prev.slice(0, -1));
+      }, deletingSpeed);
+    } else {
+      timeout = setTimeout(() => {
+        setDisplayed(currentWord.slice(0, displayed.length + 1));
+      }, typingSpeed);
+    }
+
+    return () => clearTimeout(timeout);
+  }, [displayed, wordIndex, isDeleting, words, typingSpeed, deletingSpeed, pauseDuration]);
+
+  return displayed;
+};
+
+/* ─── Landing Page ─── */
+export const Landing = ({ onNavigate, onTrySampleJD, isAuthenticated, user, isDark }) => {
+  const { logout } = useAuth();
+  const videoRef = useRef(null);
+
+  const typewriterWord = useTypeWriter(
+    ['Behavioral', 'Technical', 'Coding'],
+    70,   // typing speed (ms per char)
+    40,   // deleting speed
+    1500  // pause at end of word
+  );
+
+  // Force video to loop between 0–6 seconds
+  useEffect(() => {
+    const video = videoRef.current;
+    if (!video) return;
+    const handleTimeUpdate = () => {
+      if (video.currentTime >= 6) {
+        video.currentTime = 0;
+        video.play().catch(() => {});
+      }
+    };
+    video.addEventListener('timeupdate', handleTimeUpdate);
+    return () => video.removeEventListener('timeupdate', handleTimeUpdate);
+  }, []);
+
   return (
-    <div className="min-h-screen bg-bg-primary text-text-primary p-6 md:p-12 flex flex-col items-center justify-center relative overflow-hidden">
+    <div className="min-h-screen bg-bg-primary text-text-primary flex flex-col relative overflow-hidden">
       {/* Background radial glow */}
-      <div className="absolute top-1/4 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-text-primary/10 blur-[120px] rounded-full pointer-events-none" />
+      <div className="absolute top-1/4 left-1/3 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[500px] bg-text-primary/5 blur-[120px] rounded-full pointer-events-none" />
 
-      {/* Navigation Header */}
-      <header className="w-full max-w-6xl flex justify-between items-center mb-12">
-        <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-xl bg-text-primary flex items-center justify-center font-black text-xl text-text-primary shadow-lg shadow-sm">
-            RS
-          </div>
-          <span className="text-xl font-bold tracking-tight text-text-primary">Rozgar Sathi</span>
+      {/* ─── Navigation Header ─── */}
+      <header className="w-full max-w-7xl mx-auto flex justify-between items-center px-6 md:px-12 py-5">
+        <div className="flex items-center gap-2">
+          <img
+            src={isDark ? '/logo-white.png' : '/logo-dark.png'}
+            alt="Rozgar Sathi"
+            className="h-14 w-auto"
+          />
         </div>
         <div className="flex items-center gap-3">
-          <button
-            onClick={() => onNavigate('dashboard')}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm text-text-muted hover:text-text-primary hover:surface-text bg-surface-hover transition-colors focus:outline-none focus:ring-2 focus:ring-border-strong"
-            aria-label="View your dashboard"
-          >
-            <BarChart3 size={14} /> Dashboard
-          </button>
-          <Badge variant="primary">AI Interview Twin v1.0</Badge>
+          {isAuthenticated ? (
+            <>
+              <span className="text-sm text-text-muted hidden sm:inline">
+                Hi, <span className="text-text-primary font-medium">{user?.username || 'user'}</span>
+              </span>
+              <button
+                onClick={() => onNavigate('dashboard')}
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm text-text-muted hover:text-text-primary hover:surface-text bg-surface-hover transition-colors focus:outline-none focus:ring-2 focus:ring-border-strong"
+                aria-label="View your dashboard"
+              >
+                <BarChart3 size={14} /> Dashboard
+              </button>
+              <button
+                onClick={() => { logout(); onNavigate('landing'); }}
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm text-text-muted hover:text-text-primary hover:surface-text bg-surface-hover transition-colors focus:outline-none focus:ring-2 focus:ring-border-strong"
+                aria-label="Sign out of your account"
+              >
+                <LogOut size={14} /> Logout
+              </button>
+            </>
+          ) : (
+            <button
+              onClick={() => onNavigate('auth')}
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm text-text-muted hover:text-text-primary hover:surface-text bg-surface-hover transition-colors focus:outline-none focus:ring-2 focus:ring-border-strong"
+              aria-label="Sign in to your account"
+            >
+              <LogIn size={14} /> Sign In
+            </button>
+          )}
         </div>
       </header>
 
-      {/* Hero Section */}
-      <main className="w-full max-w-5xl space-y-12 text-center relative z-10">
-        <div className="space-y-4">
-          <Badge variant="info" className="mb-2">Day 1 Core Platform</Badge>
-          <h1 className="text-4xl md:text-6xl font-extrabold text-text-primary tracking-tight leading-tight">
-            Your Personal <span className="text-text-primary">AI Interview Twin</span>
+      {/* ─── Split-Screen Hero ─── */}
+      <section className="flex-1 w-full max-w-7xl mx-auto px-6 md:px-12 py-8 md:py-12 grid grid-cols-1 lg:grid-cols-2 gap-10 lg:gap-16 items-center relative z-10">
+        {/* Left Column — Text & CTAs */}
+        <div className="space-y-6">
+          <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-[3.25rem] font-extrabold text-text-primary tracking-tight leading-tight">
+            Get ready for
+            <br />
+            <span className="inline-block min-w-[1ch] mt-1">
+              {typewriterWord}
+              <span
+                className="inline-block w-[3px] h-[0.85em] bg-text-primary ml-0.5 align-middle"
+                style={{ animation: 'tw-cursor-blink 0.7s steps(2, start) infinite' }}
+              />
+            </span>
+            {' '}interview
           </h1>
-          <p className="text-lg md:text-xl text-text-muted max-w-2xl mx-auto font-light leading-relaxed">
-            Practice spoken Behavioral, Technical, and Live Coding interviews tailored specifically to your target Job Description.
+
+          <p className="text-base md:text-lg text-text-muted max-w-xl leading-relaxed">
+            Practice spoken Behavioral, Technical, and Live Coding interviews tailored
+            to your target Job Description — with adaptive difficulty, bilingual support,
+            and evidence-backed scoring.
           </p>
+
+          {/* Action Buttons */}
+          <div className="flex flex-wrap gap-3 pt-2">
+            <Button
+              size="lg"
+              variant="primary"
+              onClick={() => onNavigate(isAuthenticated ? 'jd-input' : 'auth')}
+            >
+              {isAuthenticated ? 'Start JD Analysis & Practice →' : 'Get Started →'}
+            </Button>
+
+            <select
+              value=""
+              onChange={(e) => {
+                const sample = sampleJDs.find((s) => s.id === e.target.value);
+                if (sample) onTrySampleJD({ text: sample.text, sampleId: sample.id });
+              }}
+              aria-label="Load a sample job description"
+              className="text-base font-semibold surface-text bg-surface rounded-lg px-4 py-3 text-text-primary hover:border-border-strong focus:outline-none focus:border-border-strong cursor-pointer"
+            >
+              <option value="" disabled>
+                <span className="flex items-center gap-1"><Sparkles size={14} /> Try a sample JD…</span>
+              </option>
+              {sampleSeniorityOrder.map((group) => (
+                <optgroup key={group} label={group}>
+                  {sampleJDs
+                    .filter((s) => s.seniority === group)
+                    .map((s) => (
+                      <option key={s.id} value={s.id}>
+                        {s.label}
+                      </option>
+                    ))}
+                </optgroup>
+              ))}
+            </select>
+          </div>
+
+          {/* Guest hint */}
+          {!isAuthenticated && (
+            <p className="text-xs text-text-muted">
+              Try a sample JD without signing up, or{' '}
+              <button onClick={() => onNavigate('auth')} className="text-text-primary font-medium hover:underline">
+                create an account
+              </button>{' '}
+              to track your progress.
+            </p>
+          )}
         </div>
 
-        {/* Action Button */}
-        <div className="flex justify-center gap-4 flex-wrap">
-          <Button size="lg" variant="primary" onClick={() => onNavigate('jd-input')}>
-            Start JD Analysis & Practice →
-          </Button>
-          {/* Sec. 15.1: pick a sample JD first (grouped by seniority), then it
-              pre-fills the textarea and runs the analyze flow on arrival */}
-          <select
-            value=""
-            onChange={(e) => {
-              const sample = sampleJDs.find((s) => s.id === e.target.value);
-              if (sample) onTrySampleJD({ text: sample.text, sampleId: sample.id });
-            }}
-            aria-label="Load a sample job description"
-            className="text-base font-semibold surface-text bg-surface  rounded-lg px-4 py-3 text-text-primary hover:border-border-strong focus:outline-none focus:border-border-strong cursor-pointer"
-          >
-            <option value="" disabled>
-              ✨ Try a sample JD…
-            </option>
-            {sampleSeniorityOrder.map((group) => (
-              <optgroup key={group} label={group}>
-                {sampleJDs
-                  .filter((s) => s.seniority === group)
-                  .map((s) => (
-                    <option key={s.id} value={s.id}>
-                      {s.label}
-                    </option>
-                  ))}
-              </optgroup>
-            ))}
-          </select>
+        {/* Right Column — Video Frame */}
+        <div className="flex items-center justify-center">
+          <div className="relative w-full max-w-lg aspect-video rounded-2xl overflow-hidden border border-border shadow-2xl bg-surface">
+            <video
+              ref={videoRef}
+              autoPlay
+              muted
+              loop
+              playsInline
+              className="w-full h-full object-cover"
+            >
+              <source src="/animated-video.mp4" type="video/mp4" />
+            </video>
+          </div>
         </div>
+      </section>
 
-        {/* Feature Cards Grid demonstrating Design System Primitives */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 pt-8 text-left">
-          <Card>
-            <CardHeader>
-              <div className="flex justify-between items-start mb-2">
-                <Badge variant="primary">Mode 1</Badge>
-                <ScoreRing score={8.5} max={10} size={50} strokeWidth={5} label="" />
-              </div>
-              <CardTitle>🎤 Spoken Behavioral</CardTitle>
-              <CardDescription>STAR structure & communication coaching</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <ProgressBar value={85} label="Communication Benchmark" />
-              <p className="text-xs text-text-muted mt-2">Voice-driven questions with adaptive follow-ups.</p>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader>
-              <div className="flex justify-between items-start mb-2">
-                <Badge variant="info">Mode 2</Badge>
-                <ScoreRing score={7.8} max={10} size={50} strokeWidth={5} label="" />
-              </div>
-              <CardTitle>💻 Technical Q&A</CardTitle>
-              <CardDescription>JD tech stack & seniority probing</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <ProgressBar value={78} label="Tech Stack Depth" />
-              <p className="text-xs text-text-muted mt-2">Live difficulty adjustment per competency.</p>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader>
-              <div className="flex justify-between items-start mb-2">
-                <Badge variant="success">Mode 3</Badge>
-                <ScoreRing score={9.2} max={10} size={50} strokeWidth={5} label="" />
-              </div>
-              <CardTitle>🧩 Live Coding</CardTitle>
-              <CardDescription>LeetCode sandbox & AI interviewer probes</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <ProgressBar value={92} label="Code Execution & Probing" />
-              <p className="text-xs text-text-muted mt-2">Monaco editor with sandboxed execution.</p>
-            </CardContent>
-          </Card>
-        </div>
-      </main>
+      {/* Cursor blink keyframes */}
+      <style>{`
+        @keyframes tw-cursor-blink {
+          0%, 100% { opacity: 1; }
+          50% { opacity: 0; }
+        }
+      `}</style>
     </div>
   );
 };

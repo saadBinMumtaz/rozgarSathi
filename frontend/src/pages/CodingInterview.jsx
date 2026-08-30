@@ -312,7 +312,7 @@ export const CodingInterview = ({ jdAnalysisId, onNavigate, userId }) => {
         {evaluation ? (
           <EvidenceCard evaluation={evaluation} />
         ) : (
-          <div className="surface-text bg-surface/80  rounded-lg p-4 text-center">
+          <div className="surface-text bg-surface rounded-lg p-4 text-center">
             <p className="text-sm text-text-muted">
               {executionError
                 ? 'Your solution encountered an error during evaluation. See details below.'
@@ -323,7 +323,7 @@ export const CodingInterview = ({ jdAnalysisId, onNavigate, userId }) => {
 
         {/* Coding report dimensions */}
         {codingReport && (
-          <div className="surface-text bg-surface/80  rounded-lg p-4">
+          <div className="surface-text bg-surface rounded-lg p-4">
             <h3 className="text-sm font-semibold text-text-muted mb-3">Coding Report</h3>
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
               {[
@@ -403,7 +403,7 @@ export const CodingInterview = ({ jdAnalysisId, onNavigate, userId }) => {
 
         {/* Tab conflict warning */}
         {tabConflict && (
-          <div className="p-2 bg-warning/10  rounded-md text-warning text-xs flex items-center justify-between gap-3" role="alert">
+          <div className="p-2 bg-warning/10 rounded-md text-warning text-xs flex items-center justify-between gap-3" role="alert">
             <span>Another tab is running this same session. Close it to avoid conflicts, or <button onClick={dismissTabWarning} className="underline font-medium">continue here</button>.</span>
           </div>
         )}
@@ -446,7 +446,7 @@ export const CodingInterview = ({ jdAnalysisId, onNavigate, userId }) => {
       <div className="grid lg:grid-cols-12 gap-4">
         {/* Left: Question panel */}
         <div className="lg:col-span-5 space-y-4">
-          <Card className="border-border-theme surface-text bg-surface/80">
+          <Card className="border-border-theme surface-text bg-surface">
             <CardHeader>
               <div className="flex items-center justify-between gap-2">
                 <CardTitle className="text-lg">{question.title}</CardTitle>
@@ -468,7 +468,7 @@ export const CodingInterview = ({ jdAnalysisId, onNavigate, userId }) => {
                   </div>
                   <div className="space-y-2">
                     {question.examples.map((ex, i) => (
-                      <div key={i} className="surface-text bg-surface-hover/60 rounded-lg px-4 py-3 font-mono text-xs space-y-1">
+                      <div key={i} className="surface-text bg-surface-hover rounded-lg px-4 py-3 font-mono text-xs space-y-1">
                         <div>
                           <span className="text-text-muted">Input:  </span>
                           <span className="text-text-primary">{ex.input}</span>
@@ -502,11 +502,11 @@ export const CodingInterview = ({ jdAnalysisId, onNavigate, userId }) => {
 
               {/* Complexity hints */}
               <div className="grid grid-cols-2 gap-2 text-xs">
-                <div className="surface-text bg-surface-hover/60 rounded-lg px-3 py-2">
+                <div className="surface-text bg-surface-hover rounded-lg px-3 py-2">
                   <span className="text-text-muted">Time: </span>
                   <span className="text-text-muted font-mono">{question.expectedTimeComplexity}</span>
                 </div>
-                <div className="surface-text bg-surface-hover/60 rounded-lg px-3 py-2">
+                <div className="surface-text bg-surface-hover rounded-lg px-3 py-2">
                   <span className="text-text-muted">Space: </span>
                   <span className="text-text-muted font-mono">{question.expectedSpaceComplexity}</span>
                 </div>
@@ -523,7 +523,7 @@ export const CodingInterview = ({ jdAnalysisId, onNavigate, userId }) => {
                     {question.followUpPrompts.map((prompt, i) => (
                       <div
                         key={i}
-                        className="text-xs text-text-muted bg-warning/5 /10 rounded-lg px-3 py-2"
+                        className="text-xs text-text-muted bg-warning/5 rounded-lg px-3 py-2"
                       >
                         {prompt}
                       </div>
@@ -584,7 +584,7 @@ export const CodingInterview = ({ jdAnalysisId, onNavigate, userId }) => {
 
           {/* Network error */}
           {networkError && (
-            <div role="alert" className="rounded-lg /40 bg-danger/10 px-4 py-3 text-sm text-danger">
+            <div role="alert" className="rounded-lg bg-danger/10 px-4 py-3 text-sm text-danger">
               {networkError}
             </div>
           )}
@@ -623,7 +623,7 @@ export const CodingInterview = ({ jdAnalysisId, onNavigate, userId }) => {
       {/* Submit confirmation modal */}
       {showConfirmModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm">
-          <div className="surface-text bg-surface  rounded-xl p-6 max-w-sm w-full mx-4 space-y-4 shadow-2xl">
+          <div className="surface-text bg-surface rounded-xl p-6 max-w-sm w-full mx-4 space-y-4 shadow-2xl">
             <div className="flex items-center gap-3">
               <div className="w-10 h-10 rounded-full bg-warning/10 flex items-center justify-center">
                 <AlertTriangle size={20} className="text-warning" />
@@ -635,13 +635,13 @@ export const CodingInterview = ({ jdAnalysisId, onNavigate, userId }) => {
             </div>
 
             {publicTestSummary && (
-              <div className="surface-text bg-surface-hover/60 rounded-lg px-3 py-2 text-sm text-text-muted">
+              <div className="surface-text bg-surface-hover rounded-lg px-3 py-2 text-sm text-text-muted">
                 {publicTestSummary}
               </div>
             )}
 
             {submitError && (
-              <div role="alert" className="rounded-lg /40 bg-danger/10 px-3 py-2 text-sm text-danger">
+              <div role="alert" className="rounded-lg bg-danger/10 px-3 py-2 text-sm text-danger">
                 {submitError}
               </div>
             )}

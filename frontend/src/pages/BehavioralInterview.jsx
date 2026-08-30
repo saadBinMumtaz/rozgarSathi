@@ -240,7 +240,7 @@ export const BehavioralInterview = ({ jdAnalysisId, onNavigate, language = 'engl
                   <div className="text-2xl font-bold text-success">Behavioral Interview Complete!</div>
                   
                   {/* Overall Score Display */}
-                  <div className="inline-flex items-center gap-4 surface-text bg-surface-hover/50 rounded-xl px-6 py-4 ">
+                  <div className="inline-flex items-center gap-4 surface-text bg-surface-hover rounded-xl px-6 py-4 ">
                     <div className="text-center">
                       <div className={`text-4xl font-bold ${avgScore >= 70 ? 'text-success' : avgScore >= 40 ? 'text-warning' : 'text-danger'}`}>
                         {avgScore}
@@ -376,7 +376,7 @@ export const BehavioralInterview = ({ jdAnalysisId, onNavigate, language = 'engl
 
         {/* JD traceability badge */}
         {currentQuestion?.matchedTerms && currentQuestion.matchedTerms.length > 0 && (
-          <div className="mb-4 p-3 surface-text bg-surface-hover/50  rounded-lg">
+          <div className="mb-4 p-3 surface-text bg-surface-hover  rounded-lg">
             <QuestionTraceBadge matchedTerms={currentQuestion.matchedTerms} />
           </div>
         )}
