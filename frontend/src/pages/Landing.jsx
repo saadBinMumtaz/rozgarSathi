@@ -5,32 +5,42 @@ import { Badge } from '../design-system/Badge';
 import { ProgressBar } from '../design-system/ProgressBar';
 import { ScoreRing } from '../design-system/ScoreRing';
 import { sampleJDs, sampleSeniorityOrder } from '../data/sampleJD';
+import { BarChart3 } from 'lucide-react';
 
 export const Landing = ({ onNavigate, onTrySampleJD }) => {
   return (
-    <div className="min-h-screen bg-slate-950 text-slate-100 p-6 md:p-12 flex flex-col items-center justify-center relative overflow-hidden">
+    <div className="min-h-screen bg-bg-primary text-text-primary p-6 md:p-12 flex flex-col items-center justify-center relative overflow-hidden">
       {/* Background radial glow */}
-      <div className="absolute top-1/4 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-indigo-600/10 blur-[120px] rounded-full pointer-events-none" />
+      <div className="absolute top-1/4 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-text-primary/10 blur-[120px] rounded-full pointer-events-none" />
 
       {/* Navigation Header */}
       <header className="w-full max-w-6xl flex justify-between items-center mb-12">
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-indigo-600 to-cyan-400 flex items-center justify-center font-black text-xl text-white shadow-lg shadow-indigo-500/30">
+          <div className="w-10 h-10 rounded-xl bg-text-primary flex items-center justify-center font-black text-xl text-text-primary shadow-lg shadow-sm">
             RS
           </div>
-          <span className="text-xl font-bold tracking-tight text-white">Rozgar Sathi</span>
+          <span className="text-xl font-bold tracking-tight text-text-primary">Rozgar Sathi</span>
         </div>
-        <Badge variant="primary">AI Interview Twin v1.0</Badge>
+        <div className="flex items-center gap-3">
+          <button
+            onClick={() => onNavigate('dashboard')}
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm text-text-muted hover:text-text-primary hover:surface-text bg-surface-hover transition-colors focus:outline-none focus:ring-2 focus:ring-border-strong"
+            aria-label="View your dashboard"
+          >
+            <BarChart3 size={14} /> Dashboard
+          </button>
+          <Badge variant="primary">AI Interview Twin v1.0</Badge>
+        </div>
       </header>
 
       {/* Hero Section */}
       <main className="w-full max-w-5xl space-y-12 text-center relative z-10">
         <div className="space-y-4">
           <Badge variant="info" className="mb-2">Day 1 Core Platform</Badge>
-          <h1 className="text-4xl md:text-6xl font-extrabold text-slate-100 tracking-tight leading-tight">
-            Your Personal <span className="bg-gradient-to-r from-indigo-400 via-cyan-400 to-emerald-400 bg-clip-text text-transparent">AI Interview Twin</span>
+          <h1 className="text-4xl md:text-6xl font-extrabold text-text-primary tracking-tight leading-tight">
+            Your Personal <span className="text-text-primary">AI Interview Twin</span>
           </h1>
-          <p className="text-lg md:text-xl text-slate-400 max-w-2xl mx-auto font-light leading-relaxed">
+          <p className="text-lg md:text-xl text-text-muted max-w-2xl mx-auto font-light leading-relaxed">
             Practice spoken Behavioral, Technical, and Live Coding interviews tailored specifically to your target Job Description.
           </p>
         </div>
@@ -49,7 +59,7 @@ export const Landing = ({ onNavigate, onTrySampleJD }) => {
               if (sample) onTrySampleJD({ text: sample.text, sampleId: sample.id });
             }}
             aria-label="Load a sample job description"
-            className="text-base font-semibold bg-slate-900 border border-slate-700 rounded-lg px-4 py-3 text-indigo-300 hover:border-indigo-500 focus:outline-none focus:border-indigo-500 cursor-pointer"
+            className="text-base font-semibold surface-text bg-surface  rounded-lg px-4 py-3 text-text-primary hover:border-border-strong focus:outline-none focus:border-border-strong cursor-pointer"
           >
             <option value="" disabled>
               ✨ Try a sample JD…
@@ -81,7 +91,7 @@ export const Landing = ({ onNavigate, onTrySampleJD }) => {
             </CardHeader>
             <CardContent>
               <ProgressBar value={85} label="Communication Benchmark" />
-              <p className="text-xs text-slate-400 mt-2">Voice-driven questions with adaptive follow-ups.</p>
+              <p className="text-xs text-text-muted mt-2">Voice-driven questions with adaptive follow-ups.</p>
             </CardContent>
           </Card>
 
@@ -96,7 +106,7 @@ export const Landing = ({ onNavigate, onTrySampleJD }) => {
             </CardHeader>
             <CardContent>
               <ProgressBar value={78} label="Tech Stack Depth" />
-              <p className="text-xs text-slate-400 mt-2">Live difficulty adjustment per competency.</p>
+              <p className="text-xs text-text-muted mt-2">Live difficulty adjustment per competency.</p>
             </CardContent>
           </Card>
 
@@ -111,7 +121,7 @@ export const Landing = ({ onNavigate, onTrySampleJD }) => {
             </CardHeader>
             <CardContent>
               <ProgressBar value={92} label="Code Execution & Probing" />
-              <p className="text-xs text-slate-400 mt-2">Monaco editor with sandboxed execution.</p>
+              <p className="text-xs text-text-muted mt-2">Monaco editor with sandboxed execution.</p>
             </CardContent>
           </Card>
         </div>

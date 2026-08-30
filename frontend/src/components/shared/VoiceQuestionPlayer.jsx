@@ -36,26 +36,30 @@ export const VoiceQuestionPlayer = ({ text, fallbackText, onSpeakingChange, lang
   if (!text) return null;
 
   return (
-    <div className="bg-slate-800 border border-slate-700 rounded-lg p-4 mb-4">
+    <div className="surface-text bg-surface  rounded-lg p-4 mb-4">
       <div className="flex items-start gap-3">
-        <div className={`mt-1 ${isSpeaking ? 'text-indigo-400 animate-pulse' : 'text-slate-400'}`}>
-          <Volume2 size={20} />
+        <div className={`mt-1 ${isSpeaking ? 'text-icon-active animate-pulse' : 'text-icon-muted'}`}>
+          <Volume2 size={20} aria-hidden="true" />
         </div>
         <div className="flex-1">
-          <div className="text-sm text-slate-300 mb-2">
-            {urduLoading ? (
-              <span className="text-indigo-400 font-medium animate-pulse">Loading Urdu voice...</span>
+          <div className="text-sm text-text-muted mb-2">
+            {!isSupported ? (
+              <span className="text-warning font-medium flex items-center gap-1" role="status">
+                Text-only mode — read the question below
+              </span>
+            ) : urduLoading ? (
+              <span className="text-text-muted font-medium animate-pulse">Loading Urdu voice...</span>
             ) : isSpeaking ? (
-              <span className="text-indigo-400 font-medium">AI is speaking...</span>
+              <span className="text-icon-active font-medium">AI is speaking...</span>
             ) : (
-              <span className="text-slate-400">Question:</span>
+              <span className="text-text-muted">Question:</span>
             )}
           </div>
-          <div className={`text-slate-100 leading-relaxed ${language === 'urdu' ? 'urdu-text' : ''}`}>{text}</div>
+          <div className={`text-text-primary leading-relaxed ${language === 'urdu' ? 'urdu-text' : ''}`}>{text}</div>
 
           {/* Only shown when BOTH local Urdu voice and cloud Urdu TTS fail — degrades to English */}
           {urduVoiceUnavailable && language === 'urdu' && (
-            <div className="mt-2 text-xs text-amber-400 bg-amber-900/20 border border-amber-700/30 rounded px-2 py-1">
+            <div className="mt-2 text-xs text-warning bg-warning/10  rounded px-2 py-1">
               Urdu voice unavailable — playing audio in English.
             </div>
           )}
@@ -68,7 +72,7 @@ export const VoiceQuestionPlayer = ({ text, fallbackText, onSpeakingChange, lang
                 variant="ghost"
                 size="sm"
                 onClick={() => speak(text, language, fallbackText)}
-                className="flex items-center gap-1 text-slate-300"
+                className="flex items-center gap-1 text-text-muted"
                 aria-label="Repeat question"
               >
                 <RefreshCw size={15} />

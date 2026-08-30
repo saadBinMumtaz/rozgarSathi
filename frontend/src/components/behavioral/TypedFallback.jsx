@@ -21,10 +21,10 @@ export const TypedFallback = ({ value, onChange, onSubmit, isSpeaking, disabled 
   };
 
   return (
-    <div className="bg-slate-800 border border-slate-700 rounded-lg p-4">
+    <div className="surface-text bg-surface-hover  rounded-lg p-4">
       <div className="flex items-center gap-2 mb-3">
-        <Keyboard size={18} className="text-indigo-400" />
-        <span className="text-sm font-medium text-slate-200">Type your answer</span>
+        <Keyboard size={18} className="text-icon-active" />
+        <span className="text-sm font-medium text-text-primary">Type your answer</span>
       </div>
 
       <form onSubmit={handleSubmit}>
@@ -38,7 +38,7 @@ export const TypedFallback = ({ value, onChange, onSubmit, isSpeaking, disabled 
               : 'Type your answer here...'
           }
           rows={5}
-          className="w-full bg-slate-900 border border-slate-700 rounded-md p-3 text-slate-100 placeholder-slate-500 focus:outline-none focus:border-indigo-500 resize-none disabled:opacity-50 disabled:cursor-not-allowed"
+          className="w-full surface-text bg-surface  rounded-md p-3 text-text-primary placeholder-text-muted focus:outline-none focus:border-border-strong resize-none disabled:opacity-50 disabled:cursor-not-allowed"
         />
 
         <Button

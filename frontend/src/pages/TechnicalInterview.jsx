@@ -15,6 +15,7 @@ import { EvidenceCard } from '../components/shared/EvidenceCard';
 import { DifficultyIndicator } from '../components/technical/DifficultyIndicator';
 import { QuestionTraceBadge } from '../components/shared/QuestionTraceBadge';
 import { apiClient } from '../api/client';
+import { useTabLock } from '../hooks/useTabLock';
 
 const TECHNICAL_SESSION_KEY = 'rozgar-sathi-technical-session-v1';
 
@@ -39,6 +40,7 @@ export const TechnicalInterview = ({ jdAnalysisId, onNavigate, language = 'engli
   const [isTranslatingUrdu, setIsTranslatingUrdu] = useState(false);
   const [urduEvaluations, setUrduEvaluations] = useState([]);
   const [terminationMessage, setTerminationMessage] = useState(null);
+  const { isLocked: tabConflict, dismissWarning: dismissTabWarning } = useTabLock(sessionId, 'technical');
 
   const MAX_QUESTIONS = 5;
 
@@ -276,7 +278,7 @@ export const TechnicalInterview = ({ jdAnalysisId, onNavigate, language = 'engli
   const progress = (questionCount / MAX_QUESTIONS) * 100;
 
   return (
-    <div className="min-h-screen bg-slate-950 text-slate-100 p-4 md:p-8">
+    <div className="min-h-screen bg-bg-primary text-text-primary p-4 md:p-8">
       <div className="max-w-4xl mx-auto space-y-6">
         {/* Header */}
         <div className="flex items-center justify-between">
@@ -299,11 +301,13 @@ export const TechnicalInterview = ({ jdAnalysisId, onNavigate, language = 'engli
 
         {/* Error banner */}
         {error && (
-          <div className="p-3 bg-rose-900/30 border border-rose-700 rounded-md text-rose-300 text-sm flex items-center justify-between gap-3">
-            <span>{error}</span>
+          <div className="p-3 bg-danger/10  rounded-md text-danger text-sm flex items-center justify-between gap-3" role="alert">
+            <span>{error.includes('Failed to fetch') || error.includes('network')
+              ? 'Server is unreachable. Check your connection and retry.'
+              : error}</span>
             <Button
               variant="link"
-              className="shrink-0 underline text-rose-300 hover:text-rose-200"
+              className="shrink-0 underline text-danger hover:text-danger"
               onClick={() => {
                 if (!sessionId) createSession();
                 else resetSession();
@@ -311,6 +315,13 @@ export const TechnicalInterview = ({ jdAnalysisId, onNavigate, language = 'engli
             >
               {sessionId ? 'Restart interview' : 'Retry'}
             </Button>
+          </div>
+        )}
+
+        {/* Tab conflict warning */}
+        {tabConflict && (
+          <div className="p-3 bg-warning/10  rounded-md text-warning text-sm flex items-center justify-between gap-3" role="alert">
+            <span>Another tab is running this same interview. Answers may conflict — close the other tab or <button onClick={dismissTabWarning} className="underline font-medium">continue here anyway</button>.</span>
           </div>
         )}
 
@@ -329,30 +340,30 @@ export const TechnicalInterview = ({ jdAnalysisId, onNavigate, language = 'engli
 
         {/* Urdu translation indicator */}
         {isUrdu && isTranslatingUrdu && (
-          <div className="text-xs text-slate-400 animate-pulse">Translating to Urdu...</div>
+          <div className="text-xs text-text-muted animate-pulse">Translating to Urdu...</div>
         )}
         {isUrdu && urduQuestionText && (
-          <div className="text-xs text-slate-400">Showing question in Urdu</div>
+          <div className="text-xs text-text-muted">Showing question in Urdu</div>
         )}
 
         {/* Follow-up display */}
 
         {/* JD traceability badge */}
         {currentQuestion?.matchedTerms && (
-          <div className="mb-4 p-3 bg-slate-800/50 border border-slate-700 rounded-lg">
+          <div className="mb-4 p-3 surface-text bg-surface-hover/50  rounded-lg">
             <QuestionTraceBadge matchedTerms={currentQuestion.matchedTerms} />
           </div>
         )}
         {followUp && !currentQuestion?.evaluation && (
-          <div className="bg-indigo-900/20 border border-indigo-700/50 rounded-lg p-4">
-            <div className="text-xs text-indigo-400 font-medium mb-1">Follow-up question</div>
-            <div className={`text-slate-200 ${isUrdu ? 'urdu-text text-right' : ''}`}>{(isUrdu && urduFollowUp) || followUp}</div>
+          <div className="surface-text bg-surface-hover  rounded-lg p-4">
+            <div className="text-xs text-icon-active font-medium mb-1">Follow-up question</div>
+            <div className={`text-text-primary ${isUrdu ? 'urdu-text text-right' : ''}`}>{(isUrdu && urduFollowUp) || followUp}</div>
           </div>
         )}
 
         {/* Invalid-answer / nudge feedback — shown + spoken in the active language */}
         {nudge && (
-          <div className={`mb-4 p-3 bg-amber-900/30 border border-amber-700 rounded-md text-amber-300 text-sm ${isUrdu ? 'urdu-text text-right' : ''}`}>
+          <div className={`mb-4 p-3 bg-warning/10  rounded-md text-warning text-sm ${isUrdu ? 'urdu-text text-right' : ''}`}>
             {!isUrdu && <strong>⚠️ Answer needed:</strong>} {(isUrdu && urduNudge) || nudge}
           </div>
         )}
@@ -455,43 +466,43 @@ export const TechnicalInterview = ({ jdAnalysisId, onNavigate, language = 'engli
 
           return (
             <div className="space-y-6">
-              <Card className={terminationMessage ? 'border-rose-700/50' : 'border-emerald-700/50'}>
+              <Card className={terminationMessage ? 'border-danger/30/50' : 'border-success/30'}>
                 <CardContent className="text-center py-8 space-y-4">
                   {terminationMessage ? (
                     <>
-                      <div className="text-2xl font-bold text-rose-400">Interview Terminated</div>
-                      <div className="text-rose-300 text-sm max-w-md mx-auto">{terminationMessage}</div>
+                      <div className="text-2xl font-bold text-danger">Interview Terminated</div>
+                      <div className="text-danger text-sm max-w-md mx-auto">{terminationMessage}</div>
                     </>
                   ) : (
                     <>
-                      <div className="text-2xl font-bold text-emerald-400">Technical Interview Complete!</div>
+                      <div className="text-2xl font-bold text-success">Technical Interview Complete!</div>
                       
                       {/* Overall Score Display */}
-                      <div className="inline-flex items-center gap-4 bg-slate-800/50 rounded-xl px-6 py-4 border border-slate-700">
+                      <div className="inline-flex items-center gap-4 surface-text bg-surface-hover/50 rounded-xl px-6 py-4 ">
                         <div className="text-center">
-                          <div className={`text-4xl font-bold ${avgScore >= 70 ? 'text-emerald-400' : avgScore >= 40 ? 'text-amber-400' : 'text-rose-400'}`}>
+                          <div className={`text-4xl font-bold ${avgScore >= 70 ? 'text-success' : avgScore >= 40 ? 'text-warning' : 'text-danger'}`}>
                             {avgScore}
                           </div>
-                          <div className="text-xs text-slate-400 uppercase tracking-wide">Overall Score</div>
+                          <div className="text-xs text-text-muted uppercase tracking-wide">Overall Score</div>
                         </div>
-                        <div className="h-12 w-px bg-slate-700"></div>
+                        <div className="h-12 w-px bg-bg-hover"></div>
                         <div className="text-left space-y-1">
-                          <div className="text-sm text-slate-300">
-                            <span className="text-slate-400">Questions:</span> {evaluations.length}
+                          <div className="text-sm text-text-muted">
+                            <span className="text-text-muted">Questions:</span> {evaluations.length}
                           </div>
-                          <div className="text-sm text-slate-300">
-                            <span className="text-emerald-400">✓ {highScores}</span> strong answers
+                          <div className="text-sm text-text-muted">
+                            <span className="text-success">✓ {highScores}</span> strong answers
                           </div>
                           {lowScores > 0 && (
-                            <div className="text-sm text-slate-300">
-                              <span className="text-rose-400">⚠ {lowScores}</span> need improvement
+                            <div className="text-sm text-text-muted">
+                              <span className="text-danger">⚠ {lowScores}</span> need improvement
                             </div>
                           )}
                         </div>
                       </div>
 
                       {/* Performance Summary */}
-                      <div className="text-sm text-slate-400 max-w-md mx-auto">
+                      <div className="text-sm text-text-muted max-w-md mx-auto">
                         {avgScore >= 70 
                           ? 'Great performance! Your technical knowledge and explanations were solid.'
                           : avgScore >= 40
@@ -517,9 +528,9 @@ export const TechnicalInterview = ({ jdAnalysisId, onNavigate, language = 'engli
               {/* Summary of all evaluations */}
               {evaluations.length > 0 && (
                 <div className="space-y-6">
-                  <h3 className="text-lg font-semibold text-slate-200 flex items-center gap-2">
+                  <h3 className="text-lg font-semibold text-text-primary flex items-center gap-2">
                     <span>Detailed Feedback</span>
-                    <span className="text-sm font-normal text-slate-400">({evaluations.length} questions)</span>
+                    <span className="text-sm font-normal text-text-muted">({evaluations.length} questions)</span>
                   </h3>
                   {evaluations.map((evaluation, idx) => (
                     <EvidenceCard
@@ -538,7 +549,7 @@ export const TechnicalInterview = ({ jdAnalysisId, onNavigate, language = 'engli
         {isLoading && !currentQuestion && !isComplete && (
           <Card>
             <CardContent className="text-center py-8">
-              <div className="text-slate-400">Setting up your technical interview...</div>
+              <div className="text-text-muted">Setting up your technical interview...</div>
             </CardContent>
           </Card>
         )}

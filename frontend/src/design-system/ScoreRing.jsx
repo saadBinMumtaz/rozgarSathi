@@ -6,46 +6,46 @@ export const ScoreRing = ({ score = 0, max = 10, label = 'Readiness', size = 90,
   const circumference = 2 * Math.PI * radius;
   const strokeDashoffset = circumference - (percentage / 100) * circumference;
 
-  let colorClass = 'text-indigo-500';
-  if (percentage >= 80) colorClass = 'text-emerald-400';
-  else if (percentage >= 60) colorClass = 'text-cyan-400';
-  else if (percentage >= 40) colorClass = 'text-amber-400';
-  else colorClass = 'text-rose-400';
+  // Semantic accent colors based on score range
+  let strokeColor;
+  if (percentage >= 80) strokeColor = 'var(--color-success)';
+  else if (percentage >= 50) strokeColor = 'var(--color-warning)';
+  else strokeColor = 'var(--color-danger)';
 
   return (
     <div className={`flex flex-col items-center justify-center ${className}`}>
       <div className="relative" style={{ width: size, height: size }}>
         <svg className="w-full h-full transform -rotate-90" viewBox={`0 0 ${size} ${size}`}>
-          {/* Background circle */}
+          {/* Background circle — track */}
           <circle
             cx={size / 2}
             cy={size / 2}
             r={radius}
-            stroke="currentColor"
+            stroke="var(--color-border)"
             strokeWidth={strokeWidth}
-            className="text-slate-800"
             fill="transparent"
+            opacity={0.3}
           />
-          {/* Animated score circle */}
+          {/* Animated scores circle */}
           <circle
             cx={size / 2}
             cy={size / 2}
             r={radius}
-            stroke="currentColor"
+            stroke={strokeColor}
             strokeWidth={strokeWidth}
             strokeDasharray={circumference}
             strokeDashoffset={strokeDashoffset}
             strokeLinecap="round"
-            className={`${colorClass} transition-all duration-700 ease-out`}
+            className="transition-all duration-700 ease-out"
             fill="transparent"
           />
         </svg>
         <div className="absolute inset-0 flex flex-col items-center justify-center text-center">
-          <span className="text-xl font-extrabold text-slate-100">{score}</span>
-          <span className="text-[10px] text-slate-400 font-medium">/{max}</span>
+          <span className="text-xl font-extrabold text-text-primary">{score}</span>
+          <span className="text-[10px] text-text-muted font-medium">/{max}</span>
         </div>
       </div>
-      {label && <span className="mt-1.5 text-xs text-slate-400 font-medium">{label}</span>}
+      {label && <span className="mt-1.5 text-xs text-text-muted font-medium">{label}</span>}
     </div>
   );
 };

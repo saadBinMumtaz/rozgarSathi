@@ -92,7 +92,7 @@ export const MicRecorder = ({ isSpeaking, onTranscriptChange, resetKey, onUnsupp
   const isDisabled = isSpeaking || !isSupported || error;
 
   return (
-    <div className="bg-slate-800 border border-slate-700 rounded-lg p-4">
+    <div className="surface-text bg-surface-hover  rounded-lg p-4">
       <div className="flex items-center gap-4">
         {/* Waveform indicator */}
         <div className="flex items-end gap-1 h-12">
@@ -100,7 +100,7 @@ export const MicRecorder = ({ isSpeaking, onTranscriptChange, resetKey, onUnsupp
             <div
               key={i}
               className={`w-2 rounded-t transition-all duration-150 ${
-                isListening ? 'bg-indigo-500' : 'bg-slate-600'
+                isListening ? 'bg-text-primary' : 'bg-icon-muted'
               }`}
               style={{ height: `${Math.max(10, level)}%` }}
             />
@@ -113,10 +113,10 @@ export const MicRecorder = ({ isSpeaking, onTranscriptChange, resetKey, onUnsupp
           disabled={isDisabled}
           className={`flex items-center gap-2 px-4 py-2 rounded-md font-medium transition-colors ${
             isListening
-              ? 'bg-rose-600 hover:bg-rose-700 text-white'
+              ? 'bg-danger hover:opacity-90 text-text-primary'
               : isDisabled
-              ? 'bg-slate-700 text-slate-500 cursor-not-allowed'
-              : 'bg-indigo-600 hover:bg-indigo-700 text-white'
+              ? 'bg-bg-hover text-text-muted cursor-not-allowed'
+              : 'bg-text-primary hover:opacity-90 text-text-primary'
           }`}
           aria-label={isListening ? 'Stop recording' : 'Start recording'}
         >
@@ -136,26 +136,32 @@ export const MicRecorder = ({ isSpeaking, onTranscriptChange, resetKey, onUnsupp
         {/* Status text */}
         <div className="flex-1 text-sm">
           {error ? (
-            <span className="text-rose-400">
-              <MicOff size={14} className="inline mr-1" />
-              {error}
+            <span className="text-danger" role="alert">
+              <MicOff size={14} className="inline mr-1" aria-hidden="true" />
+              {error === 'not-allowed'
+                ? 'Microphone permission denied. You can type your answer instead, or enable mic access in browser settings.'
+                : error === 'no-speech'
+                ? 'No speech detected. Try speaking louder or check your microphone.'
+                : error === 'network'
+                ? 'Speech recognition network error. You can type your answer instead.'
+                : `Microphone unavailable: ${error}. You can type your answer instead.`}
             </span>
           ) : isSpeaking ? (
-            <span className="text-slate-400">Wait for AI to finish speaking...</span>
+            <span className="text-text-muted">Wait for AI to finish speaking...</span>
           ) : isListening ? (
-            <span className="text-indigo-400">Listening...</span>
+            <span className="text-icon-active">Listening...</span>
           ) : (
-            <span className="text-slate-400">Click to start recording</span>
+            <span className="text-text-muted">Click to start recording</span>
           )}
         </div>
       </div>
 
       {/* Transcript display */}
       {(transcript || interimTranscript) && (
-        <div className="mt-3 p-3 bg-slate-900 rounded-md">
-          <div className="text-sm text-slate-300">
+        <div className="mt-3 p-3 surface-text bg-surface rounded-md">
+          <div className="text-sm text-text-muted">
             {transcript}
-            {interimTranscript && <span className="text-slate-500 italic"> {interimTranscript}</span>}
+            {interimTranscript && <span className="text-text-muted italic"> {interimTranscript}</span>}
           </div>
         </div>
       )}

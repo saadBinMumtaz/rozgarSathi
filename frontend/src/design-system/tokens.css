@@ -1,49 +1,170 @@
+/* ─── Rozgar Sathi Design Tokens ─── */
+/* Class-based theme switching: html.light / html.dark */
+/* Light mode: off-white bg + charcoal cards + dark text */
+/* Dark mode: black bg + charcoal cards + white text */
+
+/* ─── LIGHT MODE (default) ─── */
 :root {
-  /* Color Palette - Executive Slate & Vibrant Accent */
-  --bg-dark: #0f172a;
-  --bg-card: #1e293b;
-  --bg-card-hover: #334155;
-  --bg-glass: rgba(30, 41, 59, 0.7);
-  
-  --text-main: #f8fafc;
-  --text-muted: #94a3b8;
-  --text-dim: #64748b;
-  
-  --primary: #6366f1;
-  --primary-hover: #4f46e5;
-  --primary-light: rgba(99, 102, 241, 0.15);
-  
-  --accent-cyan: #06b6d4;
-  --accent-emerald: #10b981;
-  --accent-amber: #f59e0b;
-  --accent-rose: #f43f5e;
-  
-  --border-subtle: rgba(255, 255, 255, 0.1);
-  --border-glow: rgba(99, 102, 241, 0.4);
+  --color-bg-primary: #EDF2F4;
+  --color-surface: #3A3A4E;
+  --color-text-primary: #2B2D42;
+  --color-text-muted: #6B7280;
+  --color-border: transparent;
+  --color-icon-muted: #6B7280;
+  --color-icon-active: #2B2D42;
 
-  /* Spacing Grid (4/8px base) */
-  --space-1: 4px;
-  --space-2: 8px;
-  --space-3: 12px;
-  --space-4: 16px;
-  --space-6: 24px;
-  --space-8: 32px;
-  --space-12: 48px;
-  --space-16: 64px;
+  --color-success: #4CAF50;
+  --color-warning: #F4B942;
+  --color-danger: #E63946;
 
-  /* Typography Scale (Max 4 sizes) */
-  --font-xs: 0.75rem;    /* 12px */
-  --font-sm: 0.875rem;   /* 14px - Body Secondary */
-  --font-base: 1rem;     /* 16px - Body Main */
-  --font-heading: 1.5rem;/* 24px - Section Titles */
-  --font-hero: 2.25rem;  /* 36px - Page Headers */
+  --color-bg-hover: #E2E8EC;
+  --color-bg-active: #D5DCE1;
+  --color-surface-hover: #4A4A5E;
+  --color-border-strong: transparent;
+  --color-overlay: rgba(43, 45, 66, 0.3);
+
+  /* Text on dark surfaces (cards are charcoal in both themes) */
+  --color-surface-text: #F1F1F1;
+  --color-surface-text-muted: #B0B0C0;
+
+  color-scheme: light;
 }
 
+html.light {
+  --color-bg-primary: #EDF2F4;
+  --color-surface: #3A3A4E;
+  --color-text-primary: #2B2D42;
+  --color-text-muted: #6B7280;
+  --color-border: transparent;
+  --color-icon-muted: #6B7280;
+  --color-icon-active: #2B2D42;
+
+  --color-success: #4CAF50;
+  --color-warning: #F4B942;
+  --color-danger: #E63946;
+
+  --color-bg-hover: #E2E8EC;
+  --color-bg-active: #D5DCE1;
+  --color-surface-hover: #4A4A5E;
+  --color-border-strong: transparent;
+  --color-overlay: rgba(43, 45, 66, 0.3);
+
+  --color-surface-text: #F1F1F1;
+  --color-surface-text-muted: #B0B0C0;
+
+  color-scheme: light;
+}
+
+/* ─── DARK MODE ─── */
+html.dark {
+  --color-bg-primary: #0A0A0A;
+  --color-surface: #1E1E2E;
+  --color-text-primary: #EDF2F4;
+  --color-text-muted: #8D99AE;
+  --color-border: transparent;
+  --color-icon-muted: #8D99AE;
+  --color-icon-active: #EDF2F4;
+
+  --color-success: #4CAF50;
+  --color-warning: #F4B942;
+  --color-danger: #E63946;
+
+  --color-bg-hover: #16161A;
+  --color-bg-active: #1E1E2E;
+  --color-surface-hover: #2A2A3E;
+  --color-border-strong: transparent;
+  --color-overlay: rgba(0, 0, 0, 0.7);
+
+  --color-surface-text: #F1F1F1;
+  --color-surface-text-muted: #A0A0B0;
+
+  color-scheme: dark;
+}
+
+/* ─── Base styles ─── */
 body {
-  background-color: var(--bg-dark);
-  color: var(--text-main);
+  background-color: var(--color-bg-primary);
+  color: var(--color-text-primary);
   font-family: 'Inter', system-ui, -apple-system, sans-serif;
   margin: 0;
   padding: 0;
   min-height: 100vh;
+}
+
+/* ─── Surface text overrides ─── */
+/* Force light text on all descendants of dark surface containers.
+   This ensures text-text-primary (dark in light mode) and text-text-muted
+   are automatically overridden to light surface-text colors when inside
+   any element with the .surface-text class (Cards, panels, etc.) */
+.surface-text {
+  color: var(--color-surface-text);
+}
+/* Same-element overrides: when surface-text and text-text-primary/muted are on the SAME element */
+.surface-text.text-text-primary {
+  color: var(--color-surface-text) !important;
+}
+.surface-text.text-text-muted {
+  color: var(--color-surface-text-muted) !important;
+}
+.surface-text.text-icon-muted {
+  color: var(--color-surface-text-muted) !important;
+}
+.surface-text.text-icon-active {
+  color: var(--color-surface-text) !important;
+}
+/* Descendant overrides: when surface-text is on a parent and text classes are on children */
+.surface-text .text-text-primary {
+  color: var(--color-surface-text) !important;
+}
+.surface-text .text-text-muted {
+  color: var(--color-surface-text-muted) !important;
+}
+.surface-text .text-icon-muted {
+  color: var(--color-surface-text-muted) !important;
+}
+.surface-text .text-icon-active {
+  color: var(--color-surface-text) !important;
+}
+.surface-text .hover\:text-text-primary:hover {
+  color: var(--color-surface-text) !important;
+}
+.surface-text .hover\:text-text-muted:hover {
+  color: var(--color-surface-text) !important;
+}
+/* Same-element hover overrides */
+.surface-text.hover\:text-text-primary:hover {
+  color: var(--color-surface-text) !important;
+}
+.surface-text.hover\:text-text-muted:hover {
+  color: var(--color-surface-text) !important;
+}
+/* Placeholder text on dark surfaces */
+.surface-text .placeholder\:text-text-muted::placeholder {
+  color: var(--color-surface-text-muted) !important;
+}
+.surface-text.placeholder\:text-text-muted::placeholder {
+  color: var(--color-surface-text-muted) !important;
+}
+/* Selection on dark surfaces */
+.surface-text ::selection {
+  background-color: var(--color-surface-text);
+  color: var(--color-surface);
+}
+
+/* Form elements always use dark text (they have light backgrounds) */
+.surface-text input,
+.surface-text textarea,
+.surface-text select {
+  color: var(--color-text-primary) !important;
+}
+.surface-text input::placeholder,
+.surface-text textarea::placeholder,
+.surface-text select::placeholder {
+  color: var(--color-text-muted) !important;
+}
+
+/* Smooth theme transitions */
+html.theme-transitioning,
+html.theme-transitioning * {
+  transition: background-color 0.25s ease, color 0.25s ease !important;
 }

@@ -293,6 +293,26 @@ export const apiClient = {
 
     return res.json();
   },
+
+  // --- Day 6: Session History + Trend ----------------------------------------
+
+  async getSessionHistory(userId) {
+    const res = await fetch(`${API_BASE_URL}/dashboard/${userId}/history`);
+    if (!res.ok) {
+      const errorData = await res.json().catch(() => ({ error: 'Failed to fetch session history' }));
+      throw new Error(errorData.error || `Server error: ${res.status}`);
+    }
+    return res.json();
+  },
+
+  async getSessionTrend(userId) {
+    const res = await fetch(`${API_BASE_URL}/dashboard/${userId}/trend`);
+    if (!res.ok) {
+      const errorData = await res.json().catch(() => ({ error: 'Failed to fetch session trend' }));
+      throw new Error(errorData.error || `Server error: ${res.status}`);
+    }
+    return res.json();
+  },
 };
 
 export default apiClient;

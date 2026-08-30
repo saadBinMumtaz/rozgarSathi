@@ -1,10 +1,14 @@
+@import './design-system/tokens.css';
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
 @layer base {
   body {
-    @apply bg-slate-950 text-slate-100 antialiased;
+    @apply antialiased;
+    background-color: var(--color-bg-primary);
+    color: var(--color-text-primary);
   }
 }
 
@@ -15,4 +19,28 @@
   text-align: right;
   line-height: 2;
   word-spacing: 0.05em;
+}
+
+/* Theme transition utility — applied during theme switch to avoid jarring flashes */
+.theme-transitioning * {
+  transition: background-color 0.2s ease, border-color 0.15s ease, color 0.15s ease, box-shadow 0.2s ease !important;
+}
+
+/* Scrollbar styling for both themes */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--color-bg-primary);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--color-border);
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--color-border-strong);
 }

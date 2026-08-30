@@ -11,14 +11,19 @@ export const Button = ({
   type = 'button',
   ...props
 }) => {
-  const baseStyles = 'inline-flex items-center justify-center font-medium rounded-lg transition-all focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50 disabled:cursor-not-allowed';
+  const baseStyles = 'inline-flex items-center justify-center font-medium rounded-lg transition-all focus:outline-none focus:ring-2 focus:ring-offset-1 focus:ring-border-strong disabled:opacity-50 disabled:cursor-not-allowed';
 
   const variants = {
-    primary: 'bg-indigo-600 hover:bg-indigo-500 text-white shadow-lg shadow-indigo-600/30 border border-indigo-500/30',
-    secondary: 'bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700',
-    ghost: 'bg-transparent hover:bg-slate-800/60 text-slate-300',
-    link: 'bg-transparent hover:underline text-indigo-400 hover:text-indigo-300 p-0 shadow-none border-none',
-    destructive: 'bg-rose-600 hover:bg-rose-500 text-white shadow-lg shadow-rose-600/30',
+    // Primary: solid button — dark bg + light text (works on any surface)
+    primary: 'bg-text-primary text-bg-primary hover:opacity-90',
+    // Secondary: light bg + dark text (uses text-surface which isn't overridden by surface-text)
+    secondary: 'bg-bg-hover text-surface hover:bg-bg-active',
+    // Ghost: transparent + dark text
+    ghost: 'bg-transparent hover:bg-bg-hover text-surface hover:text-surface',
+    // Link: text only + dark color
+    link: 'bg-transparent hover:underline text-surface hover:text-surface p-0 shadow-none border-none',
+    // Destructive: red background + white text
+    destructive: 'bg-danger text-white hover:opacity-90',
   };
 
   const sizes = {

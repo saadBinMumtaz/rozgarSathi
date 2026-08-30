@@ -23,12 +23,12 @@ export const EvidenceCard = memo(({ evaluation, language = 'english' }) => {
     displayConfidence === 'high' ? 'success' : displayConfidence === 'medium' ? 'warning' : 'destructive';
 
   const scoreColor =
-    displayScore >= 70 ? 'text-emerald-400' : displayScore >= 40 ? 'text-amber-400' : 'text-rose-400';
+    displayScore >= 70 ? 'text-success' : displayScore >= 40 ? 'text-warning' : 'text-danger';
 
   const scoreBgColor =
-    displayScore >= 70 ? 'bg-emerald-900/20 border-emerald-700/30' :
-    displayScore >= 40 ? 'bg-amber-900/20 border-amber-700/30' :
-    'bg-rose-900/20 border-rose-700/30';
+    displayScore >= 70 ? 'bg-success/10 border-success/30' :
+    displayScore >= 40 ? 'bg-warning/10 border-warning/30' :
+    'bg-danger/10 border-danger/30';
 
   // Generate score explanation based on score range
   const getScoreExplanation = () => {
@@ -40,21 +40,21 @@ export const EvidenceCard = memo(({ evaluation, language = 'english' }) => {
   };
 
   return (
-    <Card className="border-slate-700 bg-slate-900/50">
+    <Card className="border-border-theme surface-text bg-surface">
       <CardHeader className="pb-3">
         {/* Score header with visual indicator */}
         <div className={`rounded-lg p-3 border ${scoreBgColor}`}>
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
-              <div className={`text-3xl font-bold ${scoreColor}`}>{displayScore}</div>
-              <div className="text-slate-400 text-sm">/100</div>
+              <div className={`text-3xl font-bold ${scoreColor}`} aria-label={`Score: ${displayScore} out of 100`}>{displayScore}</div>
+              <div className="text-text-muted text-sm">/100</div>
             </div>
             <Badge variant={confidenceVariant} size="sm">
               {displayConfidence} confidence
             </Badge>
           </div>
           {/* Score explanation */}
-          <div className="mt-2 text-sm text-slate-300">
+          <div className="mt-2 text-sm text-text-muted">
             {getScoreExplanation()}
           </div>
         </div>
@@ -62,23 +62,23 @@ export const EvidenceCard = memo(({ evaluation, language = 'english' }) => {
         {/* Dimension scores breakdown */}
         {dimensions && Object.keys(dimensions).length > 0 && (
           <div className="mt-3">
-            <div className="text-xs font-medium text-slate-400 uppercase tracking-wide mb-2">
+            <div className="text-xs font-medium text-text-muted uppercase tracking-wide mb-2">
               {isUrdu ? 'تفصیلی اسکور' : 'Score Breakdown'}
             </div>
             <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
               {Object.entries(dimensions).map(([key, value]) => {
                 const dimScore = typeof value === 'number' ? value : 0;
-                const dimColor = dimScore >= 7 ? 'text-emerald-400' : dimScore >= 4 ? 'text-amber-400' : 'text-rose-400';
+                const dimColor = dimScore >= 7 ? 'text-success' : dimScore >= 4 ? 'text-warning' : 'text-danger';
                 const barWidth = Math.min(100, dimScore * 10);
                 return (
-                  <div key={key} className="bg-slate-800/50 rounded-md px-3 py-2">
+                  <div key={key} className="surface-text bg-surface-hover rounded-md px-3 py-2">
                     <div className="flex items-center justify-between mb-1">
-                      <span className="text-xs text-slate-400 capitalize">{key}</span>
-                      <span className={`text-sm font-semibold ${dimColor}`}>{dimScore}/10</span>
+                      <span className="text-xs text-text-muted capitalize">{key}</span>
+                      <span className={`text-sm font-semibold ${dimColor}`} aria-label={`${key}: ${dimScore} out of 10`}>{dimScore}/10</span>
                     </div>
-                    <div className="h-1 bg-slate-700 rounded-full overflow-hidden">
+                    <div className="h-1 bg-border-theme/30 rounded-full overflow-hidden">
                       <div
-                        className={`h-full rounded-full ${dimScore >= 7 ? 'bg-emerald-500' : dimScore >= 4 ? 'bg-amber-500' : 'bg-rose-500'}`}
+                        className={`h-full rounded-full ${dimScore >= 7 ? 'bg-success' : dimScore >= 4 ? 'bg-warning' : 'bg-danger'}`}
                         style={{ width: `${barWidth}%` }}
                       />
                     </div>
@@ -94,13 +94,13 @@ export const EvidenceCard = memo(({ evaluation, language = 'english' }) => {
         {/* Evidence */}
         {evidence && evidence.length > 0 && (
           <div className="space-y-2">
-            <div className="flex items-center gap-2 text-sm font-medium text-slate-300">
-              <Quote size={14} className="text-indigo-400" />
+            <div className="flex items-center gap-2 text-sm font-medium text-text-primary">
+              <Quote size={14} className="text-icon-muted" />
               {isUrdu ? 'شواہد' : 'What you said'}
             </div>
             <ul className="space-y-1.5 pl-5">
               {evidence.map((item, i) => (
-                <li key={i} className={`text-sm text-slate-400 list-disc ${textClass}`}>
+                <li key={i} className={`text-sm text-text-muted list-disc ${textClass}`}>
                   {item}
                 </li>
               ))}
@@ -110,46 +110,46 @@ export const EvidenceCard = memo(({ evaluation, language = 'english' }) => {
 
         {/* Strength */}
         {strength && (
-          <div className="flex items-start gap-3 p-3 bg-emerald-900/20 border border-emerald-700/30 rounded-lg">
-            <CheckCircle size={18} className="text-emerald-400 mt-0.5 shrink-0" />
+          <div className="flex items-start gap-3 p-3 bg-success/10  rounded-lg">
+            <CheckCircle size={18} className="text-success mt-0.5 shrink-0" />
             <div>
-              <div className="text-xs font-semibold text-emerald-400 mb-1 uppercase tracking-wide">
+              <div className="text-xs font-semibold text-success mb-1 uppercase tracking-wide">
                 {isUrdu ? 'طاقت' : 'Strength'}
               </div>
-              <div className={`text-sm text-slate-200 ${textClass}`}>{strength}</div>
+              <div className={`text-sm text-text-primary ${textClass}`}>{strength}</div>
             </div>
           </div>
         )}
 
         {/* Gap / Missing */}
         {missing && (
-          <div className="flex items-start gap-3 p-3 bg-amber-900/20 border border-amber-700/30 rounded-lg">
-            <AlertCircle size={18} className="text-amber-400 mt-0.5 shrink-0" />
+          <div className="flex items-start gap-3 p-3 bg-warning/10  rounded-lg">
+            <AlertCircle size={18} className="text-warning mt-0.5 shrink-0" />
             <div>
-              <div className="text-xs font-semibold text-amber-400 mb-1 uppercase tracking-wide">
+              <div className="text-xs font-semibold text-warning mb-1 uppercase tracking-wide">
                 {isUrdu ? 'خلا' : 'What was missing'}
               </div>
-              <div className={`text-sm text-slate-200 ${textClass}`}>{missing}</div>
+              <div className={`text-sm text-text-primary ${textClass}`}>{missing}</div>
             </div>
           </div>
         )}
 
         {/* Improvement */}
         {improvement && (
-          <div className="flex items-start gap-3 p-3 bg-indigo-900/20 border border-indigo-700/30 rounded-lg">
-            <Lightbulb size={18} className="text-indigo-400 mt-0.5 shrink-0" />
+          <div className="flex items-start gap-3 p-3 surface-text bg-surface-hover  rounded-lg">
+            <Lightbulb size={18} className="text-icon-active mt-0.5 shrink-0" />
             <div>
-              <div className="text-xs font-semibold text-indigo-400 mb-1 uppercase tracking-wide">
+              <div className="text-xs font-semibold text-text-primary mb-1 uppercase tracking-wide">
                 {isUrdu ? 'بہتری کا طریقہ' : 'How to improve'}
               </div>
-              <div className={`text-sm text-slate-200 ${textClass}`}>{improvement}</div>
+              <div className={`text-sm text-text-primary ${textClass}`}>{improvement}</div>
             </div>
           </div>
         )}
 
         {/* No feedback available message */}
         {!strength && !missing && !improvement && (!evidence || evidence.length === 0) && (
-          <div className="text-center py-4 text-slate-500 text-sm">
+          <div className="text-center py-4 text-text-muted text-sm">
             {isUrdu ? 'تفصیلی فیڈبیک دستیاب نہیں ہے' : 'Detailed feedback not available for this answer'}
           </div>
         )}

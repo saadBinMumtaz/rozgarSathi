@@ -37,7 +37,11 @@ export const useCodeExecution = () => {
       setExecutionError(result.executionError || null);
       return result;
     } catch (err) {
-      setNetworkError(err.message || 'Failed to run tests');
+      const msg = err.message || '';
+      const friendly = msg.includes('Failed to fetch') || msg.includes('NetworkError') || msg.includes('network')
+        ? 'Code execution service is unreachable. Check your internet connection and try again.'
+        : msg || 'Failed to run tests';
+      setNetworkError(friendly);
       throw err;
     } finally {
       setIsRunning(false);
@@ -55,7 +59,11 @@ export const useCodeExecution = () => {
       if (result.evaluation) setEvaluation(result.evaluation);
       return result;
     } catch (err) {
-      setNetworkError(err.message || 'Failed to submit solution');
+      const msg = err.message || '';
+      const friendly = msg.includes('Failed to fetch') || msg.includes('NetworkError') || msg.includes('network')
+        ? 'Code execution service is unreachable. Your code is auto-saved locally — you can retry when the connection is back.'
+        : msg || 'Failed to submit solution';
+      setNetworkError(friendly);
       throw err;
     } finally {
       setIsSubmitting(false);

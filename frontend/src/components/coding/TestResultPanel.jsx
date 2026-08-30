@@ -28,45 +28,45 @@ const ERROR_STATE_CONFIG = {
   empty_code: {
     icon: FileWarning,
     heading: 'Nothing to run',
-    tone: 'border-slate-600 bg-slate-800/60 text-slate-300',
-    iconColor: 'text-slate-400',
+    tone: 'border-border-theme surface-text bg-surface-hover/60 text-text-muted',
+    iconColor: 'text-text-muted',
   },
   syntax_error: {
     icon: Braces,
     heading: 'Syntax error',
-    tone: 'border-amber-500/40 bg-amber-500/10 text-amber-200',
-    iconColor: 'text-amber-400',
+    tone: 'border-warning/30/40 bg-warning/10 text-warning',
+    iconColor: 'text-warning',
   },
   timeout: {
     icon: TimerOff,
     heading: 'Time limit exceeded',
-    tone: 'border-orange-500/40 bg-orange-500/10 text-orange-200',
-    iconColor: 'text-orange-400',
+    tone: 'border-warning/40 bg-warning/10 text-warning',
+    iconColor: 'text-warning',
     hint: 'Your code ran longer than the allowed time — check for infinite loops or an O(n²) loop that could be O(n).',
   },
   runtime_error: {
     icon: Bug,
     heading: 'Runtime error',
-    tone: 'border-rose-500/40 bg-rose-500/10 text-rose-200',
-    iconColor: 'text-rose-400',
+    tone: 'border-danger/30/40 bg-danger/10 text-danger',
+    iconColor: 'text-danger',
   },
   forbidden_api: {
     icon: ShieldAlert,
     heading: 'Blocked: restricted API',
-    tone: 'border-rose-500/40 bg-rose-500/10 text-rose-200',
-    iconColor: 'text-rose-400',
+    tone: 'border-danger/30/40 bg-danger/10 text-danger',
+    iconColor: 'text-danger',
   },
   no_entry_function: {
     icon: FunctionSquare,
     heading: 'Entry function not found',
-    tone: 'border-amber-500/40 bg-amber-500/10 text-amber-200',
-    iconColor: 'text-amber-400',
+    tone: 'border-warning/30/40 bg-warning/10 text-warning',
+    iconColor: 'text-warning',
   },
   service_unavailable: {
     icon: ServerCrash,
     heading: 'Judge unavailable',
-    tone: 'border-slate-600 bg-slate-800/60 text-slate-300',
-    iconColor: 'text-slate-400',
+    tone: 'border-border-theme surface-text bg-surface-hover/60 text-text-muted',
+    iconColor: 'text-text-muted',
   },
 };
 
@@ -110,38 +110,38 @@ const TestRow = memo(({ test, index }) => {
   return (
     <div
       className={`rounded-lg border px-4 py-3 ${
-        passed ? 'border-emerald-500/30 bg-emerald-500/5' : 'border-rose-500/30 bg-rose-500/5'
+        passed ? 'border-success/30 bg-success/5' : 'border-danger/30 bg-danger/5'
       }`}
     >
       <div className="flex items-center justify-between mb-2">
         <div className="flex items-center gap-2">
           {passed ? (
-            <CheckCircle2 size={16} className="text-emerald-400" />
+            <CheckCircle2 size={16} className="text-success" />
           ) : (
-            <XCircle size={16} className="text-rose-400" />
+            <XCircle size={16} className="text-danger" />
           )}
-          <span className="text-sm font-medium text-slate-200">Test {index + 1}</span>
+          <span className="text-sm font-medium text-text-primary">Test {index + 1}</span>
           <Badge variant={passed ? 'success' : 'destructive'}>{passed ? 'Passed' : 'Failed'}</Badge>
         </div>
         {executionTime !== null && executionTime !== undefined && (
-          <div className="flex items-center gap-1 text-xs text-slate-500">
+          <div className="flex items-center gap-1 text-xs text-text-muted">
             <Clock size={11} />
             <span className="font-mono">{formatTime(executionTime)}</span>
           </div>
         )}
       </div>
       <div className="grid gap-1 text-xs font-mono">
-        <div className="text-slate-400">
-          <span className="text-slate-500">input&nbsp;&nbsp;&nbsp;&nbsp;:</span>{' '}
-          <span className="text-slate-300 break-all">{formatValue(test.input)}</span>
+        <div className="text-text-muted">
+          <span className="text-text-muted">input&nbsp;&nbsp;&nbsp;&nbsp;:</span>{' '}
+          <span className="text-text-muted break-all">{formatValue(test.input)}</span>
         </div>
-        <div className="text-slate-400">
-          <span className="text-slate-500">expected :</span>{' '}
-          <span className="text-emerald-300 break-all">{formatValue(test.expected)}</span>
+        <div className="text-text-muted">
+          <span className="text-text-muted">expected :</span>{' '}
+          <span className="text-success break-all">{formatValue(test.expected)}</span>
         </div>
-        <div className="text-slate-400">
-          <span className="text-slate-500">actual&nbsp;&nbsp;&nbsp;:</span>{' '}
-          <span className={passed ? 'text-emerald-300 break-all' : 'text-rose-300 break-all'}>
+        <div className="text-text-muted">
+          <span className="text-text-muted">actual&nbsp;&nbsp;&nbsp;:</span>{' '}
+          <span className={passed ? 'text-success break-all' : 'text-danger break-all'}>
             {formatValue(test.actual)}
           </span>
         </div>
@@ -159,12 +159,12 @@ export const TestResultPanel = memo(({
   isExecuting = false,
 }) => {
   return (
-    <Card className="border-slate-700 bg-slate-900/50">
+    <Card className="border-border-theme surface-text bg-surface/80">
       <CardHeader className="pb-3">
         <div className="flex items-center justify-between">
           <CardTitle className="text-base">{title}</CardTitle>
           {isExecuting && (
-            <div className="flex items-center gap-2 text-xs text-indigo-400">
+            <div className="flex items-center gap-2 text-xs text-icon-active">
               <Loader2 size={14} className="animate-spin" />
               <span>Executing...</span>
             </div>
@@ -175,7 +175,7 @@ export const TestResultPanel = memo(({
         {executionError && <ExecutionErrorState error={executionError} />}
 
         {!executionError && !isExecuting && isEmpty && (
-          <div className="text-sm text-slate-500 py-4 text-center">
+          <div className="text-sm text-text-muted py-4 text-center">
             Run your code against the public tests to see results here.
           </div>
         )}

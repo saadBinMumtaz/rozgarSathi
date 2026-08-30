@@ -22,12 +22,12 @@ export const MonacoEditorPanel = ({
   const monacoLang = MONACO_LANGUAGES[language] || MONACO_LANGUAGES.javascript;
 
   return (
-    <div className="rounded-lg border border-slate-700 overflow-hidden bg-[#1e1e1e]">
-      <div className="flex items-center justify-between px-3 py-2 bg-slate-900 border-b border-slate-700">
-        <span className="text-xs font-medium text-slate-400 font-mono">
+    <div className="rounded-lg  overflow-hidden surface-text bg-surface">
+      <div className="flex items-center justify-between px-3 py-2 surface-text bg-surface border-b">
+        <span className="text-xs font-medium text-text-muted font-mono">
           solution.{monacoLang.ext}
         </span>
-        <span className="text-xs text-slate-500">{monacoLang.label}</span>
+        <span className="text-xs text-text-muted">{monacoLang.label}</span>
       </div>
       <Editor
         height={height}
@@ -36,7 +36,7 @@ export const MonacoEditorPanel = ({
         value={value}
         onChange={(next) => onChange(next ?? '')}
         loading={
-          <div className="flex items-center justify-center h-full text-sm text-slate-500">
+          <div className="flex items-center justify-center h-full text-sm text-text-muted">
             Loading editor...
           </div>
         }

@@ -6,8 +6,13 @@ import BehavioralInterview from './pages/BehavioralInterview';
 import TechnicalInterview from './pages/TechnicalInterview';
 import CodingInterview from './pages/CodingInterview';
 import Results from './pages/Results';
+import Dashboard from './pages/Dashboard';
+import SessionHistory from './pages/SessionHistory';
+import { ErrorBoundary } from './components/shared/ErrorBoundary';
 import Toast from './design-system/Toast';
+import { ThemeToggle } from './design-system/ThemeToggle';
 import { useLanguage } from './hooks/useLanguage';
+import { useTheme } from './hooks/useTheme';
 
 const APP_STATE_KEY = 'rozgar-sathi-app-state-v1';
 const USER_ID_KEY = 'rozgar-sathi-user-id';
@@ -63,6 +68,7 @@ export const App = () => {
   const [toastMessage, setToastMessage] = useState(null);
   const [pendingSampleJD, setPendingSampleJD] = useState(null);
   const { language, setLanguage, isUrdu } = useLanguage();
+  const { theme, toggleTheme, isDark } = useTheme();
 
   // Track previous page to detect navigation away from interviews
   const prevPageRef = useRef(currentPage);
@@ -209,7 +215,11 @@ export const App = () => {
   };
 
   return (
-    <div className="min-h-screen bg-slate-950 text-slate-100 selection:bg-indigo-500 selection:text-white">
+    <div className="min-h-screen bg-bg-primary text-text-primary selection:bg-text-primary selection:text-bg-primary">
+      {/* Global theme toggle — always visible, fixed position */}
+      <div className="fixed top-4 right-4 z-50">
+        <ThemeToggle isDark={isDark} onToggle={toggleTheme} size="md" />
+      </div>
       {/* Render all visited pages, hide inactive ones with CSS */}
       <div className={currentPage === 'landing' ? '' : 'hidden'}>
         {shouldRender('landing') && (
@@ -242,41 +252,65 @@ export const App = () => {
 
       <div className={currentPage === 'behavioral-interview' ? '' : 'hidden'}>
         {shouldRender('behavioral-interview') && (
-          <BehavioralInterview
-            jdAnalysisId={jdAnalysis?._id || jdAnalysis?.id}
-            onNavigate={navigateTo}
-            language={language}
-            isUrdu={isUrdu}
-            userId={userId}
-          />
+          <ErrorBoundary modeLabel="Behavioral Interview" onNavigate={navigateTo}>
+            <BehavioralInterview
+              jdAnalysisId={jdAnalysis?._id || jdAnalysis?.id}
+              onNavigate={navigateTo}
+              language={language}
+              isUrdu={isUrdu}
+              userId={userId}
+            />
+          </ErrorBoundary>
         )}
       </div>
 
       <div className={currentPage === 'technical-interview' ? '' : 'hidden'}>
         {shouldRender('technical-interview') && (
-          <TechnicalInterview
-            jdAnalysisId={jdAnalysis?._id || jdAnalysis?.id}
-            onNavigate={navigateTo}
-            language={language}
-            isUrdu={isUrdu}
-            userId={userId}
-          />
+          <ErrorBoundary modeLabel="Technical Interview" onNavigate={navigateTo}>
+            <TechnicalInterview
+              jdAnalysisId={jdAnalysis?._id || jdAnalysis?.id}
+              onNavigate={navigateTo}
+              language={language}
+              isUrdu={isUrdu}
+              userId={userId}
+            />
+          </ErrorBoundary>
         )}
       </div>
 
       <div className={currentPage === 'coding-interview' ? '' : 'hidden'}>
         {shouldRender('coding-interview') && (
-          <CodingInterview
-            jdAnalysisId={jdAnalysis?._id || jdAnalysis?.id}
-            onNavigate={navigateTo}
-            userId={userId}
-          />
+          <ErrorBoundary modeLabel="Coding Interview" onNavigate={navigateTo}>
+            <CodingInterview
+              jdAnalysisId={jdAnalysis?._id || jdAnalysis?.id}
+              onNavigate={navigateTo}
+              userId={userId}
+            />
+          </ErrorBoundary>
         )}
       </div>
 
       <div className={currentPage === 'results' ? '' : 'hidden'}>
         {shouldRender('results') && (
           <Results
+            userId={userId}
+            onNavigate={navigateTo}
+          />
+        )}
+      </div>
+
+      <div className={currentPage === 'dashboard' ? '' : 'hidden'}>
+        {shouldRender('dashboard') && (
+          <Dashboard
+            userId={userId}
+            onNavigate={navigateTo}
+          />
+        )}
+      </div>
+
+      <div className={currentPage === 'session-history' ? '' : 'hidden'}>
+        {shouldRender('session-history') && (
+          <SessionHistory
             userId={userId}
             onNavigate={navigateTo}
           />

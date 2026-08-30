@@ -29,32 +29,32 @@ const MODE_CONFIG = {
   behavioral: {
     label: 'Behavioral',
     icon: MessageCircle,
-    color: 'text-violet-400',
-    bg: 'bg-violet-500/10',
-    border: 'border-violet-500/20',
+    color: 'text-text-muted',
+    bg: 'bg-text-muted/10',
+    border: '',
   },
   technical: {
     label: 'Technical',
     icon: Brain,
-    color: 'text-cyan-400',
-    bg: 'bg-cyan-500/10',
-    border: 'border-cyan-500/20',
+    color: 'text-text-muted',
+    bg: 'surface-text bg-surface-hover',
+    border: '',
   },
   coding: {
     label: 'Coding',
     icon: Code,
-    color: 'text-emerald-400',
-    bg: 'bg-emerald-500/10',
-    border: 'border-emerald-500/20',
+    color: 'text-success',
+    bg: 'bg-success/10',
+    border: 'border-success/30/20',
   },
 };
 
 const getReadinessLabel = (score) => {
-  if (score >= 80) return { text: 'Excellent', color: 'text-emerald-400' };
-  if (score >= 60) return { text: 'Good', color: 'text-cyan-400' };
-  if (score >= 40) return { text: 'Fair', color: 'text-amber-400' };
-  if (score > 0) return { text: 'Needs Work', color: 'text-rose-400' };
-  return { text: 'No Data', color: 'text-slate-500' };
+  if (score >= 80) return { text: 'Excellent', color: 'text-success' };
+  if (score >= 60) return { text: 'Good', color: 'text-text-muted' };
+  if (score >= 40) return { text: 'Fair', color: 'text-warning' };
+  if (score > 0) return { text: 'Needs Work', color: 'text-danger' };
+  return { text: 'No Data', color: 'text-text-muted' };
 };
 
 export const Results = ({ userId = 'guest', onNavigate }) => {
@@ -100,10 +100,10 @@ export const Results = ({ userId = 'guest', onNavigate }) => {
   if (error || !data) {
     return (
       <div className="min-h-screen flex items-center justify-center p-6">
-        <Card className="max-w-md w-full border-rose-500/30">
+        <Card className="max-w-md w-full border-danger/30">
           <CardContent className="pt-6 text-center space-y-4">
-            <AlertTriangle className="mx-auto text-rose-400" size={32} />
-            <p className="text-rose-300">{error || 'Failed to load interview results.'}</p>
+            <AlertTriangle className="mx-auto text-danger" size={32} />
+            <p className="text-danger">{error || 'Failed to load interview results.'}</p>
             <div className="flex gap-3 justify-center">
               <Button variant="secondary" onClick={() => onNavigate?.('mode-selection')}>
                 Start an interview
@@ -126,8 +126,8 @@ export const Results = ({ userId = 'guest', onNavigate }) => {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-slate-100">Interview Results</h1>
-          <p className="text-sm text-slate-400 mt-1">
+          <h1 className="text-2xl font-bold text-text-primary">Interview Results</h1>
+          <p className="text-sm text-text-muted mt-1">
             {sessionCount > 0
               ? `Based on ${sessionCount} completed session${sessionCount !== 1 ? 's' : ''}`
               : 'Complete interviews to see your results'}
@@ -148,7 +148,7 @@ export const Results = ({ userId = 'guest', onNavigate }) => {
       {/* Overall Readiness + Per-Mode Breakdown */}
       <div className="grid md:grid-cols-4 gap-4">
         {/* Overall readiness — large ring */}
-        <Card className="md:col-span-1 border-slate-700 bg-slate-900/50">
+        <Card className="md:col-span-1 surface-text bg-surface/80">
           <CardContent className="pt-6 flex flex-col items-center">
             <ScoreRing
               score={overallReadiness}
@@ -164,10 +164,10 @@ export const Results = ({ userId = 'guest', onNavigate }) => {
         </Card>
 
         {/* Per-mode scores */}
-        <Card className="md:col-span-3 border-slate-700 bg-slate-900/50">
+        <Card className="md:col-span-3 surface-text bg-surface/80">
           <CardHeader>
             <CardTitle className="text-base flex items-center gap-2">
-              <BarChart3 size={16} className="text-slate-400" />
+              <BarChart3 size={16} className="text-text-muted" />
               Mode Breakdown
             </CardTitle>
           </CardHeader>
@@ -195,21 +195,21 @@ export const Results = ({ userId = 'guest', onNavigate }) => {
 
       {/* Weakest Competency + Weights */}
       <div className="grid md:grid-cols-2 gap-4">
-        <Card className="border-slate-700 bg-slate-900/50">
+        <Card className="border-border-theme surface-text bg-surface/80">
           <CardHeader>
             <CardTitle className="text-base flex items-center gap-2">
-              <Target size={16} className="text-amber-400" />
+              <Target size={16} className="text-warning" />
               Weakest Competency
             </CardTitle>
           </CardHeader>
           <CardContent>
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-lg bg-amber-500/10 flex items-center justify-center">
-                <AlertTriangle size={20} className="text-amber-400" />
+              <div className="w-10 h-10 rounded-lg bg-warning/10 flex items-center justify-center">
+                <AlertTriangle size={20} className="text-warning" />
               </div>
               <div>
-                <p className="text-lg font-semibold text-slate-200">{weakestCompetency}</p>
-                <p className="text-xs text-slate-400">
+                <p className="text-lg font-semibold text-text-primary">{weakestCompetency}</p>
+                <p className="text-xs text-text-muted">
                   Focus your next practice session on this area
                 </p>
               </div>
@@ -218,10 +218,10 @@ export const Results = ({ userId = 'guest', onNavigate }) => {
         </Card>
 
         {/* Weights transparency */}
-        <Card className="border-slate-700 bg-slate-900/50">
+        <Card className="border-border-theme surface-text bg-surface/80">
           <CardHeader>
             <CardTitle className="text-base flex items-center gap-2">
-              <Award size={16} className="text-indigo-400" />
+              <Award size={16} className="text-icon-active" />
               Readiness Weights
             </CardTitle>
           </CardHeader>
@@ -231,15 +231,15 @@ export const Results = ({ userId = 'guest', onNavigate }) => {
                 const config = MODE_CONFIG[mode];
                 return (
                   <div key={mode} className="flex items-center justify-between text-sm">
-                    <span className="text-slate-400 capitalize">{mode}</span>
+                    <span className="text-text-muted capitalize">{mode}</span>
                     <div className="flex items-center gap-2">
-                      <div className="w-24 h-1.5 bg-slate-800 rounded-full overflow-hidden">
+                      <div className="w-24 h-1.5 surface-text bg-surface-hover rounded-full overflow-hidden">
                         <div
-                          className="h-full bg-indigo-500 rounded-full"
+                          className="h-full bg-text-primary rounded-full"
                           style={{ width: `${weight * 100}%` }}
                         />
                       </div>
-                      <span className="text-slate-300 font-mono text-xs w-8 text-right">
+                      <span className="text-text-muted font-mono text-xs w-8 text-right">
                         {Math.round(weight * 100)}%
                       </span>
                     </div>
@@ -247,7 +247,7 @@ export const Results = ({ userId = 'guest', onNavigate }) => {
                 );
               })}
             </div>
-            <p className="text-xs text-slate-500 mt-3">
+            <p className="text-xs text-text-muted mt-3">
               {weightsReason || 'Weights reflect the role profile used during interview setup.'}
             </p>
           </CardContent>
@@ -256,26 +256,26 @@ export const Results = ({ userId = 'guest', onNavigate }) => {
 
       {/* Cross-Mode Insight — THE highlight */}
       {crossModeInsight && (
-        <Card className="border-indigo-500/30 bg-gradient-to-br from-indigo-500/5 to-slate-900/50">
+        <Card className="border-border-theme surface-text bg-surface">
           <CardHeader>
             <CardTitle className="text-base flex items-center gap-2">
-              <Brain size={16} className="text-indigo-400" />
+              <Brain size={16} className="text-icon-active" />
               Cross-Mode Insight
               <Badge variant="secondary">AI-Powered</Badge>
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <p className="text-slate-300 leading-relaxed whitespace-pre-line">{crossModeInsight}</p>
+            <p className="text-text-muted leading-relaxed whitespace-pre-line">{crossModeInsight}</p>
           </CardContent>
         </Card>
       )}
 
       {/* Trend */}
       {trend && trend.length > 0 && (
-        <Card className="border-slate-700 bg-slate-900/50">
+        <Card className="border-border-theme surface-text bg-surface/80">
           <CardHeader>
             <CardTitle className="text-base flex items-center gap-2">
-              <TrendingUp size={16} className="text-emerald-400" />
+              <TrendingUp size={16} className="text-success" />
               Session Trend
             </CardTitle>
           </CardHeader>
@@ -290,12 +290,12 @@ export const Results = ({ userId = 'guest', onNavigate }) => {
                     className="flex-1 flex flex-col items-center gap-1"
                     title={`${point.sessionDate} — ${point.mode}: ${point.score}`}
                   >
-                    <span className="text-xs text-slate-400 font-mono">{point.score}</span>
+                    <span className="text-xs text-text-muted font-mono">{point.score}</span>
                     <div
                       className={`w-full rounded-t-md ${config.bg} border ${config.border} transition-all duration-300`}
                       style={{ height: `${height}%` }}
                     />
-                    <span className="text-[10px] text-slate-500 truncate w-full text-center">
+                    <span className="text-[10px] text-text-muted truncate w-full text-center">
                       {point.sessionDate?.slice(5) || ''}
                     </span>
                   </div>

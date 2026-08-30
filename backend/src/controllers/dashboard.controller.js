@@ -185,3 +185,117 @@ export const getDashboardData = async (req, res, next) => {
 };
 
 export default { getDashboardData };
+
+// ─── Day 6: Session History + Trend ───────────────────────────────────────
+
+/**
+ * Helper: build the inclusive userId query (same logic as getDashboardData).
+ */
+const buildUserQuery = (userId) => ({
+  $or: [
+    { userId },
+    { userId: 'guest' },
+    { userId: { $regex: /^guest_/ } },
+    ...(userId.startsWith('user_') ? [{ userId: { $regex: /^user_/ } }] : []),
+  ],
+});
+
+/**
+ * GET /api/dashboard/:userId/history
+ * Returns all completed sessions sorted newest-first with full question/evaluation data.
+ */
+export const getSessionHistory = async (req, res, next) => {
+  try {
+    const { userId } = req.params;
+    const sessions = await Session.find(buildUserQuery(userId))
+      .sort({ updatedAt: -1 })
+      .lean();
+
+    const history = sessions
+      .filter((s) => s.status === 'completed')
+      .map((s) => {
+        const questions = (s.questions || []).map((q) => ({
+          questionId: q.questionId,
+          questionText: q.questionText,
+          topic: q.topic,
+          difficulty: q.difficulty,
+          transcript: q.transcript || '',
+          score: q.evaluation?.score ?? null,
+          evidence: q.evaluation?.evidence || [],
+          strength: q.evaluation?.strength || '',
+          missing: q.evaluation?.missing || '',
+          improvement: q.evaluation?.improvement || '',
+        }));
+
+        const avgScore = questions.filter((q) => q.score != null).length > 0
+          ? Math.round(
+              questions.filter((q) => q.score != null).reduce((a, q) => a + q.score, 0) /
+              questions.filter((q) => q.score != null).length
+            )
+          : null;
+
+        return {
+          sessionId: s._id,
+          mode: s.mode,
+          date: s.updatedAt || s.createdAt,
+          overallScore: s.overallScore ?? avgScore,
+          status: s.status,
+          jdSnapshot: s.jdSnapshot || null,
+          questionCount: questions.length,
+          questions,
+        };
+      });
+
+    return res.json({ history, total: history.length });
+  } catch (err) {
+    logger.error(`Session history error: ${err.message}`);
+    next(err);
+  }
+};
+
+/**
+ * GET /api/dashboard/:userId/trend
+ * Returns per-mode trend data — last 5 completed sessions per mode with scores.
+ * Used by ProgressTrendChart to draw real historical lines.
+ */
+export const getSessionTrend = async (req, res, next) => {
+  try {
+    const { userId } = req.params;
+    const sessions = await Session.find(buildUserQuery(userId))
+      .sort({ updatedAt: -1 })
+      .lean();
+
+    const completed = sessions.filter((s) => s.status === 'completed');
+
+    // Group by mode, take last 5 each, compute per-session score
+    const modes = ['behavioral', 'technical', 'coding'];
+    const trend = {};
+
+    for (const mode of modes) {
+      const modeSessions = completed
+        .filter((s) => s.mode === mode)
+        .slice(0, 5) // already sorted newest-first
+        .reverse(); // oldest-first for chart rendering
+
+      trend[mode] = modeSessions.map((s) => {
+        const evals = (s.questions || [])
+          .map((q) => q.evaluation?.score)
+          .filter((score) => typeof score === 'number');
+        const avgScore = evals.length > 0
+          ? Math.round(evals.reduce((a, b) => a + b, 0) / evals.length)
+          : s.overallScore ?? 0;
+
+        return {
+          date: new Date(s.updatedAt || s.createdAt).toISOString().split('T')[0],
+          score: avgScore,
+          questionCount: (s.questions || []).length,
+        };
+      });
+    }
+
+    return res.json({ trend });
+  } catch (err) {
+    logger.error(`Session trend error: ${err.message}`);
+    next(err);
+  }
+};
