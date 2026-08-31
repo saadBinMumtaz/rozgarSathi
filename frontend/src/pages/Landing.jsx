@@ -1,10 +1,10 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { Button } from '../design-system/Button';
 import { sampleJDs, sampleSeniorityOrder } from '../data/sampleJD';
-import { LogOut, Sparkles } from 'lucide-react';
+import { Sparkles } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import Aurora from '../components/shared/Aurora';
-import GooeyNav from '../components/shared/GooeyNav';
+import PageHeader from '../components/shared/PageHeader';
 
 /* ─── TypeWriter Hook ─── */
 const useTypeWriter = (words, typingSpeed = 70, deletingSpeed = 40, pauseDuration = 1500) => {
@@ -81,49 +81,13 @@ export const Landing = ({ onNavigate, onTrySampleJD, isAuthenticated, user, isDa
       <div className="absolute top-1/4 left-1/3 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[500px] bg-text-primary/5 blur-[120px] rounded-full pointer-events-none" />
 
       {/* ─── Navigation Header ─── */}
-      <header className="relative z-10 w-full max-w-7xl mx-auto px-6 md:px-12 py-5">
-        <div className="flex items-center justify-between gap-4">
-          {/* Logo — left */}
-          <img
-            src={isDark ? '/logo-white.png' : '/logo-dark.png'}
-            alt="Rozgar Sathi"
-            className="h-16 sm:h-20 w-auto flex-shrink-0"
-          />
-
-          {/* Gooey Navigation — centered */}
-          <div className="flex-1 flex justify-center">
-            <GooeyNav
-              items={[
-                { label: 'Home', href: '#', page: 'landing' },
-                { label: 'Practice', href: '#', page: isAuthenticated ? 'jd-input' : 'auth' },
-                { label: isAuthenticated ? 'Dashboard' : 'Sign Up', href: '#', page: isAuthenticated ? 'dashboard' : 'auth' },
-              ]}
-              particleCount={18}
-              particleDistances={[100, 12]}
-              particleR={110}
-              initialActiveIndex={0}
-              animationTime={500}
-              timeVariance={350}
-              colors={[1, 2, 3, 1, 2, 3, 1, 4]}
-              isDark={isDark}
-              onNavigate={onNavigate}
-            />
-          </div>
-
-          {/* Logout — right */}
-          <div className="flex-shrink-0">
-            {isAuthenticated && (
-              <button
-                onClick={() => { logout(); onNavigate('landing'); }}
-                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm text-text-muted hover:text-text-primary hover:surface-text bg-surface-hover transition-colors focus:outline-none focus:ring-2 focus:ring-border-strong"
-                aria-label="Sign out of your account"
-              >
-                <LogOut size={14} /> Logout
-              </button>
-            )}
-          </div>
-        </div>
-      </header>
+      <PageHeader
+        isDark={isDark}
+        onNavigate={onNavigate}
+        currentPage="landing"
+        isAuthenticated={isAuthenticated}
+        onLogout={() => { logout(); onNavigate('landing'); }}
+      />
 
       {/* ─── Split-Screen Hero ─── */}
       <section className="flex-1 w-full max-w-7xl mx-auto px-6 md:px-12 py-8 md:py-12 grid grid-cols-1 lg:grid-cols-2 gap-10 lg:gap-16 items-center relative z-10">

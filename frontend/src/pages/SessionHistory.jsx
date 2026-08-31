@@ -8,12 +8,14 @@ import { Card, CardHeader, CardTitle, CardContent } from '../design-system/Card'
 import { Button } from '../design-system/Button';
 import { Badge } from '../design-system/Badge';
 import { Skeleton } from '../design-system/Skeleton';
+import PageHeader from '../components/shared/PageHeader';
 import { EvidenceCard } from '../components/shared/EvidenceCard';
 import { apiClient } from '../api/client';
 import {
   ArrowLeft, Brain, Code, MessageCircle, Clock, ChevronDown, ChevronUp,
   AlertCircle, FileText, MessageSquare, TrendingUp,
 } from 'lucide-react';
+import { useAuth } from '../context/AuthContext';
 
 const MODE_CONFIG = {
   behavioral: { label: 'Behavioral', icon: MessageCircle, color: 'text-text-muted', bg: 'bg-text-muted/10', border: '' },
@@ -165,7 +167,8 @@ const SessionCard = ({ session }) => {
   );
 };
 
-export const SessionHistory = ({ userId = 'guest', onNavigate }) => {
+export const SessionHistory = ({ userId = 'guest', onNavigate, isDark }) => {
+  const { logout } = useAuth();
   const [sessions, setSessions] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -228,24 +231,36 @@ export const SessionHistory = ({ userId = 'guest', onNavigate }) => {
   }
 
   return (
-    <div className="min-h-screen p-6 max-w-4xl mx-auto space-y-6">
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold text-text-primary">Session History</h1>
-          <p className="text-sm text-text-muted mt-1">
-            {sessions.length} completed session{sessions.length !== 1 ? 's' : ''}
-          </p>
-        </div>
-        <div className="flex gap-2">
-          <Button variant="secondary" onClick={() => onNavigate('dashboard')}>
-            <TrendingUp size={14} className="mr-1" /> Dashboard
-          </Button>
-          <Button variant="ghost" onClick={() => onNavigate('landing')}>
-            <ArrowLeft size={14} className="mr-1" /> Home
-          </Button>
-        </div>
-      </div>
+    <div className="min-h-screen bg-bg-primary text-text-primary flex flex-col">
+      {/* Navigation Header */}
+      <PageHeader
+        isDark={isDark}
+        onNavigate={onNavigate}
+        currentPage="session-history"
+        isAuthenticated={true}
+        onLogout={() => { logout(); onNavigate('landing'); }}
+      />
+
+      {/* Content */}
+      <div className="flex-1 p-6 md:p-12">
+        <div className="max-w-4xl mx-auto space-y-6">
+          {/* Page Title */}
+          <div className="flex items-center justify-between">
+            <div>
+              <h1 className="text-2xl font-bold text-text-primary">Session History</h1>
+              <p className="text-sm text-text-muted mt-1">
+                {sessions.length} completed session{sessions.length !== 1 ? 's' : ''}
+              </p>
+            </div>
+            <div className="flex gap-2">
+              <Button variant="secondary" onClick={() => onNavigate('dashboard')}>
+                <TrendingUp size={14} className="mr-1" /> Dashboard
+              </Button>
+              <Button variant="ghost" onClick={() => onNavigate('landing')}>
+                <ArrowLeft size={14} className="mr-1" /> Home
+              </Button>
+            </div>
+          </div>
 
       {/* Mode filter */}
       <div className="flex items-center gap-2" role="group" aria-label="Filter sessions by mode">
@@ -292,6 +307,8 @@ export const SessionHistory = ({ userId = 'guest', onNavigate }) => {
           ))}
         </div>
       )}
+        </div>
+      </div>
     </div>
   );
 };

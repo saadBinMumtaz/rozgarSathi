@@ -5,10 +5,13 @@ import { Badge } from '../design-system/Badge';
 import { ProgressBar } from '../design-system/ProgressBar';
 import { ScoreRing } from '../design-system/ScoreRing';
 import { Skeleton } from '../design-system/Skeleton';
+import PageHeader from '../components/shared/PageHeader';
 import { apiClient } from '../api/client';
 import { sampleJDs, sampleSeniorityOrder } from '../data/sampleJD';
+import { useAuth } from '../context/AuthContext';
 
-export const JDInput = ({ onAnalysisComplete, onNavigate, pendingSampleJD, onSampleJDConsumed }) => {
+export const JDInput = ({ onAnalysisComplete, onNavigate, pendingSampleJD, onSampleJDConsumed, isDark }) => {
+  const { logout } = useAuth();
   const [jdText, setJdText] = useState('');
   const [currentSampleId, setCurrentSampleId] = useState(null);
   const [resumeFile, setResumeFile] = useState(null);
@@ -75,21 +78,19 @@ export const JDInput = ({ onAnalysisComplete, onNavigate, pendingSampleJD, onSam
   }, []);
 
   return (
-    <div className="min-h-screen bg-bg-primary text-text-primary p-6 md:p-12 flex flex-col items-center">
-      {/* Header */}
-      <header className="w-full max-w-4xl flex justify-between items-center mb-8">
-        <Button
-          variant="link"
-          className="text-text-muted hover:text-text-primary flex items-center gap-2"
-          onClick={() => onNavigate('landing')}
-        >
-          ← Back to Home
-        </Button>
-        <Badge variant="primary">Step 1 of 2: Job Context</Badge>
-      </header>
+    <div className="min-h-screen bg-bg-primary text-text-primary flex flex-col">
+      {/* Navigation Header */}
+      <PageHeader
+        isDark={isDark}
+        onNavigate={onNavigate}
+        currentPage="jd-input"
+        isAuthenticated={true}
+        onLogout={() => { logout(); onNavigate('landing'); }}
+        extraRightContent={<Badge variant="primary">Step 1 of 2: Job Context</Badge>}
+      />
 
       {/* Main Container */}
-      <main className="w-full max-w-4xl space-y-8">
+      <main className="flex-1 w-full max-w-4xl mx-auto px-6 md:px-12 pb-12 space-y-8">
         <div className="text-center space-y-2">
           <h1 className="text-3xl md:text-4xl font-extrabold text-text-primary">Paste Job Description</h1>
           <p className="text-text-muted text-sm md:text-base">

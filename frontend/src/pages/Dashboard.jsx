@@ -12,12 +12,14 @@ import { ProgressBar } from '../design-system/ProgressBar';
 import { Skeleton } from '../design-system/Skeleton';
 import { ProgressTrendChart } from '../components/shared/ProgressTrendChart';
 import { StreakBadge } from '../components/shared/StreakBadge';
+import PageHeader from '../components/shared/PageHeader';
 import { apiClient } from '../api/client';
 import {
   ArrowLeft, ArrowRight, Brain, Code, MessageCircle, Target,
   Award, AlertTriangle, BarChart3, Clock, TrendingUp,
   CheckCircle2, AlertCircle,
 } from 'lucide-react';
+import { useAuth } from '../context/AuthContext';
 
 const MODE_CONFIG = {
   behavioral: { label: 'Behavioral', icon: MessageCircle, color: 'text-text-muted', bg: 'bg-text-muted/10', border: '', route: 'behavioral-interview' },
@@ -39,7 +41,8 @@ const formatDate = (dateStr) => {
   return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
 };
 
-export const Dashboard = ({ userId = 'guest', onNavigate }) => {
+export const Dashboard = ({ userId = 'guest', onNavigate, isDark }) => {
+  const { logout } = useAuth();
   const [data, setData] = useState(null);
   const [history, setHistory] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -132,29 +135,40 @@ export const Dashboard = ({ userId = 'guest', onNavigate }) => {
   }
 
   return (
-    <div className="min-h-screen p-6 max-w-5xl mx-auto space-y-6">
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold text-text-primary">Your Dashboard</h1>
-          <p className="text-sm text-text-muted mt-1">
-            {sessionCount > 0
-              ? `${sessionCount} completed session${sessionCount !== 1 ? 's' : ''} tracked`
-              : 'Start your first interview to begin tracking'}
-          </p>
-          <div className="mt-1">
-            <StreakBadge userId={userId} />
+    <div className="min-h-screen bg-bg-primary text-text-primary">
+      {/* Navigation Header */}
+      <PageHeader
+        isDark={isDark}
+        onNavigate={onNavigate}
+        currentPage="dashboard"
+        isAuthenticated={true}
+        onLogout={() => { logout(); onNavigate('landing'); }}
+      />
+
+      {/* Content */}
+      <div className="p-6 md:p-12 max-w-5xl mx-auto space-y-6">
+        {/* Page Title */}
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-2xl font-bold text-text-primary">Your Dashboard</h1>
+            <p className="text-sm text-text-muted mt-1">
+              {sessionCount > 0
+                ? `${sessionCount} completed session${sessionCount !== 1 ? 's' : ''} tracked`
+                : 'Start your first interview to begin tracking'}
+            </p>
+            <div className="mt-1">
+              <StreakBadge userId={userId} />
+            </div>
+          </div>
+          <div className="flex gap-2">
+            <Button variant="secondary" onClick={() => onNavigate('session-history')}>
+              <Clock size={14} className="mr-1" /> History
+            </Button>
+            <Button variant="ghost" onClick={() => onNavigate('landing')}>
+              <ArrowLeft size={14} className="mr-1" /> Home
+            </Button>
           </div>
         </div>
-        <div className="flex gap-2">
-          <Button variant="secondary" onClick={() => onNavigate('session-history')}>
-            <Clock size={14} className="mr-1" /> History
-          </Button>
-          <Button variant="ghost" onClick={() => onNavigate('landing')}>
-            <ArrowLeft size={14} className="mr-1" /> Home
-          </Button>
-        </div>
-      </div>
 
       {/* Overall Readiness + Per-Mode Breakdown */}
       <div className="grid md:grid-cols-4 gap-4">
@@ -371,6 +385,7 @@ export const Dashboard = ({ userId = 'guest', onNavigate }) => {
           </CardContent>
         </Card>
       )}
+      </div>
     </div>
   );
 };

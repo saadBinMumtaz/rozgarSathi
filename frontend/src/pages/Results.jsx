@@ -11,6 +11,7 @@ import { Badge } from '../design-system/Badge';
 import { ScoreRing } from '../design-system/ScoreRing';
 import { ProgressBar } from '../design-system/ProgressBar';
 import { Skeleton } from '../design-system/Skeleton';
+import PageHeader from '../components/shared/PageHeader';
 import { apiClient } from '../api/client';
 import { ExportReportButton } from '../components/shared/ExportReportButton';
 import {
@@ -28,6 +29,7 @@ import {
   Copy,
   Check,
 } from 'lucide-react';
+import { useAuth } from '../context/AuthContext';
 
 const MODE_CONFIG = {
   behavioral: {
@@ -61,7 +63,8 @@ const getReadinessLabel = (score) => {
   return { text: 'No Data', color: 'text-text-muted' };
 };
 
-export const Results = ({ userId = 'guest', onNavigate }) => {
+export const Results = ({ userId = 'guest', onNavigate, isDark }) => {
+  const { logout } = useAuth();
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -170,44 +173,56 @@ export const Results = ({ userId = 'guest', onNavigate }) => {
   const readiness = getReadinessLabel(overallReadiness);
 
   return (
-    <div className="min-h-screen p-6 max-w-5xl mx-auto space-y-6">
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold text-text-primary">Interview Results</h1>
-          <p className="text-sm text-text-muted mt-1">
-            {sessionCount > 0
-              ? `Based on ${sessionCount} completed session${sessionCount !== 1 ? 's' : ''}`
-              : 'Complete interviews to see your results'}
-          </p>
-        </div>
-        {onNavigate && (
-          <div className="flex gap-2">
-            <ExportReportButton data={data} />
-            <Button
-              variant="secondary"
-              onClick={shareLink ? handleCopyLink : handleShare}
-              isLoading={shareLoading}
-              disabled={!latestSessionId}
-            >
-              {shareLink ? (
-                <>
-                  {copied ? <Check size={14} className="mr-1" /> : <Copy size={14} className="mr-1" />}
-                  {copied ? 'Copied!' : 'Copy Link'}
-                </>
-              ) : (
-                <>
-                  <Share2 size={14} className="mr-1" />
-                  Share Report
-                </>
-              )}
-            </Button>
-            <Button variant="secondary" onClick={() => onNavigate('mode-selection')}>
-              Practice More
-            </Button>
-            <Button variant="ghost" onClick={() => onNavigate('landing')}>
-              <ArrowLeft size={14} className="mr-1" /> Home
-            </Button>
+    <div className="min-h-screen bg-bg-primary text-text-primary flex flex-col">
+      {/* Navigation Header */}
+      <PageHeader
+        isDark={isDark}
+        onNavigate={onNavigate}
+        currentPage="results"
+        isAuthenticated={true}
+        onLogout={() => { logout(); onNavigate('landing'); }}
+      />
+
+      {/* Content */}
+      <div className="flex-1 p-6 md:p-12">
+        <div className="max-w-5xl mx-auto space-y-6">
+          {/* Page Title */}
+          <div className="flex items-center justify-between">
+            <div>
+              <h1 className="text-2xl font-bold text-text-primary">Interview Results</h1>
+              <p className="text-sm text-text-muted mt-1">
+                {sessionCount > 0
+                  ? `Based on ${sessionCount} completed session${sessionCount !== 1 ? 's' : ''}`
+                  : 'Complete interviews to see your results'}
+              </p>
+            </div>
+            {onNavigate && (
+              <div className="flex gap-2">
+                <ExportReportButton data={data} />
+                <Button
+                  variant="secondary"
+                  onClick={shareLink ? handleCopyLink : handleShare}
+                  isLoading={shareLoading}
+                  disabled={!latestSessionId}
+                >
+                  {shareLink ? (
+                    <>
+                      {copied ? <Check size={14} className="mr-1" /> : <Copy size={14} className="mr-1" />}
+                      {copied ? 'Copied!' : 'Copy Link'}
+                    </>
+                  ) : (
+                    <>
+                      <Share2 size={14} className="mr-1" />
+                      Share Report
+                    </>
+                  )}
+                </Button>
+                <Button variant="secondary" onClick={() => onNavigate('mode-selection')}>
+                  Practice More
+                </Button>
+                <Button variant="ghost" onClick={() => onNavigate('landing')}>
+                  <ArrowLeft size={14} className="mr-1" /> Home
+                </Button>
           </div>
         )}
       </div>
@@ -389,6 +404,8 @@ export const Results = ({ userId = 'guest', onNavigate }) => {
           </CardContent>
         </Card>
       )}
+        </div>
+      </div>
     </div>
   );
 };

@@ -14,12 +14,15 @@ import { TypedFallback } from '../components/behavioral/TypedFallback';
 import { EvidenceCard } from '../components/shared/EvidenceCard';
 import { DifficultyIndicator } from '../components/technical/DifficultyIndicator';
 import { QuestionTraceBadge } from '../components/shared/QuestionTraceBadge';
+import PageHeader from '../components/shared/PageHeader';
 import { apiClient } from '../api/client';
 import { useTabLock } from '../hooks/useTabLock';
+import { useAuth } from '../context/AuthContext';
 
 const TECHNICAL_SESSION_KEY = 'rozgar-sathi-technical-session-v1';
 
-export const TechnicalInterview = ({ jdAnalysisId, onNavigate, language = 'english', isUrdu = false, userId }) => {
+export const TechnicalInterview = ({ jdAnalysisId, onNavigate, language = 'english', isUrdu = false, userId, isDark }) => {
+  const { logout } = useAuth();
   const [sessionId, setSessionId] = useState(null);
   const [currentQuestion, setCurrentQuestion] = useState(null);
   const [evaluations, setEvaluations] = useState([]);
@@ -278,23 +281,34 @@ export const TechnicalInterview = ({ jdAnalysisId, onNavigate, language = 'engli
   const progress = (questionCount / MAX_QUESTIONS) * 100;
 
   return (
-    <div className="min-h-screen bg-bg-primary text-text-primary p-4 md:p-8">
-      <div className="max-w-4xl mx-auto space-y-6">
-        {/* Header */}
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <Button variant="ghost" size="sm" onClick={() => onNavigate('mode-selection')}>
-              ← Back
-            </Button>
-            <Badge variant="primary">💻 Technical Q&A</Badge>
-            <Badge variant="success">Question {Math.min(questionCount, MAX_QUESTIONS)} of {MAX_QUESTIONS}</Badge>
+    <div className="min-h-screen bg-bg-primary text-text-primary flex flex-col">
+      {/* Navigation Header */}
+      <PageHeader
+        isDark={isDark}
+        onNavigate={onNavigate}
+        currentPage="technical-interview"
+        isAuthenticated={true}
+        onLogout={() => { logout(); onNavigate('landing'); }}
+      />
+
+      {/* Interview Content */}
+      <div className="flex-1 p-4 md:p-8">
+        <div className="max-w-4xl mx-auto space-y-6">
+          {/* Interview Header */}
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <Button variant="ghost" size="sm" onClick={() => onNavigate('mode-selection')}>
+                ← Back
+              </Button>
+              <Badge variant="primary">💻 Technical Q&A</Badge>
+              <Badge variant="success">Question {Math.min(questionCount, MAX_QUESTIONS)} of {MAX_QUESTIONS}</Badge>
+            </div>
+            <DifficultyIndicator
+              current={difficultyInfo.current}
+              previous={difficultyInfo.previous}
+              ratingDelta={difficultyInfo.ratingDelta}
+            />
           </div>
-          <DifficultyIndicator
-            current={difficultyInfo.current}
-            previous={difficultyInfo.previous}
-            ratingDelta={difficultyInfo.ratingDelta}
-          />
-        </div>
 
         {/* Progress bar */}
         <ProgressBar value={progress} label={`Progress: ${questionCount}/${MAX_QUESTIONS} questions`} />
@@ -553,6 +567,7 @@ export const TechnicalInterview = ({ jdAnalysisId, onNavigate, language = 'engli
             </CardContent>
           </Card>
         )}
+        </div>
       </div>
     </div>
   );

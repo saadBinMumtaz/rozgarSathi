@@ -10,10 +10,10 @@ import { useRef, useEffect, useState, useCallback } from 'react';
 const GooeyNav = ({
   items,
   animationTime = 600,
-  particleCount = 18,
-  particleDistances = [100, 12],
-  particleR = 110,
-  timeVariance = 350,
+  particleCount = 28,
+  particleDistances = [130, 18],
+  particleR = 140,
+  timeVariance = 450,
   colors = [1, 2, 3, 1, 2, 3, 1, 4],
   initialActiveIndex = 0,
   isDark = true,
@@ -180,15 +180,15 @@ const GooeyNav = ({
           color: ${pillText};
         }
         .gooey-effect.filter {
-          filter: blur(6px) contrast(80) blur(0);
-          mix-blend-mode: screen;
+          filter: blur(5px) contrast(12) blur(0);
+          mix-blend-mode: normal;
         }
         .gooey-effect.filter::before {
           content: "";
           position: absolute;
-          inset: -60px;
+          inset: 0;
           z-index: -2;
-          background: ${isDark ? '#0f172a' : '#f8fafc'};
+          background: transparent;
         }
         .gooey-effect.filter::after {
           content: "";
@@ -204,24 +204,25 @@ const GooeyNav = ({
           animation: gooey-pill 0.35s cubic-bezier(0.34, 1.56, 0.64, 1) both;
         }
         @keyframes gooey-pill {
-          0% { transform: scale(0.3); opacity: 0; }
-          60% { transform: scale(1.05); opacity: 1; }
+          0% { transform: scale(0.2); opacity: 0; }
+          50% { transform: scale(1.08); opacity: 1; }
+          75% { transform: scale(0.97); }
           100% { transform: scale(1); opacity: 1; }
         }
         .gooey-particle,
         .gooey-point {
           display: block;
           opacity: 0;
-          width: 18px;
-          height: 18px;
+          width: 14px;
+          height: 14px;
           border-radius: 9999px;
           transform-origin: center;
         }
         .gooey-particle {
           --time: 5s;
           position: absolute;
-          top: calc(50% - 9px);
-          left: calc(50% - 9px);
+          top: calc(50% - 7px);
+          left: calc(50% - 7px);
           animation: gooey-particle-anim calc(var(--time)) ease 1 -350ms;
         }
         .gooey-point {
@@ -232,29 +233,32 @@ const GooeyNav = ({
         @keyframes gooey-particle-anim {
           0% {
             transform: rotate(0deg) translate(calc(var(--start-x)), calc(var(--start-y)));
+            opacity: 0;
+            animation-timing-function: cubic-bezier(0.22, 0.61, 0.36, 1);
+          }
+          15% {
+            opacity: 1;
+          }
+          50% {
+            transform: rotate(calc(var(--rotate) * 0.35)) translate(calc(var(--end-x) * 1.1), calc(var(--end-y) * 1.1));
             opacity: 1;
             animation-timing-function: cubic-bezier(0.22, 0.61, 0.36, 1);
           }
-          60% {
-            transform: rotate(calc(var(--rotate) * 0.4)) translate(calc(var(--end-x) * 1.15), calc(var(--end-y) * 1.15));
-            opacity: 1;
-            animation-timing-function: cubic-bezier(0.22, 0.61, 0.36, 1);
-          }
-          80% {
-            transform: rotate(calc(var(--rotate) * 0.6)) translate(calc(var(--end-x)), calc(var(--end-y)));
-            opacity: 0.9;
+          75% {
+            transform: rotate(calc(var(--rotate) * 0.55)) translate(calc(var(--end-x) * 0.85), calc(var(--end-y) * 0.85));
+            opacity: 0.7;
           }
           100% {
-            transform: rotate(calc(var(--rotate) * 1.0)) translate(calc(var(--end-x) * 0.4), calc(var(--end-y) * 0.4));
+            transform: rotate(calc(var(--rotate) * 0.8)) translate(calc(var(--end-x) * 0.3), calc(var(--end-y) * 0.3));
             opacity: 0;
           }
         }
         @keyframes gooey-point-anim {
           0% { transform: scale(0); opacity: 0; animation-timing-function: cubic-bezier(0.22, 0.61, 0.36, 1); }
-          20% { transform: scale(calc(var(--scale) * 0.3)); }
-          35% { opacity: 1; }
-          55% { transform: scale(var(--scale)); opacity: 1; animation-timing-function: cubic-bezier(0.22, 0.61, 0.36, 1); }
-          80% { transform: scale(var(--scale)); opacity: 0.8; }
+          15% { transform: scale(calc(var(--scale) * 0.2)); }
+          30% { opacity: 1; }
+          50% { transform: scale(var(--scale)); opacity: 1; animation-timing-function: cubic-bezier(0.22, 0.61, 0.36, 1); }
+          75% { transform: scale(calc(var(--scale) * 0.9)); opacity: 0.6; }
           100% { transform: scale(0); opacity: 0; }
         }
         .gooey-li {

@@ -13,6 +13,7 @@ import { TestResultPanel } from '../components/coding/TestResultPanel';
 import { LanguageSelector } from '../components/coding/LanguageSelector';
 import { EvidenceCard } from '../components/shared/EvidenceCard';
 import { ProbePanel } from '../components/coding/ProbePanel';
+import PageHeader from '../components/shared/PageHeader';
 import { useCodeExecution } from '../hooks/useCodeExecution';
 import { useTabLock } from '../hooks/useTabLock';
 import { apiClient } from '../api/client';
@@ -20,6 +21,7 @@ import {
   ArrowLeft, Play, Send, Clock, Timer, RotateCcw, Users, User,
   CheckCircle2, AlertTriangle, Lightbulb, Eye, EyeOff, X,
 } from 'lucide-react';
+import { useAuth } from '../context/AuthContext';
 
 const DIFFICULTY_VARIANT = { easy: 'success', medium: 'warning', hard: 'destructive' };
 const AUTOSAVE_KEY_PREFIX = 'rozgar-sathi-coding-code-';
@@ -30,7 +32,8 @@ const formatElapsed = (seconds) => {
   return `${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
 };
 
-export const CodingInterview = ({ jdAnalysisId, onNavigate, userId }) => {
+export const CodingInterview = ({ jdAnalysisId, onNavigate, userId, isDark }) => {
+  const { logout } = useAuth();
   const [sessionId, setSessionId] = useState(null);
   const [question, setQuestion] = useState(null);
   const [code, setCode] = useState('');
@@ -391,15 +394,27 @@ export const CodingInterview = ({ jdAnalysisId, onNavigate, userId }) => {
   const modKey = isMac ? 'Cmd' : 'Ctrl';
 
   return (
-    <div className="min-h-screen p-4 lg:p-6 max-w-7xl mx-auto space-y-4">
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-3">
-          <Button variant="ghost" size="sm" onClick={() => onNavigate('mode-selection')}>
-            <ArrowLeft size={16} className="mr-1" /> Exit
-          </Button>
-          <h1 className="text-lg font-semibold text-text-primary">Live Coding Interview</h1>
-        </div>
+    <div className="min-h-screen bg-bg-primary text-text-primary flex flex-col">
+      {/* Navigation Header */}
+      <PageHeader
+        isDark={isDark}
+        onNavigate={onNavigate}
+        currentPage="coding-interview"
+        isAuthenticated={true}
+        onLogout={() => { logout(); onNavigate('landing'); }}
+      />
+
+      {/* Interview Content */}
+      <div className="flex-1 p-4 lg:p-6">
+        <div className="max-w-7xl mx-auto space-y-4">
+          {/* Interview Header */}
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <Button variant="ghost" size="sm" onClick={() => onNavigate('mode-selection')}>
+                <ArrowLeft size={16} className="mr-1" /> Exit
+              </Button>
+              <h1 className="text-lg font-semibold text-text-primary">Live Coding Interview</h1>
+            </div>
 
         {/* Tab conflict warning */}
         {tabConflict && (
@@ -661,6 +676,8 @@ export const CodingInterview = ({ jdAnalysisId, onNavigate, userId }) => {
           </div>
         </div>
       )}
+        </div>
+      </div>
     </div>
   );
 };

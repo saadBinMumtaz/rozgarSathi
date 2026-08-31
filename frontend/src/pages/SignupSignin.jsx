@@ -2,10 +2,11 @@ import React, { useState } from 'react';
 import { Button } from '../design-system/Button';
 import { Card, CardTitle, CardContent } from '../design-system/Card';
 import { Badge } from '../design-system/Badge';
+import PageHeader from '../components/shared/PageHeader';
 import { useAuth } from '../context/AuthContext';
 import { ArrowLeft, Mail, Lock, User, Eye, EyeOff, Loader2 } from 'lucide-react';
 
-export const SignupSignin = ({ onNavigate, onAuthComplete, guestId }) => {
+export const SignupSignin = ({ onNavigate, onAuthComplete, guestId, isDark }) => {
   const [mode, setMode] = useState('signin'); // 'signin' | 'signup'
   const [username, setUsername] = useState('');
   const [email, setEmail] = useState('');
@@ -15,7 +16,7 @@ export const SignupSignin = ({ onNavigate, onAuthComplete, guestId }) => {
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
 
-  const { signin, signup } = useAuth();
+  const { signin, signup, logout } = useAuth();
 
   const resetForm = () => {
     setUsername('');
@@ -81,17 +82,27 @@ export const SignupSignin = ({ onNavigate, onAuthComplete, guestId }) => {
   };
 
   return (
-    <div className="min-h-screen bg-bg-primary text-text-primary p-6 md:p-12 flex flex-col items-center justify-center">
-      {/* Back button */}
-      <div className="w-full max-w-md mb-6">
-        <Button
-          variant="ghost"
-          onClick={() => onNavigate('landing')}
-          className="text-text-muted hover:text-text-primary"
-        >
-          <ArrowLeft size={16} className="mr-1" /> Back to Home
-        </Button>
-      </div>
+    <div className="min-h-screen bg-bg-primary text-text-primary flex flex-col">
+      {/* Navigation Header */}
+      <PageHeader
+        isDark={isDark}
+        onNavigate={onNavigate}
+        currentPage="auth"
+        isAuthenticated={false}
+        showThemeToggle={true}
+      />
+
+      {/* Auth Content */}
+      <div className="flex-1 flex flex-col items-center justify-center p-6 md:p-12">
+        <div className="w-full max-w-md mb-6">
+          <Button
+            variant="ghost"
+            onClick={() => onNavigate('landing')}
+            className="text-text-muted hover:text-text-primary"
+          >
+            <ArrowLeft size={16} className="mr-1" /> Back to Home
+          </Button>
+        </div>
 
       <Card className="w-full max-w-md" hover={false}>
         {/* Tab switcher */}
@@ -249,6 +260,7 @@ export const SignupSignin = ({ onNavigate, onAuthComplete, guestId }) => {
           )}
         </p>
       </Card>
+      </div>
     </div>
   );
 };

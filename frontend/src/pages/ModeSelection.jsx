@@ -3,8 +3,12 @@ import { Button } from '../design-system/Button';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '../design-system/Card';
 import { Badge } from '../design-system/Badge';
 import { ScoreRing } from '../design-system/ScoreRing';
+import PageHeader from '../components/shared/PageHeader';
+import { ThemeToggle } from '../design-system/ThemeToggle';
+import { useAuth } from '../context/AuthContext';
 
-export const ModeSelection = ({ jdAnalysis, onSelectMode, onNavigate, language, setLanguage }) => {
+export const ModeSelection = ({ jdAnalysis, onSelectMode, onNavigate, language, setLanguage, isDark }) => {
+  const { logout } = useAuth();
   const [selectedMode, setSelectedMode] = useState(null);
 
   if (!jdAnalysis) {
@@ -62,50 +66,41 @@ export const ModeSelection = ({ jdAnalysis, onSelectMode, onNavigate, language, 
   ];
 
   return (
-    <div className="min-h-screen bg-bg-primary text-text-primary p-6 md:p-12 flex flex-col items-center">
+    <div className="min-h-screen bg-bg-primary text-text-primary flex flex-col">
       {/* Navigation Header */}
-      <header className="w-full max-w-5xl flex flex-wrap items-center justify-between gap-4 mb-8">
-        <Button
-          variant="link"
-          className="text-text-muted hover:text-text-primary flex items-center gap-2"
-          onClick={() => onNavigate('jd-input')}
-        >
-          ← Edit Job Description
-        </Button>
-
-        <div className="flex items-center gap-3">
-          <Button
-            variant="secondary"
-            size="sm"
-            onClick={() => onNavigate('results')}
-          >
-            View Results
-          </Button>
-          {/* Language Toggle */}
-          <div className="flex items-center gap-2 surface-text bg-surface  rounded-lg px-3 py-1.5">
-            <span className="text-xs text-text-muted">
-              {language === 'urdu' ? 'زبان' : 'Language'}
-            </span>
-            <Button
-              variant={language === 'english' ? 'primary' : 'ghost'}
-              size="sm"
-              onClick={() => setLanguage('english')}
-            >
-              English
-            </Button>
-            <Button
-              variant={language === 'urdu' ? 'primary' : 'ghost'}
-              size="sm"
-              onClick={() => setLanguage('urdu')}
-            >
-              {'اردو'}
-            </Button>
+      <PageHeader
+        isDark={isDark}
+        onNavigate={onNavigate}
+        currentPage="mode-selection"
+        isAuthenticated={true}
+        onLogout={() => { logout(); onNavigate('landing'); }}
+        extraRightContent={
+          <div className="flex items-center gap-2">
+            <ThemeToggle />
+            <div className="flex items-center gap-1 surface-text bg-surface rounded-lg px-2 py-1">
+              <Button
+                variant={language === 'english' ? 'primary' : 'ghost'}
+                size="sm"
+                onClick={() => setLanguage('english')}
+                className="text-xs"
+              >
+                EN
+              </Button>
+              <Button
+                variant={language === 'urdu' ? 'primary' : 'ghost'}
+                size="sm"
+                onClick={() => setLanguage('urdu')}
+                className="text-xs"
+              >
+                اردو
+              </Button>
+            </div>
+            <Badge variant="success">Step 2 of 2</Badge>
           </div>
-          <Badge variant="success">Step 2 of 2</Badge>
-        </div>
-      </header>
+        }
+      />
 
-      <main className="w-full max-w-5xl space-y-8">
+      <main className="flex-1 w-full max-w-5xl mx-auto px-6 md:px-12 pb-12 space-y-8">
         {/* Extracted JD Analysis Summary Card */}
         <Card className="surface-text bg-surface">
           <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
