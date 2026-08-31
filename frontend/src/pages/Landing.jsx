@@ -1,7 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { Button } from '../design-system/Button';
 import { sampleJDs, sampleSeniorityOrder } from '../data/sampleJD';
-import { BarChart3, LogIn, LogOut, Sparkles } from 'lucide-react';
+import { LogOut, Sparkles } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 
 /* ─── TypeWriter Hook ─── */
@@ -70,44 +70,20 @@ export const Landing = ({ onNavigate, onTrySampleJD, isAuthenticated, user, isDa
 
       {/* ─── Navigation Header ─── */}
       <header className="w-full max-w-7xl mx-auto flex justify-between items-center px-6 md:px-12 py-5">
-        <div className="flex items-center gap-2">
-          <img
-            src={isDark ? '/logo-white.png' : '/logo-dark.png'}
-            alt="Rozgar Sathi"
-            className="h-14 w-auto"
-          />
-        </div>
-        <div className="flex items-center gap-3">
-          {isAuthenticated ? (
-            <>
-              <span className="text-sm text-text-muted hidden sm:inline">
-                Hi, <span className="text-text-primary font-medium">{user?.username || 'user'}</span>
-              </span>
-              <button
-                onClick={() => onNavigate('dashboard')}
-                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm text-text-muted hover:text-text-primary hover:surface-text bg-surface-hover transition-colors focus:outline-none focus:ring-2 focus:ring-border-strong"
-                aria-label="View your dashboard"
-              >
-                <BarChart3 size={14} /> Dashboard
-              </button>
-              <button
-                onClick={() => { logout(); onNavigate('landing'); }}
-                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm text-text-muted hover:text-text-primary hover:surface-text bg-surface-hover transition-colors focus:outline-none focus:ring-2 focus:ring-border-strong"
-                aria-label="Sign out of your account"
-              >
-                <LogOut size={14} /> Logout
-              </button>
-            </>
-          ) : (
-            <button
-              onClick={() => onNavigate('auth')}
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm text-text-muted hover:text-text-primary hover:surface-text bg-surface-hover transition-colors focus:outline-none focus:ring-2 focus:ring-border-strong"
-              aria-label="Sign in to your account"
-            >
-              <LogIn size={14} /> Sign In
-            </button>
-          )}
-        </div>
+        <img
+          src={isDark ? '/logo-white.png' : '/logo-dark.png'}
+          alt="Rozgar Sathi"
+          className="h-20 w-auto"
+        />
+        {isAuthenticated && (
+          <button
+            onClick={() => { logout(); onNavigate('landing'); }}
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm text-text-muted hover:text-text-primary hover:surface-text bg-surface-hover transition-colors focus:outline-none focus:ring-2 focus:ring-border-strong"
+            aria-label="Sign out of your account"
+          >
+            <LogOut size={14} /> Logout
+          </button>
+        )}
       </header>
 
       {/* ─── Split-Screen Hero ─── */}
