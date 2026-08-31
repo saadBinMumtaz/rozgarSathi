@@ -3,6 +3,7 @@ import { Button } from '../design-system/Button';
 import { sampleJDs, sampleSeniorityOrder } from '../data/sampleJD';
 import { LogOut, Sparkles } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
+import Aurora from '../components/shared/Aurora';
 
 /* ─── TypeWriter Hook ─── */
 const useTypeWriter = (words, typingSpeed = 70, deletingSpeed = 40, pauseDuration = 1500) => {
@@ -65,6 +66,16 @@ export const Landing = ({ onNavigate, onTrySampleJD, isAuthenticated, user, isDa
 
   return (
     <div className="min-h-screen bg-bg-primary text-text-primary flex flex-col relative overflow-hidden">
+      {/* Aurora background effect */}
+      <div className="absolute inset-0 w-full h-full pointer-events-none opacity-60">
+        <Aurora
+          blend={0.5}
+          amplitude={1.0}
+          speed={0.5}
+          lightMode={!isDark}
+        />
+      </div>
+
       {/* Background radial glow */}
       <div className="absolute top-1/4 left-1/3 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[500px] bg-text-primary/5 blur-[120px] rounded-full pointer-events-none" />
 
