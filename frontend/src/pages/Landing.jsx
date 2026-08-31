@@ -67,11 +67,11 @@ export const Landing = ({ onNavigate, onTrySampleJD, isAuthenticated, user, isDa
   return (
     <div className="min-h-screen bg-bg-primary text-text-primary flex flex-col relative overflow-hidden">
       {/* Aurora background effect */}
-      <div className="absolute inset-0 w-full h-full pointer-events-none opacity-60">
+      <div className="absolute inset-0 w-full h-full pointer-events-none">
         <Aurora
-          blend={0.5}
-          amplitude={1.0}
-          speed={0.5}
+          blend={0.4}
+          amplitude={0.8}
+          speed={1.0}
           lightMode={!isDark}
         />
       </div>
@@ -80,7 +80,7 @@ export const Landing = ({ onNavigate, onTrySampleJD, isAuthenticated, user, isDa
       <div className="absolute top-1/4 left-1/3 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[500px] bg-text-primary/5 blur-[120px] rounded-full pointer-events-none" />
 
       {/* ─── Navigation Header ─── */}
-      <header className="w-full max-w-7xl mx-auto flex justify-between items-center px-6 md:px-12 py-5">
+      <header className="relative z-10 w-full max-w-7xl mx-auto flex justify-between items-center px-6 md:px-12 py-5">
         <img
           src={isDark ? '/logo-white.png' : '/logo-dark.png'}
           alt="Rozgar Sathi"

@@ -68,6 +68,19 @@ float snoise(vec2 v){
   return 130.0 * dot(m, g);
 }
 
+// Fractal brownian motion — 4 octaves for richer detail
+float fbm(vec2 p) {
+  float value = 0.0;
+  float amp = 0.5;
+  float freq = 1.0;
+  for (int i = 0; i < 4; i++) {
+    value += amp * snoise(p * freq);
+    freq *= 2.0;
+    amp *= 0.5;
+  }
+  return value;
+}
+
 struct ColorStop {
   vec3 color;
   float position;
@@ -98,13 +111,19 @@ void main() {
   vec3 rampColor;
   COLOR_RAMP(colors, uv.x, rampColor);
   
-  float height = snoise(vec2(uv.x * 2.0 + uTime * 0.1, uTime * 0.25)) * 0.5 * uAmplitude;
-  height = exp(height);
-  height = (uv.y * 2.0 - height + 0.2);
-  float intensity = 0.6 * height;
+  // Multi-layer noise for flowing aurora movement
+  float t = uTime;
+  float n1 = fbm(vec2(uv.x * 3.0 + t * 0.4, uv.y * 1.5 + t * 0.15));
+  float n2 = snoise(vec2(uv.x * 1.8 - t * 0.25, t * 0.35 + uv.y * 0.8));
+  float n3 = snoise(vec2(uv.x * 5.0 + t * 0.6, uv.y * 2.0 - t * 0.2)) * 0.3;
   
-  float midPoint = 0.20;
-  float auroraAlpha = smoothstep(midPoint - uBlend * 0.5, midPoint + uBlend * 0.5, intensity);
+  float height = (n1 * 0.5 + n2 * 0.35 + n3 * 0.15) * uAmplitude;
+  height = exp(height * 0.6);
+  height = (uv.y * 2.5 - height + 0.2);
+  float intensity = 0.4 * height;
+  
+  float midPoint = 0.35;
+  float auroraAlpha = smoothstep(midPoint - uBlend * 0.4, midPoint + uBlend * 0.4, intensity);
   
   vec3 auroraColor = intensity * rampColor;
   
@@ -116,7 +135,10 @@ void main() {
     chroma /= max(chromaPeak, 0.0001);
     fragColor = vec4(mix(vec3(1.0), chroma, min(coverage * 1.08, 0.94)), 1.0);
   } else {
-    fragColor = vec4(auroraColor * auroraAlpha, auroraAlpha);
+    // Dark mode: aurora fades to fully transparent — no residual color
+    float alpha = auroraAlpha * clamp(intensity, 0.0, 0.7);
+    vec3 col = auroraColor * auroraAlpha;
+    fragColor = vec4(col, alpha);
   }
 }
 `;
@@ -192,20 +214,19 @@ export default function Aurora({
     ctn.appendChild(gl.canvas);
 
     let animateId = 0;
+    // Pre-compute color arrays once to avoid per-frame allocation
+    const darkColorArray = DARK_COLORS.map(hex => { const c = new Color(hex); return [c.r, c.g, c.b]; });
+    const lightColorArray = LIGHT_COLORS.map(hex => { const c = new Color(hex); return [c.r, c.g, c.b]; });
+
     const update = t => {
       animateId = requestAnimationFrame(update);
-      const { speed: spd = 1.0 } = propsRef.current;
-      program.uniforms.uTime.value = t * 0.001 * spd * 0.1;
+      const { speed: spd = 1.0, lightMode: lm } = propsRef.current;
+      // Time advances at a visible rate — speed=1 => natural flow
+      program.uniforms.uTime.value = t * 0.001 * spd;
       program.uniforms.uAmplitude.value = propsRef.current.amplitude ?? 1.0;
       program.uniforms.uBlend.value = propsRef.current.blend ?? blend;
-      program.uniforms.uLightMode.value = (propsRef.current.lightMode ?? lightMode) ? 1 : 0;
-      
-      const stops = propsRef.current.lightMode ? LIGHT_COLORS : DARK_COLORS;
-      program.uniforms.uColorStops.value = stops.map(hex => {
-        const c = new Color(hex);
-        return [c.r, c.g, c.b];
-      });
-      
+      program.uniforms.uLightMode.value = (lm ?? lightMode) ? 1 : 0;
+      program.uniforms.uColorStops.value = (lm ?? lightMode) ? lightColorArray : darkColorArray;
       renderer.render({ scene: mesh });
     };
     animateId = requestAnimationFrame(update);
