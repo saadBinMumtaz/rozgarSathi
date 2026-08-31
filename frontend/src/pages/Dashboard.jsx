@@ -15,7 +15,7 @@ import { StreakBadge } from '../components/shared/StreakBadge';
 import PageHeader from '../components/shared/PageHeader';
 import { apiClient } from '../api/client';
 import {
-  ArrowLeft, ArrowRight, Brain, Code, MessageCircle, Target,
+  ArrowRight, Brain, Code, MessageCircle, Target,
   Award, AlertTriangle, BarChart3, Clock, TrendingUp,
   CheckCircle2, AlertCircle,
 } from 'lucide-react';
@@ -41,7 +41,7 @@ const formatDate = (dateStr) => {
   return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
 };
 
-export const Dashboard = ({ userId = 'guest', onNavigate, isDark }) => {
+export const Dashboard = ({ userId = 'guest', onNavigate, isDark, isAuthenticated }) => {
   const { logout } = useAuth();
   const [data, setData] = useState(null);
   const [history, setHistory] = useState(null);
@@ -141,7 +141,7 @@ export const Dashboard = ({ userId = 'guest', onNavigate, isDark }) => {
         isDark={isDark}
         onNavigate={onNavigate}
         currentPage="dashboard"
-        isAuthenticated={true}
+        isAuthenticated={isAuthenticated}
         onLogout={() => { logout(); onNavigate('landing'); }}
       />
 
@@ -163,9 +163,6 @@ export const Dashboard = ({ userId = 'guest', onNavigate, isDark }) => {
           <div className="flex gap-2">
             <Button variant="secondary" onClick={() => onNavigate('session-history')}>
               <Clock size={14} className="mr-1" /> History
-            </Button>
-            <Button variant="ghost" onClick={() => onNavigate('landing')}>
-              <ArrowLeft size={14} className="mr-1" /> Home
             </Button>
           </div>
         </div>

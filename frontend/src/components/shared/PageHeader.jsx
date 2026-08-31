@@ -1,10 +1,10 @@
 // frontend/src/components/shared/PageHeader.jsx
 // Reusable page header with GooeyNav for consistent navigation across all pages.
 // Adapts to dark/light mode and provides standardized spacing.
+// Theme toggle is handled globally in App.jsx (fixed top-4 right-4 z-50).
 
 import React from 'react';
 import GooeyNav from './GooeyNav';
-import { ThemeToggle } from '../../design-system/ThemeToggle';
 
 const PageHeader = ({
   isDark,
@@ -12,7 +12,6 @@ const PageHeader = ({
   currentPage,
   isAuthenticated = false,
   onLogout,
-  showThemeToggle = true,
   extraRightContent = null,
 }) => {
   // Define navigation items based on authentication state
@@ -24,15 +23,16 @@ const PageHeader = ({
       ]
     : [
         { label: 'Home', href: '#', page: 'landing' },
-        { label: 'Practice', href: '#', page: 'auth' },
+        { label: 'Features', href: '#', page: 'landing' },
         { label: 'Sign Up', href: '#', page: 'auth' },
       ];
 
   // Determine active index based on current page
   const getActiveIndex = () => {
     if (currentPage === 'landing' || currentPage === 'home') return 0;
-    if (currentPage === 'jd-input' || currentPage === 'mode-selection' || 
-        currentPage === 'technical-interview' || currentPage === 'behavioral-interview' || 
+    if (currentPage === 'auth') return isAuthenticated ? 0 : 2;
+    if (currentPage === 'jd-input' || currentPage === 'mode-selection' ||
+        currentPage === 'technical-interview' || currentPage === 'behavioral-interview' ||
         currentPage === 'coding-interview') return 1;
     if (currentPage === 'dashboard' || currentPage === 'results' || currentPage === 'session-history') return 2;
     return 0;
@@ -59,12 +59,10 @@ const PageHeader = ({
           />
         </div>
 
-        {/* Right side — theme toggle and logout */}
+        {/* Right side — extra content and logout */}
         <div className="flex items-center gap-3 flex-shrink-0">
-          {showThemeToggle && <ThemeToggle />}
-          
           {extraRightContent}
-          
+
           {isAuthenticated && onLogout && (
             <button
               onClick={onLogout}

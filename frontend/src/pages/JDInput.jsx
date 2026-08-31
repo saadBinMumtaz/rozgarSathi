@@ -10,7 +10,7 @@ import { apiClient } from '../api/client';
 import { sampleJDs, sampleSeniorityOrder } from '../data/sampleJD';
 import { useAuth } from '../context/AuthContext';
 
-export const JDInput = ({ onAnalysisComplete, onNavigate, pendingSampleJD, onSampleJDConsumed, isDark }) => {
+export const JDInput = ({ onAnalysisComplete, onNavigate, pendingSampleJD, onSampleJDConsumed, isDark, isAuthenticated }) => {
   const { logout } = useAuth();
   const [jdText, setJdText] = useState('');
   const [currentSampleId, setCurrentSampleId] = useState(null);
@@ -84,7 +84,7 @@ export const JDInput = ({ onAnalysisComplete, onNavigate, pendingSampleJD, onSam
         isDark={isDark}
         onNavigate={onNavigate}
         currentPage="jd-input"
-        isAuthenticated={true}
+        isAuthenticated={isAuthenticated}
         onLogout={() => { logout(); onNavigate('landing'); }}
         extraRightContent={<Badge variant="primary">Step 1 of 2: Job Context</Badge>}
       />

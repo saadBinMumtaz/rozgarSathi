@@ -22,7 +22,7 @@ import { useAuth } from '../context/AuthContext';
 
 const MAX_QUESTIONS = 5;
 
-export const BehavioralInterview = ({ jdAnalysisId, onNavigate, language = 'english', isUrdu = false, userId, isDark }) => {
+export const BehavioralInterview = ({ jdAnalysisId, onNavigate, language = 'english', isUrdu = false, userId, isDark, isAuthenticated }) => {
   const { logout } = useAuth();
   const {
     sessionId,
@@ -317,7 +317,7 @@ export const BehavioralInterview = ({ jdAnalysisId, onNavigate, language = 'engl
         isDark={isDark}
         onNavigate={onNavigate}
         currentPage="behavioral-interview"
-        isAuthenticated={true}
+        isAuthenticated={isAuthenticated}
         onLogout={() => { logout(); onNavigate('landing'); }}
       />
 

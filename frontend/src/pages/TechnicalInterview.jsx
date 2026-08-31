@@ -21,7 +21,7 @@ import { useAuth } from '../context/AuthContext';
 
 const TECHNICAL_SESSION_KEY = 'rozgar-sathi-technical-session-v1';
 
-export const TechnicalInterview = ({ jdAnalysisId, onNavigate, language = 'english', isUrdu = false, userId, isDark }) => {
+export const TechnicalInterview = ({ jdAnalysisId, onNavigate, language = 'english', isUrdu = false, userId, isDark, isAuthenticated }) => {
   const { logout } = useAuth();
   const [sessionId, setSessionId] = useState(null);
   const [currentQuestion, setCurrentQuestion] = useState(null);
@@ -287,7 +287,7 @@ export const TechnicalInterview = ({ jdAnalysisId, onNavigate, language = 'engli
         isDark={isDark}
         onNavigate={onNavigate}
         currentPage="technical-interview"
-        isAuthenticated={true}
+        isAuthenticated={isAuthenticated}
         onLogout={() => { logout(); onNavigate('landing'); }}
       />
 

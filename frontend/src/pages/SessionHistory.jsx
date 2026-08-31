@@ -12,7 +12,7 @@ import PageHeader from '../components/shared/PageHeader';
 import { EvidenceCard } from '../components/shared/EvidenceCard';
 import { apiClient } from '../api/client';
 import {
-  ArrowLeft, Brain, Code, MessageCircle, Clock, ChevronDown, ChevronUp,
+  Brain, Code, MessageCircle, Clock, ChevronDown, ChevronUp,
   AlertCircle, FileText, MessageSquare, TrendingUp,
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
@@ -167,7 +167,7 @@ const SessionCard = ({ session }) => {
   );
 };
 
-export const SessionHistory = ({ userId = 'guest', onNavigate, isDark }) => {
+export const SessionHistory = ({ userId = 'guest', onNavigate, isDark, isAuthenticated }) => {
   const { logout } = useAuth();
   const [sessions, setSessions] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -237,7 +237,7 @@ export const SessionHistory = ({ userId = 'guest', onNavigate, isDark }) => {
         isDark={isDark}
         onNavigate={onNavigate}
         currentPage="session-history"
-        isAuthenticated={true}
+        isAuthenticated={isAuthenticated}
         onLogout={() => { logout(); onNavigate('landing'); }}
       />
 
@@ -255,9 +255,6 @@ export const SessionHistory = ({ userId = 'guest', onNavigate, isDark }) => {
             <div className="flex gap-2">
               <Button variant="secondary" onClick={() => onNavigate('dashboard')}>
                 <TrendingUp size={14} className="mr-1" /> Dashboard
-              </Button>
-              <Button variant="ghost" onClick={() => onNavigate('landing')}>
-                <ArrowLeft size={14} className="mr-1" /> Home
               </Button>
             </div>
           </div>

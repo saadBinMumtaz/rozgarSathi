@@ -32,7 +32,7 @@ const formatElapsed = (seconds) => {
   return `${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
 };
 
-export const CodingInterview = ({ jdAnalysisId, onNavigate, userId, isDark }) => {
+export const CodingInterview = ({ jdAnalysisId, onNavigate, userId, isDark, isAuthenticated }) => {
   const { logout } = useAuth();
   const [sessionId, setSessionId] = useState(null);
   const [question, setQuestion] = useState(null);
@@ -400,7 +400,7 @@ export const CodingInterview = ({ jdAnalysisId, onNavigate, userId, isDark }) =>
         isDark={isDark}
         onNavigate={onNavigate}
         currentPage="coding-interview"
-        isAuthenticated={true}
+        isAuthenticated={isAuthenticated}
         onLogout={() => { logout(); onNavigate('landing'); }}
       />
 

@@ -4,10 +4,9 @@ import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '../de
 import { Badge } from '../design-system/Badge';
 import { ScoreRing } from '../design-system/ScoreRing';
 import PageHeader from '../components/shared/PageHeader';
-import { ThemeToggle } from '../design-system/ThemeToggle';
 import { useAuth } from '../context/AuthContext';
 
-export const ModeSelection = ({ jdAnalysis, onSelectMode, onNavigate, language, setLanguage, isDark }) => {
+export const ModeSelection = ({ jdAnalysis, onSelectMode, onNavigate, language, setLanguage, isDark, isAuthenticated }) => {
   const { logout } = useAuth();
   const [selectedMode, setSelectedMode] = useState(null);
 
@@ -72,11 +71,10 @@ export const ModeSelection = ({ jdAnalysis, onSelectMode, onNavigate, language, 
         isDark={isDark}
         onNavigate={onNavigate}
         currentPage="mode-selection"
-        isAuthenticated={true}
+        isAuthenticated={isAuthenticated}
         onLogout={() => { logout(); onNavigate('landing'); }}
         extraRightContent={
           <div className="flex items-center gap-2">
-            <ThemeToggle />
             <div className="flex items-center gap-1 surface-text bg-surface rounded-lg px-2 py-1">
               <Button
                 variant={language === 'english' ? 'primary' : 'ghost'}

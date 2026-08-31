@@ -15,7 +15,6 @@ import PageHeader from '../components/shared/PageHeader';
 import { apiClient } from '../api/client';
 import { ExportReportButton } from '../components/shared/ExportReportButton';
 import {
-  ArrowLeft,
   TrendingUp,
   TrendingDown,
   Brain,
@@ -63,7 +62,7 @@ const getReadinessLabel = (score) => {
   return { text: 'No Data', color: 'text-text-muted' };
 };
 
-export const Results = ({ userId = 'guest', onNavigate, isDark }) => {
+export const Results = ({ userId = 'guest', onNavigate, isDark, isAuthenticated }) => {
   const { logout } = useAuth();
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -179,7 +178,7 @@ export const Results = ({ userId = 'guest', onNavigate, isDark }) => {
         isDark={isDark}
         onNavigate={onNavigate}
         currentPage="results"
-        isAuthenticated={true}
+        isAuthenticated={isAuthenticated}
         onLogout={() => { logout(); onNavigate('landing'); }}
       />
 
@@ -219,9 +218,6 @@ export const Results = ({ userId = 'guest', onNavigate, isDark }) => {
                 </Button>
                 <Button variant="secondary" onClick={() => onNavigate('mode-selection')}>
                   Practice More
-                </Button>
-                <Button variant="ghost" onClick={() => onNavigate('landing')}>
-                  <ArrowLeft size={14} className="mr-1" /> Home
                 </Button>
           </div>
         )}

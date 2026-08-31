@@ -4,7 +4,7 @@ import { Card, CardTitle, CardContent } from '../design-system/Card';
 import { Badge } from '../design-system/Badge';
 import PageHeader from '../components/shared/PageHeader';
 import { useAuth } from '../context/AuthContext';
-import { ArrowLeft, Mail, Lock, User, Eye, EyeOff, Loader2 } from 'lucide-react';
+import { Mail, Lock, User, Eye, EyeOff, Loader2 } from 'lucide-react';
 
 export const SignupSignin = ({ onNavigate, onAuthComplete, guestId, isDark }) => {
   const [mode, setMode] = useState('signin'); // 'signin' | 'signup'
@@ -89,21 +89,10 @@ export const SignupSignin = ({ onNavigate, onAuthComplete, guestId, isDark }) =>
         onNavigate={onNavigate}
         currentPage="auth"
         isAuthenticated={false}
-        showThemeToggle={true}
       />
 
       {/* Auth Content */}
       <div className="flex-1 flex flex-col items-center justify-center p-6 md:p-12">
-        <div className="w-full max-w-md mb-6">
-          <Button
-            variant="ghost"
-            onClick={() => onNavigate('landing')}
-            className="text-text-muted hover:text-text-primary"
-          >
-            <ArrowLeft size={16} className="mr-1" /> Back to Home
-          </Button>
-        </div>
-
       <Card className="w-full max-w-md" hover={false}>
         {/* Tab switcher */}
         <div className="flex mb-6 bg-surface rounded-lg p-1">

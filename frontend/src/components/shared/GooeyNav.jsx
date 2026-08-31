@@ -25,6 +25,13 @@ const GooeyNav = ({
   const textRef = useRef(null);
   const [activeIndex, setActiveIndex] = useState(initialActiveIndex);
 
+  // Sync activeIndex with initialActiveIndex prop when it changes (page navigation)
+  useEffect(() => {
+    if (initialActiveIndex !== activeIndex) {
+      setActiveIndex(initialActiveIndex);
+    }
+  }, [initialActiveIndex]);
+
   const noise = (n = 1) => n / 2 - Math.random() * n;
   const getXY = (distance, pointIndex, totalPoints) => {
     const angle = ((360 + noise(8)) / totalPoints) * pointIndex * (Math.PI / 180);
@@ -145,10 +152,12 @@ const GooeyNav = ({
   // Theme-aware CSS variables
   const pillBg = isDark ? 'rgba(255,255,255,0.95)' : 'rgba(15,23,42,0.92)';
   const pillText = isDark ? '#0f172a' : '#f8fafc';
-  const navText = isDark ? 'rgba(255,255,255,0.8)' : 'rgba(15,23,42,0.7)';
+  const navText = isDark ? 'rgba(255,255,255,0.85)' : 'rgba(15,23,42,0.75)';
+  const navTextHover = isDark ? 'rgba(255,255,255,1)' : 'rgba(15,23,42,0.95)';
   const particleColors = isDark
     ? { 1: '#96abc9', 2: '#e5b10c', 3: '#38bdf8', 4: '#a78bfa' }
     : { 1: '#64748b', 2: '#d97706', 3: '#0284c7', 4: '#7c3aed' };
+  const glowColor = isDark ? 'rgba(255,255,255,0.2)' : 'rgba(15,23,42,0.1)';
 
   return (
     <>
@@ -166,12 +175,12 @@ const GooeyNav = ({
           display: grid;
           place-items: center;
           z-index: 2;
-          transition: left 0.45s cubic-bezier(0.34, 1.56, 0.64, 1),
-                      width 0.45s cubic-bezier(0.34, 1.56, 0.64, 1);
+          transition: left 0.3s cubic-bezier(0.34, 1.56, 0.64, 1),
+                      width 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
         }
         .gooey-effect.text {
           color: ${pillText};
-          transition: color 0.3s ease;
+          transition: color 0.15s ease;
           font-weight: 600;
           font-size: 0.875rem;
           z-index: 3;
@@ -193,20 +202,21 @@ const GooeyNav = ({
         .gooey-effect.filter::after {
           content: "";
           position: absolute;
-          inset: 0;
+          inset: -2px;
           background: ${pillBg};
           transform: scale(0);
           opacity: 0;
           z-index: -1;
           border-radius: 9999px;
+          box-shadow: 0 0 0 1px ${glowColor}, 0 4px 12px ${isDark ? 'rgba(0,0,0,0.3)' : 'rgba(0,0,0,0.1)'};
         }
         .gooey-effect.active::after {
-          animation: gooey-pill 0.35s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+          animation: gooey-pill 0.3s cubic-bezier(0.34, 1.56, 0.64, 1) both;
         }
         @keyframes gooey-pill {
-          0% { transform: scale(0.2); opacity: 0; }
-          50% { transform: scale(1.08); opacity: 1; }
-          75% { transform: scale(0.97); }
+          0% { transform: scale(0.15); opacity: 0; }
+          40% { transform: scale(1.1); opacity: 1; }
+          70% { transform: scale(0.98); }
           100% { transform: scale(1); opacity: 1; }
         }
         .gooey-particle,
@@ -267,6 +277,18 @@ const GooeyNav = ({
         .gooey-li a {
           position: relative;
           z-index: 4;
+          transition: color 0.15s ease, transform 0.1s ease;
+          cursor: pointer;
+        }
+        .gooey-li a:hover {
+          color: ${navTextHover} !important;
+        }
+        .gooey-li a:active {
+          transform: scale(0.95);
+        }
+        .gooey-li.active a {
+          color: ${pillText} !important;
+          font-weight: 600;
         }
       `}</style>
 
@@ -279,8 +301,8 @@ const GooeyNav = ({
               background: isDark
                 ? 'rgba(255,255,255,0.06)'
                 : 'rgba(15,23,42,0.04)',
-              backdropFilter: 'blur(12px)',
-              WebkitBackdropFilter: 'blur(12px)',
+              backdropFilter: 'blur(16px)',
+              WebkitBackdropFilter: 'blur(16px)',
               border: `1px solid ${isDark ? 'rgba(255,255,255,0.12)' : 'rgba(15,23,42,0.1)'}`,
               boxShadow: isDark
                 ? '0 4px 24px rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.08)'
@@ -296,7 +318,7 @@ const GooeyNav = ({
             {items.map((item, index) => (
               <li
                 key={index}
-                className={`gooey-li rounded-full cursor-pointer text-xs sm:text-sm font-medium transition-colors duration-300 ${
+                className={`gooey-li rounded-full cursor-pointer text-xs sm:text-sm font-medium ${
                   activeIndex === index ? 'active' : ''
                 }`}
               >
@@ -307,7 +329,6 @@ const GooeyNav = ({
                   className="outline-none py-2 px-3 sm:px-4 md:px-5 inline-block select-none no-underline"
                   style={{
                     color: activeIndex === index ? pillText : navText,
-                    fontWeight: activeIndex === index ? 600 : 500,
                   }}
                 >
                   {item.label}
