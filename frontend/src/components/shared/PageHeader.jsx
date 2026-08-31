@@ -45,7 +45,7 @@ const PageHeader = ({
         <img
           src={isDark ? '/logo-white.png' : '/logo-dark.png'}
           alt="Rozgar Sathi"
-          className="h-16 sm:h-20 w-auto flex-shrink-0 cursor-pointer"
+          className="h-20 sm:h-24 w-auto flex-shrink-0 cursor-pointer"
           onClick={() => onNavigate?.('landing')}
         />
 
