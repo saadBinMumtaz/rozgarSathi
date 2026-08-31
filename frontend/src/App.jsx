@@ -9,6 +9,7 @@ import Results from './pages/Results';
 import Dashboard from './pages/Dashboard';
 import SessionHistory from './pages/SessionHistory';
 import SignupSignin from './pages/SignupSignin';
+import SharedReport from './pages/SharedReport';
 import { ErrorBoundary } from './components/shared/ErrorBoundary';
 import Toast from './design-system/Toast';
 import { ThemeToggle } from './design-system/ThemeToggle';
@@ -24,6 +25,12 @@ const INTERVIEW_PAGES = new Set(['behavioral-interview', 'technical-interview', 
 
 // Protected pages — require authentication
 const PROTECTED_PAGES = new Set(['dashboard', 'results', 'session-history']);
+
+// Parse share token from URL path: /shared/:shareToken
+const parseShareToken = () => {
+  const match = window.location.pathname.match(/^\/shared\/([a-f0-9]+)$/);
+  return match ? match[1] : null;
+};
 
 /**
  * Centralized cleanup: stops TTS, speech synthesis, audio, and dispatches a
@@ -55,8 +62,11 @@ const AppContent = () => {
     return id;
   });
 
-  // Restore page from localStorage on mount
+  // Restore page from localStorage on mount (or detect shared report URL)
+  const [shareToken, setShareToken] = useState(() => parseShareToken());
   const [currentPage, setCurrentPage] = useState(() => {
+    // If URL has a share token, show shared report immediately
+    if (parseShareToken()) return 'shared-report';
     try {
       const stored = localStorage.getItem(APP_STATE_KEY);
       if (stored) {
@@ -347,6 +357,13 @@ const AppContent = () => {
             userId={isAuthenticated && user ? String(user._id) : userId}
             onNavigate={navigateTo}
           />
+        )}
+      </div>
+
+      {/* Shared report (public, no auth required) */}
+      <div className={currentPage === 'shared-report' ? '' : 'hidden'}>
+        {shareToken && (
+          <SharedReport shareToken={shareToken} />
         )}
       </div>
 

@@ -388,6 +388,41 @@ export const apiClient = {
     }
     return res.json();
   },
+
+  async getStreak(userId) {
+    const res = await fetch(`${API_BASE_URL}/dashboard/${userId}/streak`, {
+      headers: authHeaders(),
+    });
+    if (!res.ok) {
+      const errorData = await res.json().catch(() => ({ error: 'Failed to fetch streak' }));
+      throw new Error(errorData.error || `Server error: ${res.status}`);
+    }
+    return res.json();
+  },
+
+  // --- Shareable Reports (§15.6 / §22) ---------------------------------
+
+  async generateShareToken(sessionId) {
+    const res = await fetch(`${API_BASE_URL}/reports/share`, {
+      method: 'POST',
+      headers: authHeaders(),
+      body: JSON.stringify({ sessionId }),
+    });
+    if (!res.ok) {
+      const errorData = await res.json().catch(() => ({ error: 'Failed to generate share link' }));
+      throw new Error(errorData.error || `Server error: ${res.status}`);
+    }
+    return res.json();
+  },
+
+  async getSharedReport(shareToken) {
+    const res = await fetch(`${API_BASE_URL}/reports/shared/${shareToken}`);
+    if (!res.ok) {
+      const errorData = await res.json().catch(() => ({ error: 'Failed to fetch shared report' }));
+      throw new Error(errorData.error || `Server error: ${res.status}`);
+    }
+    return res.json();
+  },
 };
 
 export default apiClient;

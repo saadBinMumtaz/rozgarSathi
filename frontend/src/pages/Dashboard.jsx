@@ -11,6 +11,7 @@ import { ScoreRing } from '../design-system/ScoreRing';
 import { ProgressBar } from '../design-system/ProgressBar';
 import { Skeleton } from '../design-system/Skeleton';
 import { ProgressTrendChart } from '../components/shared/ProgressTrendChart';
+import { StreakBadge } from '../components/shared/StreakBadge';
 import { apiClient } from '../api/client';
 import {
   ArrowLeft, ArrowRight, Brain, Code, MessageCircle, Target,
@@ -141,6 +142,9 @@ export const Dashboard = ({ userId = 'guest', onNavigate }) => {
               ? `${sessionCount} completed session${sessionCount !== 1 ? 's' : ''} tracked`
               : 'Start your first interview to begin tracking'}
           </p>
+          <div className="mt-1">
+            <StreakBadge userId={userId} />
+          </div>
         </div>
         <div className="flex gap-2">
           <Button variant="secondary" onClick={() => onNavigate('session-history')}>

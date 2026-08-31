@@ -178,7 +178,75 @@ export const getDashboardData = async (req, res, next) => {
   }
 };
 
-export default { getDashboardData };
+/**
+ * Compute a consistency streak from existing Session.createdAt timestamps.
+ * Uses MongoDB aggregation to extract unique dates, then counts consecutive
+ * days backwards from today (or yesterday if no session today).
+ * No new schema field — purely derived from createdAt.
+ */
+export const getStreak = async (req, res, next) => {
+  try {
+    const { userId } = req.params;
+    const authenticatedUser = req.user || null;
+    const effectiveUserId = authenticatedUser ? String(authenticatedUser._id) : userId;
+
+    // Aggregation: get unique dates (YYYY-MM-DD) from createdAt for completed sessions
+    const dateResults = await Session.aggregate([
+      { $match: { $or: [{ userId: effectiveUserId }, ...(authenticatedUser ? [] : [{ userId: 'guest' }])] } },
+      { $match: { status: 'completed' } },
+      { $group: { _id: {
+        $dateToString: { format: '%Y-%m-%d', date: '$createdAt' }
+      } } },
+      { $sort: { _id: -1 } },
+    ]);
+
+    const dates = dateResults.map((d) => d._id);
+    const streak = computeStreakFromDates(dates);
+
+    return res.json({ streak, totalDays: dates.length });
+  } catch (err) {
+    logger.error(`Streak error: ${err.message}`);
+    next(err);
+  }
+};
+
+/**
+ * Given an array of date strings (YYYY-MM-DD) sorted descending,
+ * return the length of the longest consecutive-day run ending at
+ * today or yesterday.
+ */
+const computeStreakFromDates = (sortedDatesDesc) => {
+  if (!sortedDatesDesc || sortedDatesDesc.length === 0) return 0;
+
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const todayStr = today.toISOString().split('T')[0];
+
+  const yesterday = new Date(today);
+  yesterday.setDate(yesterday.getDate() - 1);
+  const yesterdayStr = yesterday.toISOString().split('T')[0];
+
+  // Streak must start from today or yesterday
+  const start = sortedDatesDesc[0];
+  if (start !== todayStr && start !== yesterdayStr) return 0;
+
+  let streak = 1;
+  for (let i = 1; i < sortedDatesDesc.length; i++) {
+    const prev = new Date(sortedDatesDesc[i - 1] + 'T00:00:00Z');
+    const curr = new Date(sortedDatesDesc[i] + 'T00:00:00Z');
+    const diffMs = prev.getTime() - curr.getTime();
+    const diffDays = diffMs / (1000 * 60 * 60 * 24);
+    if (Math.round(diffDays) === 1) {
+      streak++;
+    } else {
+      break;
+    }
+  }
+
+  return streak;
+};
+
+export default { getDashboardData, getStreak };
 
 // ─── Day 6: Session History + Trend ───────────────────────────────────────
 

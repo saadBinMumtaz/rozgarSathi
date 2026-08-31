@@ -12,6 +12,7 @@ import { ScoreRing } from '../design-system/ScoreRing';
 import { ProgressBar } from '../design-system/ProgressBar';
 import { Skeleton } from '../design-system/Skeleton';
 import { apiClient } from '../api/client';
+import { ExportReportButton } from '../components/shared/ExportReportButton';
 import {
   ArrowLeft,
   TrendingUp,
@@ -23,6 +24,9 @@ import {
   Award,
   AlertTriangle,
   BarChart3,
+  Share2,
+  Copy,
+  Check,
 } from 'lucide-react';
 
 const MODE_CONFIG = {
@@ -61,6 +65,10 @@ export const Results = ({ userId = 'guest', onNavigate }) => {
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [shareLink, setShareLink] = useState(null);
+  const [shareLoading, setShareLoading] = useState(false);
+  const [copied, setCopied] = useState(false);
+  const [latestSessionId, setLatestSessionId] = useState(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -70,6 +78,13 @@ export const Results = ({ userId = 'guest', onNavigate }) => {
       try {
         const result = await apiClient.getDashboardData(userId);
         if (!cancelled) setData(result);
+        // Also fetch session history to get latest session ID for sharing
+        try {
+          const historyResult = await apiClient.getSessionHistory(userId);
+          if (!cancelled && historyResult?.history?.length > 0) {
+            setLatestSessionId(historyResult.history[0].sessionId);
+          }
+        } catch {}
       } catch (err) {
         if (!cancelled) setError(err.message || 'Failed to load results');
       } finally {
@@ -79,6 +94,39 @@ export const Results = ({ userId = 'guest', onNavigate }) => {
     fetchDashboard();
     return () => { cancelled = true; };
   }, [userId]);
+
+  const handleShare = async () => {
+    if (!latestSessionId) return;
+    setShareLoading(true);
+    try {
+      const result = await apiClient.generateShareToken(latestSessionId);
+      const fullUrl = `${window.location.origin}/shared/${result.shareToken}`;
+      setShareLink(fullUrl);
+    } catch (err) {
+      console.error('Share failed:', err);
+    } finally {
+      setShareLoading(false);
+    }
+  };
+
+  const handleCopyLink = async () => {
+    if (!shareLink) return;
+    try {
+      await navigator.clipboard.writeText(shareLink);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    } catch {
+      // Fallback
+      const input = document.createElement('input');
+      input.value = shareLink;
+      document.body.appendChild(input);
+      input.select();
+      document.execCommand('copy');
+      document.body.removeChild(input);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    }
+  };
 
   // --- Loading state ---
   if (loading) {
@@ -135,6 +183,25 @@ export const Results = ({ userId = 'guest', onNavigate }) => {
         </div>
         {onNavigate && (
           <div className="flex gap-2">
+            <ExportReportButton data={data} />
+            <Button
+              variant="secondary"
+              onClick={shareLink ? handleCopyLink : handleShare}
+              isLoading={shareLoading}
+              disabled={!latestSessionId}
+            >
+              {shareLink ? (
+                <>
+                  {copied ? <Check size={14} className="mr-1" /> : <Copy size={14} className="mr-1" />}
+                  {copied ? 'Copied!' : 'Copy Link'}
+                </>
+              ) : (
+                <>
+                  <Share2 size={14} className="mr-1" />
+                  Share Report
+                </>
+              )}
+            </Button>
             <Button variant="secondary" onClick={() => onNavigate('mode-selection')}>
               Practice More
             </Button>
@@ -144,6 +211,23 @@ export const Results = ({ userId = 'guest', onNavigate }) => {
           </div>
         )}
       </div>
+
+      {/* Share link display */}
+      {shareLink && (
+        <div className="flex items-center gap-2 p-3 rounded-lg bg-surface-hover/50 border border-border/30">
+          <Share2 size={14} className="text-text-muted flex-shrink-0" />
+          <input
+            type="text"
+            readOnly
+            value={shareLink}
+            className="flex-1 bg-transparent text-sm text-text-muted outline-none truncate"
+            onClick={(e) => e.target.select()}
+          />
+          <Button variant="ghost" size="sm" onClick={handleCopyLink}>
+            {copied ? <Check size={14} /> : <Copy size={14} />}
+          </Button>
+        </div>
+      )}
 
       {/* Overall Readiness + Per-Mode Breakdown */}
       <div className="grid md:grid-cols-4 gap-4">
