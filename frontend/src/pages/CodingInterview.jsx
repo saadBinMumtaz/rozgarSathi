@@ -13,7 +13,6 @@ import { TestResultPanel } from '../components/coding/TestResultPanel';
 import { LanguageSelector } from '../components/coding/LanguageSelector';
 import { EvidenceCard } from '../components/shared/EvidenceCard';
 import { ProbePanel } from '../components/coding/ProbePanel';
-import PageHeader from '../components/shared/PageHeader';
 import { useCodeExecution } from '../hooks/useCodeExecution';
 import { useTabLock } from '../hooks/useTabLock';
 import { apiClient } from '../api/client';
@@ -21,7 +20,6 @@ import {
   ArrowLeft, Play, Send, Clock, Timer, RotateCcw, Users, User,
   CheckCircle2, AlertTriangle, Lightbulb, Eye, EyeOff, X,
 } from 'lucide-react';
-import { useAuth } from '../context/AuthContext';
 
 const DIFFICULTY_VARIANT = { easy: 'success', medium: 'warning', hard: 'destructive' };
 const AUTOSAVE_KEY_PREFIX = 'rozgar-sathi-coding-code-';
@@ -32,8 +30,7 @@ const formatElapsed = (seconds) => {
   return `${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
 };
 
-export const CodingInterview = ({ jdAnalysisId, onNavigate, userId, isDark, isAuthenticated }) => {
-  const { logout } = useAuth();
+export const CodingInterview = ({ jdAnalysisId, onNavigate, userId }) => {
   const [sessionId, setSessionId] = useState(null);
   const [question, setQuestion] = useState(null);
   const [code, setCode] = useState('');
@@ -395,15 +392,6 @@ export const CodingInterview = ({ jdAnalysisId, onNavigate, userId, isDark, isAu
 
   return (
     <div className="min-h-screen bg-bg-primary text-text-primary flex flex-col">
-      {/* Navigation Header */}
-      <PageHeader
-        isDark={isDark}
-        onNavigate={onNavigate}
-        currentPage="coding-interview"
-        isAuthenticated={isAuthenticated}
-        onLogout={() => { logout(); onNavigate('landing'); }}
-      />
-
       {/* Interview Content */}
       <div className="flex-1 p-4 lg:p-6">
         <div className="max-w-7xl mx-auto space-y-4">

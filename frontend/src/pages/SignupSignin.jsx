@@ -2,11 +2,10 @@ import React, { useState } from 'react';
 import { Button } from '../design-system/Button';
 import { Card, CardTitle, CardContent } from '../design-system/Card';
 import { Badge } from '../design-system/Badge';
-import PageHeader from '../components/shared/PageHeader';
 import { useAuth } from '../context/AuthContext';
-import { Mail, Lock, User, Eye, EyeOff, Loader2 } from 'lucide-react';
+import { ArrowLeft, Mail, Lock, User, Eye, EyeOff, Loader2 } from 'lucide-react';
 
-export const SignupSignin = ({ onNavigate, onAuthComplete, guestId, isDark }) => {
+export const SignupSignin = ({ onNavigate, onAuthComplete, guestId }) => {
   const [mode, setMode] = useState('signin'); // 'signin' | 'signup'
   const [username, setUsername] = useState('');
   const [email, setEmail] = useState('');
@@ -16,7 +15,7 @@ export const SignupSignin = ({ onNavigate, onAuthComplete, guestId, isDark }) =>
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
 
-  const { signin, signup, logout } = useAuth();
+  const { signin, signup } = useAuth();
 
   const resetForm = () => {
     setUsername('');
@@ -82,14 +81,18 @@ export const SignupSignin = ({ onNavigate, onAuthComplete, guestId, isDark }) =>
   };
 
   return (
-    <div className="min-h-screen bg-bg-primary text-text-primary flex flex-col">
-      {/* Navigation Header */}
-      <PageHeader
-        isDark={isDark}
-        onNavigate={onNavigate}
-        currentPage="auth"
-        isAuthenticated={false}
-      />
+    <div className="min-h-screen bg-bg-primary text-text-primary flex flex-col pt-8">
+      {/* Back button */}
+      <div className="w-full max-w-md mx-auto px-6 mb-4">
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={() => onNavigate('landing')}
+          className="text-text-muted hover:text-text-primary"
+        >
+          <ArrowLeft size={16} className="mr-1" /> Back to Home
+        </Button>
+      </div>
 
       {/* Auth Content */}
       <div className="flex-1 flex flex-col items-center justify-center p-6 md:p-12">

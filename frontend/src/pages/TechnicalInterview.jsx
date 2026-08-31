@@ -14,15 +14,12 @@ import { TypedFallback } from '../components/behavioral/TypedFallback';
 import { EvidenceCard } from '../components/shared/EvidenceCard';
 import { DifficultyIndicator } from '../components/technical/DifficultyIndicator';
 import { QuestionTraceBadge } from '../components/shared/QuestionTraceBadge';
-import PageHeader from '../components/shared/PageHeader';
 import { apiClient } from '../api/client';
 import { useTabLock } from '../hooks/useTabLock';
-import { useAuth } from '../context/AuthContext';
 
 const TECHNICAL_SESSION_KEY = 'rozgar-sathi-technical-session-v1';
 
-export const TechnicalInterview = ({ jdAnalysisId, onNavigate, language = 'english', isUrdu = false, userId, isDark, isAuthenticated }) => {
-  const { logout } = useAuth();
+export const TechnicalInterview = ({ jdAnalysisId, onNavigate, language = 'english', isUrdu = false, userId }) => {
   const [sessionId, setSessionId] = useState(null);
   const [currentQuestion, setCurrentQuestion] = useState(null);
   const [evaluations, setEvaluations] = useState([]);
@@ -282,15 +279,6 @@ export const TechnicalInterview = ({ jdAnalysisId, onNavigate, language = 'engli
 
   return (
     <div className="min-h-screen bg-bg-primary text-text-primary flex flex-col">
-      {/* Navigation Header */}
-      <PageHeader
-        isDark={isDark}
-        onNavigate={onNavigate}
-        currentPage="technical-interview"
-        isAuthenticated={isAuthenticated}
-        onLogout={() => { logout(); onNavigate('landing'); }}
-      />
-
       {/* Interview Content */}
       <div className="flex-1 p-4 md:p-8">
         <div className="max-w-4xl mx-auto space-y-6">

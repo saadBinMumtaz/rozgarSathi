@@ -3,11 +3,9 @@ import { Button } from '../design-system/Button';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '../design-system/Card';
 import { Badge } from '../design-system/Badge';
 import { ScoreRing } from '../design-system/ScoreRing';
-import PageHeader from '../components/shared/PageHeader';
-import { useAuth } from '../context/AuthContext';
+import { ArrowLeft } from 'lucide-react';
 
-export const ModeSelection = ({ jdAnalysis, onSelectMode, onNavigate, language, setLanguage, isDark, isAuthenticated }) => {
-  const { logout } = useAuth();
+export const ModeSelection = ({ jdAnalysis, onSelectMode, onNavigate, language, setLanguage }) => {
   const [selectedMode, setSelectedMode] = useState(null);
 
   if (!jdAnalysis) {
@@ -66,37 +64,35 @@ export const ModeSelection = ({ jdAnalysis, onSelectMode, onNavigate, language, 
 
   return (
     <div className="min-h-screen bg-bg-primary text-text-primary flex flex-col">
-      {/* Navigation Header */}
-      <PageHeader
-        isDark={isDark}
-        onNavigate={onNavigate}
-        currentPage="mode-selection"
-        isAuthenticated={isAuthenticated}
-        onLogout={() => { logout(); onNavigate('landing'); }}
-        extraRightContent={
-          <div className="flex items-center gap-2">
-            <div className="flex items-center gap-1 surface-text bg-surface rounded-lg px-2 py-1">
-              <Button
-                variant={language === 'english' ? 'primary' : 'ghost'}
-                size="sm"
-                onClick={() => setLanguage('english')}
-                className="text-xs"
-              >
-                EN
-              </Button>
-              <Button
-                variant={language === 'urdu' ? 'primary' : 'ghost'}
-                size="sm"
-                onClick={() => setLanguage('urdu')}
-                className="text-xs"
-              >
-                اردو
-              </Button>
-            </div>
-            <Badge variant="success">Step 2 of 2</Badge>
-          </div>
-        }
-      />
+      {/* Simple top bar with back button and language toggle */}
+      <div className="w-full max-w-7xl mx-auto px-6 md:px-12 py-4 flex items-center justify-between">
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={() => onNavigate('jd-input')}
+          className="text-text-muted hover:text-text-primary"
+        >
+          <ArrowLeft size={16} className="mr-1" /> Back to JD Input
+        </Button>
+        <div className="flex items-center gap-1 bg-surface surface-text rounded-lg px-2 py-1">
+          <Button
+            variant={language === 'english' ? 'primary' : 'ghost'}
+            size="sm"
+            onClick={() => setLanguage('english')}
+            className="text-xs"
+          >
+            EN
+          </Button>
+          <Button
+            variant={language === 'urdu' ? 'primary' : 'ghost'}
+            size="sm"
+            onClick={() => setLanguage('urdu')}
+            className="text-xs"
+          >
+            اردو
+          </Button>
+        </div>
+      </div>
 
       <main className="flex-1 w-full max-w-5xl mx-auto px-6 md:px-12 pb-12 space-y-8">
         {/* Extracted JD Analysis Summary Card */}

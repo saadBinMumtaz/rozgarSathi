@@ -8,14 +8,12 @@ import { Card, CardHeader, CardTitle, CardContent } from '../design-system/Card'
 import { Button } from '../design-system/Button';
 import { Badge } from '../design-system/Badge';
 import { Skeleton } from '../design-system/Skeleton';
-import PageHeader from '../components/shared/PageHeader';
 import { EvidenceCard } from '../components/shared/EvidenceCard';
 import { apiClient } from '../api/client';
 import {
   Brain, Code, MessageCircle, Clock, ChevronDown, ChevronUp,
   AlertCircle, FileText, MessageSquare, TrendingUp,
 } from 'lucide-react';
-import { useAuth } from '../context/AuthContext';
 
 const MODE_CONFIG = {
   behavioral: { label: 'Behavioral', icon: MessageCircle, color: 'text-text-muted', bg: 'bg-text-muted/10', border: '' },
@@ -167,8 +165,7 @@ const SessionCard = ({ session }) => {
   );
 };
 
-export const SessionHistory = ({ userId = 'guest', onNavigate, isDark, isAuthenticated }) => {
-  const { logout } = useAuth();
+export const SessionHistory = ({ userId = 'guest', onNavigate }) => {
   const [sessions, setSessions] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -232,15 +229,6 @@ export const SessionHistory = ({ userId = 'guest', onNavigate, isDark, isAuthent
 
   return (
     <div className="min-h-screen bg-bg-primary text-text-primary flex flex-col">
-      {/* Navigation Header */}
-      <PageHeader
-        isDark={isDark}
-        onNavigate={onNavigate}
-        currentPage="session-history"
-        isAuthenticated={isAuthenticated}
-        onLogout={() => { logout(); onNavigate('landing'); }}
-      />
-
       {/* Content */}
       <div className="flex-1 p-6 md:p-12">
         <div className="max-w-4xl mx-auto space-y-6">

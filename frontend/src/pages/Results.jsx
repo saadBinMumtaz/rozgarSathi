@@ -11,10 +11,10 @@ import { Badge } from '../design-system/Badge';
 import { ScoreRing } from '../design-system/ScoreRing';
 import { ProgressBar } from '../design-system/ProgressBar';
 import { Skeleton } from '../design-system/Skeleton';
-import PageHeader from '../components/shared/PageHeader';
 import { apiClient } from '../api/client';
 import { ExportReportButton } from '../components/shared/ExportReportButton';
 import {
+  ArrowLeft,
   TrendingUp,
   TrendingDown,
   Brain,
@@ -28,7 +28,6 @@ import {
   Copy,
   Check,
 } from 'lucide-react';
-import { useAuth } from '../context/AuthContext';
 
 const MODE_CONFIG = {
   behavioral: {
@@ -62,8 +61,7 @@ const getReadinessLabel = (score) => {
   return { text: 'No Data', color: 'text-text-muted' };
 };
 
-export const Results = ({ userId = 'guest', onNavigate, isDark, isAuthenticated }) => {
-  const { logout } = useAuth();
+export const Results = ({ userId = 'guest', onNavigate }) => {
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -173,18 +171,21 @@ export const Results = ({ userId = 'guest', onNavigate, isDark, isAuthenticated 
 
   return (
     <div className="min-h-screen bg-bg-primary text-text-primary flex flex-col">
-      {/* Navigation Header */}
-      <PageHeader
-        isDark={isDark}
-        onNavigate={onNavigate}
-        currentPage="results"
-        isAuthenticated={isAuthenticated}
-        onLogout={() => { logout(); onNavigate('landing'); }}
-      />
-
       {/* Content */}
       <div className="flex-1 p-6 md:p-12">
         <div className="max-w-5xl mx-auto space-y-6">
+          {/* Back button */}
+          <div>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => onNavigate('mode-selection')}
+              className="text-text-muted hover:text-text-primary"
+            >
+              <ArrowLeft size={16} className="mr-1" /> Back to Mode Selection
+            </Button>
+          </div>
+
           {/* Page Title */}
           <div className="flex items-center justify-between">
             <div>

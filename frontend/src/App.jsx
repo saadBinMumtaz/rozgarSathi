@@ -253,7 +253,6 @@ const AppContent = () => {
             onNavigate={navigateTo}
             onAuthComplete={handleAuthComplete}
             guestId={userId}
-            isDark={isDark}
           />
         )}
       </div>
@@ -278,8 +277,6 @@ const AppContent = () => {
             onNavigate={navigateTo}
             pendingSampleJD={pendingSampleJD}
             onSampleJDConsumed={() => setPendingSampleJD(null)}
-            isDark={isDark}
-            isAuthenticated={isAuthenticated}
           />
         )}
       </div>
@@ -292,8 +289,6 @@ const AppContent = () => {
             onNavigate={navigateTo}
             language={language}
             setLanguage={setLanguage}
-            isDark={isDark}
-            isAuthenticated={isAuthenticated}
           />
         )}
       </div>
@@ -307,8 +302,6 @@ const AppContent = () => {
               language={language}
               isUrdu={isUrdu}
               userId={isAuthenticated && user ? String(user._id) : userId}
-              isDark={isDark}
-              isAuthenticated={isAuthenticated}
             />
           </ErrorBoundary>
         )}
@@ -323,8 +316,6 @@ const AppContent = () => {
               language={language}
               isUrdu={isUrdu}
               userId={isAuthenticated && user ? String(user._id) : userId}
-              isDark={isDark}
-              isAuthenticated={isAuthenticated}
             />
           </ErrorBoundary>
         )}
@@ -337,8 +328,6 @@ const AppContent = () => {
               jdAnalysisId={jdAnalysis?._id || jdAnalysis?.id}
               onNavigate={navigateTo}
               userId={isAuthenticated && user ? String(user._id) : userId}
-              isDark={isDark}
-              isAuthenticated={isAuthenticated}
             />
           </ErrorBoundary>
         )}
@@ -349,8 +338,6 @@ const AppContent = () => {
           <Results
             userId={isAuthenticated && user ? String(user._id) : userId}
             onNavigate={navigateTo}
-            isDark={isDark}
-            isAuthenticated={isAuthenticated}
           />
         )}
       </div>
@@ -371,8 +358,6 @@ const AppContent = () => {
           <SessionHistory
             userId={isAuthenticated && user ? String(user._id) : userId}
             onNavigate={navigateTo}
-            isDark={isDark}
-            isAuthenticated={isAuthenticated}
           />
         )}
       </div>

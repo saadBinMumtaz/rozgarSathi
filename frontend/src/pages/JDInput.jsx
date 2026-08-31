@@ -5,13 +5,11 @@ import { Badge } from '../design-system/Badge';
 import { ProgressBar } from '../design-system/ProgressBar';
 import { ScoreRing } from '../design-system/ScoreRing';
 import { Skeleton } from '../design-system/Skeleton';
-import PageHeader from '../components/shared/PageHeader';
 import { apiClient } from '../api/client';
 import { sampleJDs, sampleSeniorityOrder } from '../data/sampleJD';
-import { useAuth } from '../context/AuthContext';
+import { ArrowLeft } from 'lucide-react';
 
-export const JDInput = ({ onAnalysisComplete, onNavigate, pendingSampleJD, onSampleJDConsumed, isDark, isAuthenticated }) => {
-  const { logout } = useAuth();
+export const JDInput = ({ onAnalysisComplete, onNavigate, pendingSampleJD, onSampleJDConsumed }) => {
   const [jdText, setJdText] = useState('');
   const [currentSampleId, setCurrentSampleId] = useState(null);
   const [resumeFile, setResumeFile] = useState(null);
@@ -79,18 +77,20 @@ export const JDInput = ({ onAnalysisComplete, onNavigate, pendingSampleJD, onSam
 
   return (
     <div className="min-h-screen bg-bg-primary text-text-primary flex flex-col">
-      {/* Navigation Header */}
-      <PageHeader
-        isDark={isDark}
-        onNavigate={onNavigate}
-        currentPage="jd-input"
-        isAuthenticated={isAuthenticated}
-        onLogout={() => { logout(); onNavigate('landing'); }}
-        extraRightContent={<Badge variant="primary">Step 1 of 2: Job Context</Badge>}
-      />
-
       {/* Main Container */}
       <main className="flex-1 w-full max-w-4xl mx-auto px-6 md:px-12 pb-12 space-y-8">
+        {/* Back button */}
+        <div className="pt-4">
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => onNavigate('landing')}
+            className="text-text-muted hover:text-text-primary"
+          >
+            <ArrowLeft size={16} className="mr-1" /> Back to Home
+          </Button>
+        </div>
+
         <div className="text-center space-y-2">
           <h1 className="text-3xl md:text-4xl font-extrabold text-text-primary">Paste Job Description</h1>
           <p className="text-text-muted text-sm md:text-base">

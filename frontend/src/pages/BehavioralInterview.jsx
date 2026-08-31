@@ -15,15 +15,12 @@ import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '../de
 import { Button } from '../design-system/Button';
 import { Badge } from '../design-system/Badge';
 import { ProgressBar } from '../design-system/ProgressBar';
-import PageHeader from '../components/shared/PageHeader';
 import { Loader2, CheckCircle2 } from 'lucide-react';
 import { apiClient } from '../api/client';
-import { useAuth } from '../context/AuthContext';
 
 const MAX_QUESTIONS = 5;
 
-export const BehavioralInterview = ({ jdAnalysisId, onNavigate, language = 'english', isUrdu = false, userId, isDark, isAuthenticated }) => {
-  const { logout } = useAuth();
+export const BehavioralInterview = ({ jdAnalysisId, onNavigate, language = 'english', isUrdu = false, userId }) => {
   const {
     sessionId,
     currentQuestion,
@@ -312,15 +309,6 @@ export const BehavioralInterview = ({ jdAnalysisId, onNavigate, language = 'engl
 
   return (
     <div className="min-h-screen bg-bg-primary text-text-primary flex flex-col">
-      {/* Navigation Header */}
-      <PageHeader
-        isDark={isDark}
-        onNavigate={onNavigate}
-        currentPage="behavioral-interview"
-        isAuthenticated={isAuthenticated}
-        onLogout={() => { logout(); onNavigate('landing'); }}
-      />
-
       {/* Interview Content */}
       <div className="flex-1 p-4 md:p-8">
         <div className="max-w-4xl mx-auto space-y-6">
