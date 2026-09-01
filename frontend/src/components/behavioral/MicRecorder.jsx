@@ -36,8 +36,7 @@ export const MicRecorder = ({ isSpeaking, onTranscriptChange, resetKey, onUnsupp
 
   // Hard gate: whenever the AI starts speaking (question, follow-up or nudge),
   // stop any in-progress recognition immediately so the AI's voice is never
-  // transcribed as the candidate's answer. Centralized in this shared recorder
-  // so it applies identically to every voice interview page (Behavioral + Technical).
+  // transcribed as the candidate's answer.
   useEffect(() => {
     if (isSpeaking && isListening) {
       stop();
@@ -92,7 +91,7 @@ export const MicRecorder = ({ isSpeaking, onTranscriptChange, resetKey, onUnsupp
   const isDisabled = isSpeaking || !isSupported || error;
 
   return (
-    <div className="surface-text bg-surface-hover  rounded-lg p-4">
+    <div className="surface-text bg-surface rounded-lg p-4">
       <div className="flex items-center gap-4">
         {/* Waveform indicator */}
         <div className="flex items-end gap-1 h-12">
@@ -100,7 +99,7 @@ export const MicRecorder = ({ isSpeaking, onTranscriptChange, resetKey, onUnsupp
             <div
               key={i}
               className={`w-2 rounded-t transition-all duration-150 ${
-                isListening ? 'bg-text-primary' : 'bg-icon-muted'
+                isListening ? 'bg-surface-text' : 'bg-icon-muted'
               }`}
               style={{ height: `${Math.max(10, level)}%` }}
             />
@@ -113,10 +112,10 @@ export const MicRecorder = ({ isSpeaking, onTranscriptChange, resetKey, onUnsupp
           disabled={isDisabled}
           className={`flex items-center gap-2 px-4 py-2 rounded-md font-medium transition-colors ${
             isListening
-              ? 'bg-danger hover:opacity-90 text-text-primary'
+              ? 'bg-danger hover:opacity-90 text-white'
               : isDisabled
-              ? 'bg-bg-hover text-text-muted cursor-not-allowed'
-              : 'bg-text-primary hover:opacity-90 text-text-primary'
+              ? 'bg-surface-hover text-surface-text-muted cursor-not-allowed'
+              : 'bg-surface-text hover:opacity-90 text-surface'
           }`}
           aria-label={isListening ? 'Stop recording' : 'Start recording'}
         >
@@ -147,21 +146,21 @@ export const MicRecorder = ({ isSpeaking, onTranscriptChange, resetKey, onUnsupp
                 : `Microphone unavailable: ${error}. You can type your answer instead.`}
             </span>
           ) : isSpeaking ? (
-            <span className="text-text-muted">Wait for AI to finish speaking...</span>
+            <span className="text-surface-text-muted">Wait for AI to finish speaking...</span>
           ) : isListening ? (
-            <span className="text-icon-active">Listening...</span>
+            <span className="text-surface-text">Listening...</span>
           ) : (
-            <span className="text-text-muted">Click to start recording</span>
+            <span className="text-surface-text-muted">Click to start recording</span>
           )}
         </div>
       </div>
 
       {/* Transcript display */}
       {(transcript || interimTranscript) && (
-        <div className="mt-3 p-3 surface-text bg-surface rounded-md">
-          <div className="text-sm text-text-muted">
+        <div className="mt-3 p-3 surface-text bg-surface-hover rounded-md border border-border-strong/20">
+          <div className="text-sm text-surface-text">
             {transcript}
-            {interimTranscript && <span className="text-text-muted italic"> {interimTranscript}</span>}
+            {interimTranscript && <span className="text-surface-text-muted italic"> {interimTranscript}</span>}
           </div>
         </div>
       )}

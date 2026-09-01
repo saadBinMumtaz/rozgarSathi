@@ -63,12 +63,20 @@ export const useSpeechToText = (language = 'english') => {
 
       recognition.onerror = (event) => {
         console.error('Speech recognition error:', event.error);
+        // Don't treat 'no-speech' or 'aborted' as fatal errors
+        if (event.error === 'no-speech' || event.error === 'aborted') {
+          return;
+        }
         setError(event.error);
         setIsListening(false);
       };
 
       recognition.onend = () => {
         setIsListening(false);
+      };
+
+      recognition.onstart = () => {
+        setIsListening(true);
       };
 
       recognitionRef.current = recognition;
@@ -78,20 +86,7 @@ export const useSpeechToText = (language = 'english') => {
     }
     setChecked(true);
 
-    // Listen for app-level cleanup event (dispatched when navigating away
-    // from interview pages). Stops recognition so the mic doesn't keep
-    // listening in the background even though the component stays mounted
-    // (App.jsx uses CSS hidden, not unmount).
-    const handleCleanup = () => {
-      if (recognitionRef.current) {
-        try { recognitionRef.current.stop(); } catch {}
-      }
-      setIsListening(false);
-    };
-    window.addEventListener('rozgar:interview-cleanup', handleCleanup);
-
     return () => {
-      window.removeEventListener('rozgar:interview-cleanup', handleCleanup);
       if (recognitionRef.current) {
         recognitionRef.current.stop();
       }
@@ -106,7 +101,8 @@ export const useSpeechToText = (language = 'english') => {
     }
 
     setError(null);
-    setTranscript('');
+    // Don't clear transcript here — reset() handles that.
+    // start() should only begin recognition, preserving any existing text.
     setInterimTranscript('');
 
     // Ensure language is current before starting
@@ -117,7 +113,18 @@ export const useSpeechToText = (language = 'english') => {
       setIsListening(true);
     } catch (err) {
       console.error('Failed to start speech recognition:', err);
-      setError(err.message || 'Failed to start');
+      // If already started, stop and restart
+      if (err.message?.includes('already started')) {
+        try {
+          recognitionRef.current.stop();
+          setTimeout(() => {
+            recognitionRef.current.start();
+            setIsListening(true);
+          }, 100);
+        } catch {}
+      } else {
+        setError(err.message || 'Failed to start');
+      }
     }
   }, [isSupported]);
 
