@@ -1,3 +1,10 @@
+# ── Allow only backend/ and frontend/ ───
+# Ignore everything at root, then whitelist the two folders
+/*
+!.gitignore
+!backend/
+!frontend/
+
 # Dependencies
 node_modules/
 .pnp
@@ -26,17 +33,13 @@ pnpm-debug.log*
 lerna-debug.log*
 
 # Editor directories and files
-.vscode/*
-!.vscode/extensions.json
-!.vscode/settings.json
+.vscode/
 .idea
 *.suo
 *.ntvs*
 *.njsproj
 *.sln
 *.sw?
-.DS_Store
-Thumbs.db
 
 # OS files
 .DS_Store
@@ -51,3 +54,4 @@ coverage/
 *.tsbuildinfo
 .cache
 .parcel-cache
+.qoder/
