@@ -55,3 +55,7 @@ coverage/
 .cache
 .parcel-cache
 .qoder/
+
+# Temp files with secrets
+backend/tmp_*.mjs
+backend/tmp_*.js
