@@ -5,7 +5,7 @@ export const createSession = async (req, res, next) => {
   try {
     const { mode, jdAnalysisId, userId } = req.body;
     if (!mode) {
-      return res.status(400).json({ error: 'Session mode is required' });
+      return res.status(400).json({ code: 400, message: 'Session mode is required' });
     }
     const newSession = await Session.create({
       userId: userId || 'guest',
@@ -27,7 +27,7 @@ export const getSessionById = async (req, res, next) => {
   try {
     const session = await Session.findById(req.params.id);
     if (!session) {
-      return res.status(404).json({ error: 'Session not found' });
+      return res.status(404).json({ code: 404, message: 'Session not found' });
     }
     return res.json(session);
   } catch (err) {
@@ -40,12 +40,12 @@ export const translateEvaluationHandler = async (req, res) => {
   try {
     const { evaluation, targetLanguage } = req.body;
     if (!evaluation) {
-      return res.status(400).json({ error: 'Evaluation is required' });
+      return res.status(400).json({ code: 400, message: 'Evaluation is required' });
     }
     const translated = await translateEvaluation(evaluation, targetLanguage || 'urdu');
     return res.json({ evaluation: translated });
   } catch (err) {
-    return res.status(500).json({ error: err.message });
+    return res.status(500).json({ code: 500, message: err.message });
   }
 };
 
@@ -54,12 +54,12 @@ export const translateQuestionHandler = async (req, res) => {
   try {
     const { questionText, followUpPrompts, targetLanguage } = req.body;
     if (!questionText) {
-      return res.status(400).json({ error: 'questionText is required' });
+      return res.status(400).json({ code: 400, message: 'questionText is required' });
     }
     const translated = await translateQuestionText(questionText, followUpPrompts || [], targetLanguage || 'urdu');
     return res.json(translated);
   } catch (err) {
-    return res.status(500).json({ error: err.message });
+    return res.status(500).json({ code: 500, message: err.message });
   }
 };
 
@@ -68,18 +68,18 @@ export const synthesizeSpeechHandler = async (req, res) => {
   try {
     const { text, language } = req.body;
     if (!text || typeof text !== 'string') {
-      return res.status(400).json({ error: 'text is required' });
+      return res.status(400).json({ code: 400, message: 'text is required' });
     }
     if (language !== 'urdu') {
-      return res.status(400).json({ error: 'Cloud TTS is currently only supported for Urdu' });
+      return res.status(400).json({ code: 400, message: 'Cloud TTS is currently only supported for Urdu' });
     }
     const audio = await synthesizeUrduSpeech(text);
     return res.json(audio);
   } catch (err) {
     if (err.code === 'TTS_NOT_CONFIGURED') {
-      return res.status(503).json({ error: err.message, code: 'TTS_NOT_CONFIGURED' });
+      return res.status(503).json({ code: 503, message: err.message });
     }
-    return res.status(500).json({ error: err.message });
+    return res.status(500).json({ code: 500, message: err.message });
   }
 };
 
@@ -88,12 +88,12 @@ export const synthesizeSpeechGoogleHandler = async (req, res) => {
   try {
     const { text } = req.body;
     if (!text || typeof text !== 'string') {
-      return res.status(400).json({ error: 'text is required' });
+      return res.status(400).json({ code: 400, message: 'text is required' });
     }
     const audio = await synthesizeUrduSpeechGoogle(text);
     return res.json(audio);
   } catch (err) {
-    return res.status(500).json({ error: err.message });
+    return res.status(500).json({ code: 500, message: err.message });
   }
 };
 

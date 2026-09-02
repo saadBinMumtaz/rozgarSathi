@@ -9,7 +9,7 @@ import rateLimit from 'express-rate-limit';
 // session is created).
 const sessionKeyGenerator = (req) => (req.body && req.body.sessionId) || req.ip;
 
-const tooManyHandler = (message) => (req, res) => res.status(429).json({ error: message });
+const tooManyHandler = (message) => (req, res) => res.status(429).json({ code: 429, message });
 
 // POST /api/coding/run — each run triggers several judge executions, keep
 // the window generous but bounded.

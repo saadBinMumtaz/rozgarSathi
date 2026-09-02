@@ -32,7 +32,7 @@ export const analyzeResume = async (req, res, next) => {
     }
 
     if (!resumeText || !resumeText.trim()) {
-      return res.status(400).json({ error: 'Résumé text or file is required' });
+      return res.status(400).json({ code: 400, message: 'Résumé text or file is required' });
     }
 
     // Extract structured candidate info from résumé
@@ -45,7 +45,7 @@ export const analyzeResume = async (req, res, next) => {
     if (linkedJDAnalysisId) {
       jdAnalysis = await JDAnalysis.findById(linkedJDAnalysisId);
       if (!jdAnalysis) {
-        return res.status(404).json({ error: 'Linked JD analysis not found' });
+        return res.status(404).json({ code: 404, message: 'Linked JD analysis not found' });
       }
 
       // Compute embedding-based gap analysis

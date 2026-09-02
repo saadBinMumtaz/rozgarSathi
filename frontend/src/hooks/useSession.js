@@ -1,17 +1,25 @@
 // frontend/src/hooks/useSession.js
-// Manages behavioral interview session state.
+// Manages interview session state (behavioral, technical, coding).
 // Exposes: createSession, loadSession, answerQuestion, currentQuestion, evaluations, etc.
 // Persists to localStorage for page refresh recovery.
+//
+// Usage:
+//   const session = useSession({ mode: 'behavioral' }); // or 'technical'
+//   const session = useSession({ mode: 'technical', storageKey: 'my-custom-key' });
 
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { apiClient } from '../api/client';
 
-const SESSION_STORAGE_KEY = 'rozgar-sathi-behavioral-session-v2';
+// Default storage keys per mode
+const DEFAULT_STORAGE_KEYS = {
+  behavioral: 'rozgar-sathi-behavioral-session-v2',
+  technical: 'rozgar-sathi-technical-session-v2',
+};
 
 // Load initial state from localStorage synchronously to prevent race conditions
-const loadInitialState = () => {
+const loadInitialState = (storageKey) => {
   try {
-    const stored = localStorage.getItem(SESSION_STORAGE_KEY);
+    const stored = localStorage.getItem(storageKey);
     if (stored) {
       const data = JSON.parse(stored);
       return {
@@ -27,8 +35,9 @@ const loadInitialState = () => {
   return { sessionId: null, currentQuestion: null, evaluations: [], isComplete: false };
 };
 
-export const useSession = () => {
-  const initialState = loadInitialState();
+export const useSession = ({ mode = 'behavioral', storageKey } = {}) => {
+  const resolvedStorageKey = storageKey || DEFAULT_STORAGE_KEYS[mode] || DEFAULT_STORAGE_KEYS.behavioral;
+  const initialState = loadInitialState(resolvedStorageKey);
   const [sessionId, setSessionId] = useState(initialState.sessionId);
   const [currentQuestion, setCurrentQuestion] = useState(initialState.currentQuestion);
   const [evaluations, setEvaluations] = useState(initialState.evaluations);
@@ -48,7 +57,7 @@ export const useSession = () => {
       saveTimerRef.current = setTimeout(() => {
         try {
           localStorage.setItem(
-            SESSION_STORAGE_KEY,
+            resolvedStorageKey,
             JSON.stringify({
               sessionId,
               currentQuestion,
@@ -66,7 +75,7 @@ export const useSession = () => {
         clearTimeout(saveTimerRef.current);
       }
     };
-  }, [sessionId, currentQuestion, evaluations, isComplete]);
+  }, [sessionId, currentQuestion, evaluations, isComplete, resolvedStorageKey]);
 
   const createSession = useCallback(async (mode, jdAnalysisId, userId) => {
     setIsLoading(true);
@@ -77,7 +86,7 @@ export const useSession = () => {
     setFollowUp(null);
     setNudge(null);
     setIsComplete(false);
-    localStorage.removeItem(SESSION_STORAGE_KEY);
+    localStorage.removeItem(resolvedStorageKey);
     try {
       const result = await apiClient.createSession(mode, jdAnalysisId, userId);
       setSessionId(result.sessionId);
@@ -88,7 +97,7 @@ export const useSession = () => {
       setIsLoading(false);
       throw err;
     }
-  }, []);
+  }, [resolvedStorageKey]);
 
   const loadSession = useCallback(async (id) => {
     setIsLoading(true);
@@ -117,7 +126,10 @@ export const useSession = () => {
     setFollowUp(null);
 
     try {
-      const result = await apiClient.answerBehavioral(sessionId, questionId, transcript, language);
+      // Use the appropriate API call based on mode
+      const result = mode === 'technical'
+        ? await apiClient.answerTechnical(sessionId, questionId, transcript, language)
+        : await apiClient.answerBehavioral(sessionId, questionId, transcript, language);
 
       if (result.nextAction === 'first_question') {
         setCurrentQuestion(result.nextQuestion);
@@ -155,7 +167,7 @@ export const useSession = () => {
       setIsLoading(false);
       throw err;
     }
-  }, [sessionId]);
+  }, [sessionId, mode]);
 
   const resetSession = useCallback(() => {
     setSessionId(null);
@@ -165,8 +177,8 @@ export const useSession = () => {
     setNudge(null);
     setIsComplete(false);
     setError(null);
-    localStorage.removeItem(SESSION_STORAGE_KEY);
-  }, []);
+    localStorage.removeItem(resolvedStorageKey);
+  }, [resolvedStorageKey]);
 
   // Rebuild client state from the persisted backend session (refresh recovery).
   const resume = useCallback(async () => {

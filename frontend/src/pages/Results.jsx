@@ -226,13 +226,13 @@ export const Results = ({ userId = 'guest', onNavigate }) => {
 
       {/* Share link display */}
       {shareLink && (
-        <div className="flex items-center gap-2 p-3 rounded-lg bg-surface-hover/50 border border-border/30">
-          <Share2 size={14} className="text-text-muted flex-shrink-0" />
+        <div className="surface-text flex items-center gap-2 p-3 rounded-lg bg-surface-hover/50 border border-border/30">
+          <Share2 size={14} className="text-surface-text-muted flex-shrink-0" />
           <input
             type="text"
             readOnly
             value={shareLink}
-            className="flex-1 bg-transparent text-sm text-text-muted outline-none truncate"
+            className="flex-1 bg-transparent text-sm text-surface-text-muted outline-none truncate"
             onClick={(e) => e.target.select()}
           />
           <Button variant="ghost" size="sm" onClick={handleCopyLink}>

@@ -133,7 +133,7 @@ export const getCodingQuestion = async (req, res, next) => {
     console.log('[getCodingQuestion] Request body:', { topic, difficulty, questionId, sessionId });
 
     if (codingBank.length === 0) {
-      return res.status(500).json({ error: 'No coding questions available' });
+      return res.status(500).json({ code: 500, message: 'No coding questions available' });
     }
 
     let question = null;
@@ -168,12 +168,12 @@ const loadSessionQuestion = async (req, res) => {
   const { sessionId } = req.body || {};
   console.log('[loadSessionQuestion] sessionId:', sessionId);
   if (!sessionId) {
-    res.status(400).json({ error: 'sessionId is required' });
+    res.status(400).json({ code: 400, message: 'sessionId is required' });
     return null;
   }
   const session = await Session.findById(sessionId).catch(() => null);
   if (!session) {
-    res.status(404).json({ error: 'Session not found' });
+    res.status(404).json({ code: 404, message: 'Session not found' });
     return null;
   }
   const questionId = session.metadata?.codingQuestionId;
@@ -182,7 +182,7 @@ const loadSessionQuestion = async (req, res) => {
   const question = codingBank.find((q) => q.id === questionId);
   if (!question) {
     console.error('[loadSessionQuestion] FAILED: questionId', questionId, 'not found in codingBank (size:', codingBank.length, ')');
-    res.status(400).json({ error: 'No coding question linked to this session — fetch one via POST /api/coding/questions first.' });
+    res.status(400).json({ code: 400, message: 'No coding question linked to this session — fetch one via POST /api/coding/questions first.' });
     return null;
   }
   console.log('[loadSessionQuestion] SUCCESS: loaded question', question.id, '(' + question.title + ')');
@@ -291,7 +291,7 @@ export const evaluateProbe = async (req, res, next) => {
   try {
     const { probeText, answer, questionTitle, language } = req.body || {};
     if (!probeText || !answer) {
-      return res.status(400).json({ error: 'probeText and answer are required' });
+      return res.status(400).json({ code: 400, message: 'probeText and answer are required' });
     }
 
     const evaluation = await evaluateProbeAnswer({

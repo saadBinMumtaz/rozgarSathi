@@ -170,7 +170,7 @@ export const JDInput = ({ onAnalysisComplete, onNavigate, pendingSampleJD, onSam
                 </label>
                 <Badge variant="secondary">Day 3 Gap Analysis</Badge>
               </div>
-              <div className="flex items-center gap-4 bg-surface rounded-lg p-3">
+              <div className="surface-text flex items-center gap-4 bg-surface rounded-lg p-3">
                 <input
                   type="file"
                   accept=".pdf,.txt,.doc,.docx"

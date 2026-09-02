@@ -40,7 +40,7 @@ export const authMiddleware = async (req, res, next) => {
  */
 export const requireAuth = (req, res, next) => {
   if (!req.user) {
-    return res.status(401).json({ error: 'Authentication required. Please sign in.' });
+    return res.status(401).json({ code: 401, message: 'Authentication required. Please sign in.' });
   }
   next();
 };

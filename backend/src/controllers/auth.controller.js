@@ -18,13 +18,13 @@ export const signup = async (req, res, next) => {
 
     // Validate
     if (!username || !email || !password) {
-      return res.status(400).json({ error: 'Username, email, and password are required.' });
+      return res.status(400).json({ code: 400, message: 'Username, email, and password are required.' });
     }
     if (password.length < 6) {
-      return res.status(400).json({ error: 'Password must be at least 6 characters.' });
+      return res.status(400).json({ code: 400, message: 'Password must be at least 6 characters.' });
     }
     if (username.length < 3) {
-      return res.status(400).json({ error: 'Username must be at least 3 characters.' });
+      return res.status(400).json({ code: 400, message: 'Username must be at least 3 characters.' });
     }
 
     // Check existing
@@ -33,7 +33,7 @@ export const signup = async (req, res, next) => {
     });
     if (existingUser) {
       const field = existingUser.email === email.toLowerCase() ? 'email' : 'username';
-      return res.status(409).json({ error: `A user with that ${field} already exists.` });
+      return res.status(409).json({ code: 409, message: `A user with that ${field} already exists.` });
     }
 
     // Create user (password hashed by pre-save hook)
@@ -76,7 +76,7 @@ export const signin = async (req, res, next) => {
     const { username, password } = req.body;
 
     if (!username || !password) {
-      return res.status(400).json({ error: 'Username and password are required.' });
+      return res.status(400).json({ code: 400, message: 'Username and password are required.' });
     }
 
     // Find by username or email
@@ -88,12 +88,12 @@ export const signin = async (req, res, next) => {
     });
 
     if (!user) {
-      return res.status(401).json({ error: 'Invalid username or password.' });
+      return res.status(401).json({ code: 401, message: 'Invalid username or password.' });
     }
 
     const isMatch = await user.comparePassword(password);
     if (!isMatch) {
-      return res.status(401).json({ error: 'Invalid username or password.' });
+      return res.status(401).json({ code: 401, message: 'Invalid username or password.' });
     }
 
     // Update last login
@@ -118,7 +118,7 @@ export const signin = async (req, res, next) => {
 export const getMe = async (req, res, next) => {
   try {
     if (!req.user) {
-      return res.status(401).json({ error: 'Not authenticated.' });
+      return res.status(401).json({ code: 401, message: 'Not authenticated.' });
     }
     res.json({ user: req.user.toJSON() });
   } catch (err) {
@@ -134,12 +134,12 @@ export const getMe = async (req, res, next) => {
 export const migrateGuest = async (req, res, next) => {
   try {
     if (!req.user) {
-      return res.status(401).json({ error: 'Not authenticated.' });
+      return res.status(401).json({ code: 401, message: 'Not authenticated.' });
     }
 
     const { guestId } = req.body;
     if (!guestId) {
-      return res.status(400).json({ error: 'guestId is required.' });
+      return res.status(400).json({ code: 400, message: 'guestId is required.' });
     }
 
     const result = await Session.updateMany(

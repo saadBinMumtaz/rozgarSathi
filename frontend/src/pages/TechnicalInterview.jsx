@@ -16,17 +16,24 @@ import { DifficultyIndicator } from '../components/technical/DifficultyIndicator
 import { QuestionTraceBadge } from '../components/shared/QuestionTraceBadge';
 import { apiClient } from '../api/client';
 import { useTabLock } from '../hooks/useTabLock';
-
-const TECHNICAL_SESSION_KEY = 'rozgar-sathi-technical-session-v1';
+import { useSession } from '../hooks/useSession';
 
 export const TechnicalInterview = ({ jdAnalysisId, onNavigate, language = 'english', isUrdu = false, userId }) => {
-  const [sessionId, setSessionId] = useState(null);
-  const [currentQuestion, setCurrentQuestion] = useState(null);
-  const [evaluations, setEvaluations] = useState([]);
-  const [followUp, setFollowUp] = useState(null);
-  const [isLoading, setIsLoading] = useState(false);
-  const [isComplete, setIsComplete] = useState(false);
-  const [error, setError] = useState(null);
+  const {
+    sessionId,
+    currentQuestion,
+    evaluations,
+    followUp,
+    nudge,
+    isLoading,
+    isComplete,
+    error,
+    createSession,
+    answerQuestion,
+    resetSession,
+    resume,
+  } = useSession({ mode: 'technical' });
+
   const [isSpeaking, setIsSpeaking] = useState(false);
   const [useTypedFallback, setUseTypedFallback] = useState(false);
   const [micTranscript, setMicTranscript] = useState('');
@@ -35,7 +42,6 @@ export const TechnicalInterview = ({ jdAnalysisId, onNavigate, language = 'engli
   const [questionCount, setQuestionCount] = useState(0);
   const [urduQuestionText, setUrduQuestionText] = useState(null);
   const [urduFollowUp, setUrduFollowUp] = useState(null);
-  const [nudge, setNudge] = useState(null);
   const [urduNudge, setUrduNudge] = useState(null);
   const [isTranslatingUrdu, setIsTranslatingUrdu] = useState(false);
   const [urduEvaluations, setUrduEvaluations] = useState([]);
@@ -43,29 +49,6 @@ export const TechnicalInterview = ({ jdAnalysisId, onNavigate, language = 'engli
   const { isLocked: tabConflict, dismissWarning: dismissTabWarning } = useTabLock(sessionId, 'technical');
 
   const MAX_QUESTIONS = 5;
-
-  // Clear any previous session on mount — always start fresh
-  useEffect(() => {
-    try {
-      localStorage.removeItem(TECHNICAL_SESSION_KEY);
-    } catch (err) {
-      console.error('Failed to clear technical session:', err);
-    }
-  }, []);
-
-  // Persist to localStorage
-  useEffect(() => {
-    if (sessionId) {
-      try {
-        localStorage.setItem(
-          TECHNICAL_SESSION_KEY,
-          JSON.stringify({ sessionId, currentQuestion, evaluations, isComplete, questionCount })
-        );
-      } catch (err) {
-        console.error('Failed to save technical session:', err);
-      }
-    }
-  }, [sessionId, currentQuestion, evaluations, isComplete, questionCount]);
 
   // Cleanup: stop TTS and speech synthesis when component unmounts or navigating away
   useEffect(() => {
@@ -164,115 +147,75 @@ export const TechnicalInterview = ({ jdAnalysisId, onNavigate, language = 'engli
     return () => { cancelled = true; };
   }, [isUrdu, isComplete, evaluations]);
 
-  const handleAnswerResult = useCallback((result) => {
-    // Clear any prior invalid-answer feedback; only re-set it for a 'nudge'.
-    setNudge(null);
-    if (result.nextAction === 'first_question') {
-      setCurrentQuestion(result.nextQuestion);
-      setQuestionCount(1);
-      setDifficultyInfo({ current: result.nextQuestion.difficulty, previous: null, ratingDelta: 0 });
-    } else if (result.nextAction === 'nudge') {
-      // Direct invalid-answer feedback — re-asks the SAME question/follow-up.
-      setNudge(result.nudge);
-    } else if (result.nextAction === 'followup') {
-      setFollowUp(result.followUp);
-    } else if (result.nextAction === 'next_question') {
-      if (result.evaluation) {
-        setEvaluations((prev) => [...prev, result.evaluation]);
-      }
-      setCurrentQuestion(result.nextQuestion);
-      setQuestionCount((prev) => prev + 1);
-      setFollowUp(null);
-      setUrduQuestionText(null); // Clear for auto-translate of new question
-      // If the server flagged the previous answer as invalid, show the feedback message.
-      if (result.nudge) {
-        setNudge(result.nudge);
-      }
-      if (result.difficultyChange) {
-        setDifficultyInfo({
-          current: result.difficultyChange.to,
-          previous: result.difficultyChange.from,
-          ratingDelta: result.ratingDelta || 0,
-        });
-      }
-    } else if (result.nextAction === 'complete') {
-      if (result.evaluation) {
-        setEvaluations((prev) => [...prev, result.evaluation]);
-      }
-      if (result.terminationReason === 'profanity' && result.message) {
-        setTerminationMessage(result.message);
-      }
-      setIsComplete(true);
-      setCurrentQuestion(null);
-    }
-  }, []);
+  // Handle difficulty tracking and termination messages from answer results
+  useEffect(() => {
+    if (!currentQuestion) return;
+    // Update question count when question changes
+    setQuestionCount((prev) => {
+      const newCount = evaluations.length + (currentQuestion ? 1 : 0);
+      return Math.max(prev, newCount);
+    });
+  }, [currentQuestion, evaluations.length]);
 
-  // Create a new technical session
-  const createSession = useCallback(async () => {
-    setIsLoading(true);
-    setError(null);
-    try {
-      const result = await apiClient.createSession('technical', jdAnalysisId, userId);
-      setSessionId(result.sessionId);
-      // Fetch first question
-      const answerResult = await apiClient.answerTechnical(result.sessionId, null, '');
-      handleAnswerResult(answerResult);
-    } catch (err) {
-      setError(err.message || 'Failed to create session');
-    } finally {
-      setIsLoading(false);
-    }
-  }, [jdAnalysisId, handleAnswerResult]);
-
-  // Start the interview
+  // Create a new technical session and fetch first question
   useEffect(() => {
     if (!sessionId && jdAnalysisId && !isComplete) {
-      createSession();
+      const initSession = async () => {
+        try {
+          const newSessionId = await createSession('technical', jdAnalysisId, userId);
+          // Fetch first question
+          await answerQuestion(null, '', language);
+        } catch (err) {
+          console.error('Failed to initialize session:', err);
+        }
+      };
+      initSession();
     }
-  }, []);
+  }, [sessionId, jdAnalysisId, isComplete]);
 
   const submitAnswer = useCallback(async () => {
     // Strict limit: prevent submitting more than MAX_QUESTIONS
     if (questionCount >= MAX_QUESTIONS) {
-      setIsComplete(true);
-      setCurrentQuestion(null);
       return;
     }
 
     const transcript = useTypedFallback ? typedTranscript.trim() : micTranscript.trim();
     if (!transcript || !sessionId) return;
 
-    setIsLoading(true);
-    setError(null);
     setMicTranscript('');
     setTypedTranscript('');
+    setUrduQuestionText(null); // Clear for auto-translate of new question
 
     try {
-      const result = await apiClient.answerTechnical(sessionId, currentQuestion?.questionId, transcript, language);
-      handleAnswerResult(result);
+      const result = await answerQuestion(currentQuestion?.questionId, transcript, language);
+      // Handle technical-specific logic: difficulty changes and termination
+      if (result?.difficultyChange) {
+        setDifficultyInfo({
+          current: result.difficultyChange.to,
+          previous: result.difficultyChange.from,
+          ratingDelta: result.ratingDelta || 0,
+        });
+      }
+      if (result?.terminationReason === 'profanity' && result.message) {
+        setTerminationMessage(result.message);
+      }
+      if (result?.nextAction === 'first_question') {
+        setDifficultyInfo({ current: result.nextQuestion.difficulty, previous: null, ratingDelta: 0 });
+      }
     } catch (err) {
-      setError(err.message || 'Failed to submit answer');
-    } finally {
-      setIsLoading(false);
+      console.error('Failed to submit answer:', err);
     }
-  }, [sessionId, currentQuestion, micTranscript, typedTranscript, useTypedFallback, handleAnswerResult, language, questionCount]);
+  }, [sessionId, currentQuestion, micTranscript, typedTranscript, useTypedFallback, answerQuestion, language, questionCount]);
 
-  const resetSession = () => {
-    setSessionId(null);
-    setCurrentQuestion(null);
-    setEvaluations([]);
-    setFollowUp(null);
-    setNudge(null);
+  const handleResetSession = useCallback(() => {
+    resetSession();
     setUrduNudge(null);
-    setIsLoading(false);
-    setIsComplete(false);
-    setError(null);
     setMicTranscript('');
     setTypedTranscript('');
     setQuestionCount(0);
     setDifficultyInfo({ current: 'medium', previous: null, ratingDelta: 0 });
-    localStorage.removeItem(TECHNICAL_SESSION_KEY);
-  };
+    setTerminationMessage(null);
+  }, [resetSession]);
 
   const activeTranscript = useTypedFallback ? typedTranscript : micTranscript;
   const progress = (questionCount / MAX_QUESTIONS) * 100;
@@ -311,8 +254,8 @@ export const TechnicalInterview = ({ jdAnalysisId, onNavigate, language = 'engli
               variant="link"
               className="shrink-0 underline text-danger hover:text-danger"
               onClick={() => {
-                if (!sessionId) createSession();
-                else resetSession();
+                if (!sessionId) createSession('technical', jdAnalysisId, userId);
+                else handleResetSession();
               }}
             >
               {sessionId ? 'Restart interview' : 'Retry'}
@@ -520,7 +463,7 @@ export const TechnicalInterview = ({ jdAnalysisId, onNavigate, language = 'engli
                     <Button variant="primary" onClick={() => onNavigate('mode-selection')}>
                       Try Another Mode
                     </Button>
-                    <Button variant="secondary" onClick={resetSession}>
+                    <Button variant="secondary" onClick={handleResetSession}>
                       Restart Technical
                     </Button>
                   </div>

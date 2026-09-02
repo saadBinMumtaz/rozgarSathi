@@ -13,87 +13,15 @@ import {
   INVALID_ANSWER_MESSAGE,
   MAX_INVALID_ATTEMPTS,
   isInvalidAnswer,
+  detectProfanity,
+  resetInvalidAttempts,
 } from '../services/answerQuality.js';
+import { completeSession } from '../services/sessionUtils.js';
+import { buildTechnicalFollowUp } from '../services/followUpEngine.js';
 import logger from '../utils/logger.js';
 
 const MAX_QUESTIONS = 5; // technical interview length
 const FOLLOW_UP_SCORE_THRESHOLD = 50;
-
-const PROFANITY_LIST = [
-  'fuck', 'shit', 'bitch', 'asshole', 'bastard', 'cunt', 'motherfucker', 'dick', 'piss',
-  'damn', 'hell', 'crap', 'slut', 'whore',
-];
-
-const detectProfanity = (transcript) => {
-  const lower = transcript.toLowerCase();
-  return PROFANITY_LIST.find((p) => lower.includes(p)) || null;
-};
-
-/**
- * Track answer-quality attempts on session metadata so invalid inputs are
- * re-asked with the same direct message instead of being scored. Shared by the
- * main-answer and follow-up paths (mirrors behavioral.controller.js).
- */
-const bumpInvalidAttempts = async (session) => {
-  if (!session.metadata) session.metadata = {};
-  session.metadata.invalidAttempts = (session.metadata.invalidAttempts || 0) + 1;
-  await session.save();
-  return session.metadata.invalidAttempts;
-};
-
-const resetInvalidAttempts = (session) => {
-  if (session.metadata) session.metadata.invalidAttempts = 0;
-};
-
-/**
- * Build a technical follow-up based on the weakest rubric dimension.
- * Enhanced with context-aware deep probes anchored to the candidate's answer.
- */
-const TECHNICAL_DEEP_PROBES = {
-  correctness: [
-    'Can you verify that with a concrete example from your experience?',
-    'What edge cases might break that assumption?',
-  ],
-  depth: [
-    'Can you go one level deeper — what are the underlying mechanics?',
-    'How does this behave under high load or with large datasets?',
-  ],
-  practical: [
-    'How would you apply this in a real production system?',
-    'What monitoring or observability would you add to catch issues early?',
-  ],
-  relevance: [
-    'How does this relate specifically to the role requirements?',
-    'Can you connect this to a project you have actually shipped?',
-  ],
-  communication: [
-    'Can you rephrase that more concisely for a junior developer?',
-    'What would you include in a design doc about this decision?',
-  ],
-  reasoning: [
-    'What was your reasoning process for arriving at that conclusion?',
-    'What alternatives did you consider and why did you reject them?',
-  ],
-};
-
-const buildTechnicalFollowUp = (evaluation, question) => {
-  const dims = evaluation.dimensions || {};
-  const keys = Object.keys(dims).filter((k) => typeof dims[k] === 'number');
-  if (keys.length === 0) {
-    return 'Can you elaborate more on that with a specific example?';
-  }
-
-  // Find the weakest dimension
-  keys.sort((a, b) => dims[a] - dims[b]);
-  const weakest = keys[0];
-
-  const prompts = TECHNICAL_DEEP_PROBES[weakest] || [
-    'Can you elaborate more on that with a specific example?',
-  ];
-
-  // Pick a random deep probe for variety
-  return prompts[Math.floor(Math.random() * prompts.length)];
-};
 
 /**
  * Load JD analysis for the session.
@@ -235,7 +163,7 @@ export const answerTechnical = async (req, res, next) => {
   try {
     const session = await Session.findById(req.params.id);
     if (!session) {
-      return res.status(404).json({ error: 'Session not found' });
+      return res.status(404).json({ code: 404, message: 'Session not found' });
     }
 
     // Mode guard: fall through to next handler if not technical
@@ -258,7 +186,7 @@ export const answerTechnical = async (req, res, next) => {
       const jdAnalysis = await loadJdAnalysis(session);
       const question = await getFirstQuestion(session, jdAnalysis);
       if (!question) {
-        return res.status(500).json({ error: 'No technical questions available' });
+        return res.status(500).json({ code: 500, message: 'No technical questions available' });
       }
 
       session.questions.push({
@@ -300,7 +228,7 @@ export const answerTechnical = async (req, res, next) => {
 
     // ─── Subsequent calls: process the answer ───────────────────────
     if (!transcript) {
-      return res.status(400).json({ error: 'Transcript is required' });
+      return res.status(400).json({ code: 400, message: 'Transcript is required' });
     }
 
     // Profanity check — terminate interview if detected
@@ -412,7 +340,7 @@ const finalizeTechnicalQuestion = async (session, evaluation, res, extra = {}) =
   // Strict check: if we've reached MAX_QUESTIONS, complete the session
   if (session.questions.length >= MAX_QUESTIONS) {
     logger.info(`Technical session completed: ${session.questions.length} questions answered.`);
-    return completeTechnicalSession(session, evaluation, res);
+    return completeSession(session, evaluation, res);
   }
 
   const jdAnalysis = await loadJdAnalysis(session);
@@ -420,7 +348,7 @@ const finalizeTechnicalQuestion = async (session, evaluation, res, extra = {}) =
 
   const result = await getNextQuestion(session, jdAnalysis, skillHistory);
   if (!result) {
-    return completeTechnicalSession(session, evaluation, res);
+    return completeSession(session, evaluation, res);
   }
 
   const { question, nextDifficulty, updatedSkillHistory } = result;
@@ -476,19 +404,6 @@ const finalizeTechnicalQuestion = async (session, evaluation, res, extra = {}) =
     detectedLanguage: sessionLanguage,
     languageConfidence: 1,
   });
-};
-
-/**
- * Complete the technical session with an overall score.
- */
-const completeTechnicalSession = async (session, evaluation, res) => {
-  session.status = 'completed';
-  session.overallScore = Math.round(
-    session.questions.reduce((sum, q) => sum + (q.evaluation?.score || 0), 0) /
-      session.questions.length
-  );
-  await session.save();
-  return res.json({ evaluation, nextAction: 'complete' });
 };
 
 export default { answerTechnical };

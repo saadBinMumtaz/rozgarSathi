@@ -18,12 +18,12 @@ export const generateShareToken = async (req, res, next) => {
   try {
     const authenticatedUser = req.user;
     if (!authenticatedUser) {
-      return res.status(401).json({ error: 'Authentication required' });
+      return res.status(401).json({ code: 401, message: 'Authentication required' });
     }
 
     const { sessionId } = req.body;
     if (!sessionId) {
-      return res.status(400).json({ error: 'sessionId is required' });
+      return res.status(400).json({ code: 400, message: 'sessionId is required' });
     }
 
     const session = await Session.findOne({
@@ -32,7 +32,7 @@ export const generateShareToken = async (req, res, next) => {
     });
 
     if (!session) {
-      return res.status(404).json({ error: 'Session not found' });
+      return res.status(404).json({ code: 404, message: 'Session not found' });
     }
 
     // Generate token if not already present
@@ -58,12 +58,12 @@ export const getSharedReport = async (req, res, next) => {
   try {
     const { shareToken } = req.params;
     if (!shareToken) {
-      return res.status(400).json({ error: 'Share token is required' });
+      return res.status(400).json({ code: 400, message: 'Share token is required' });
     }
 
     const session = await Session.findOne({ shareToken, status: 'completed' }).lean();
     if (!session) {
-      return res.status(404).json({ error: 'Shared report not found or expired' });
+      return res.status(404).json({ code: 404, message: 'Shared report not found or expired' });
     }
 
     // Build sanitized response — ONLY fields visible on Results.jsx

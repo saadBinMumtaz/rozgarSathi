@@ -34,7 +34,7 @@ export const BehavioralInterview = ({ jdAnalysisId, onNavigate, language = 'engl
     answerQuestion,
     resetSession,
     resume,
-  } = useSession();
+  } = useSession({ mode: 'behavioral' });
 
   const [isSpeaking, setIsSpeaking] = useState(false);
   const [typedAnswer, setTypedAnswer] = useState('');

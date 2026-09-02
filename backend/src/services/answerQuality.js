@@ -18,6 +18,39 @@ export const INVALID_ANSWER_MESSAGE =
 // Set to 0 for immediate flagging: show the message once, then move to next question.
 export const MAX_INVALID_ATTEMPTS = 0;
 
+// Shared profanity list — single source of truth for both controllers.
+const PROFANITY_LIST = [
+  'fuck', 'shit', 'bitch', 'asshole', 'bastard', 'cunt', 'motherfucker', 'dick', 'piss',
+  'damn', 'hell', 'crap', 'slut', 'whore',
+];
+
+/**
+ * Check if transcript contains profanity.
+ * Returns the first profane word found, or null.
+ */
+export const detectProfanity = (transcript) => {
+  const lower = transcript.toLowerCase();
+  return PROFANITY_LIST.find((p) => lower.includes(p)) || null;
+};
+
+/**
+ * Track answer-quality attempts on session metadata so invalid inputs are
+ * re-asked with the same direct message instead of being scored.
+ */
+export const bumpInvalidAttempts = async (session) => {
+  if (!session.metadata) session.metadata = {};
+  session.metadata.invalidAttempts = (session.metadata.invalidAttempts || 0) + 1;
+  await session.save();
+  return session.metadata.invalidAttempts;
+};
+
+/**
+ * Reset the invalid attempt counter after a valid answer.
+ */
+export const resetInvalidAttempts = (session) => {
+  if (session.metadata) session.metadata.invalidAttempts = 0;
+};
+
 /**
  * Robustly detect random / gibberish / non-sensical answers.
  * Script-aware: legitimate Urdu (or other non-Latin) answers are NOT flagged
@@ -57,4 +90,4 @@ export const isInvalidAnswer = (transcript) => {
   return false;
 };
 
-export default { INVALID_ANSWER_MESSAGE, MAX_INVALID_ATTEMPTS, isInvalidAnswer };
+export default { INVALID_ANSWER_MESSAGE, MAX_INVALID_ATTEMPTS, isInvalidAnswer, detectProfanity, bumpInvalidAttempts, resetInvalidAttempts };

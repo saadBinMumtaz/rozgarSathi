@@ -11,127 +11,17 @@ import {
   INVALID_ANSWER_MESSAGE,
   MAX_INVALID_ATTEMPTS,
   isInvalidAnswer,
+  detectProfanity,
+  resetInvalidAttempts,
 } from '../services/answerQuality.js';
+import { completeSession } from '../services/sessionUtils.js';
+import { buildStarFollowUp } from '../services/followUpEngine.js';
 import logger from '../utils/logger.js';
 
 const FOLLOW_UP_SCORE_THRESHOLD = 50;
 const MAX_QUESTIONS = 5; // behavioral interview length
 
-const PROFANITY_LIST = [
-  'fuck', 'shit', 'bitch', 'asshole', 'bastard', 'cunt', 'motherfucker', 'dick', 'piss',
-  'damn', 'hell', 'crap', 'bastard', 'slut', 'whore',
-];
-
-/**
- * Check if transcript contains profanity.
- * Returns the first profane word found, or null.
- */
-const detectProfanity = (transcript) => {
-  const lower = transcript.toLowerCase();
-  return PROFANITY_LIST.find((p) => lower.includes(p)) || null;
-};
-
-/**
- * Record the answer-quality attempt counter on session metadata and return
- * the updated count. Shared by the main-answer and follow-up paths so invalid
- * inputs are re-asked with the same direct message instead of being scored.
- */
-const bumpInvalidAttempts = async (session) => {
-  if (!session.metadata) session.metadata = {};
-  session.metadata.invalidAttempts = (session.metadata.invalidAttempts || 0) + 1;
-  await session.save();
-  return session.metadata.invalidAttempts;
-};
-
-const resetInvalidAttempts = (session) => {
-  if (session.metadata) session.metadata.invalidAttempts = 0;
-};
-
-const STAR_FOLLOWUPS = {
-  situation: "Let's go back to the beginning — what was the specific situation you were in, and what made it particularly challenging?",
-  task: 'What exactly was your responsibility in that situation, and how did you clarify what was expected of you?',
-  action: 'Walk me through the specific steps you personally took — not the team, but you individually. What was your thought process?',
-  result: 'How did it end — what was the concrete result of your actions, and how did you measure whether you succeeded?',
-};
-
-/**
- * Build context-aware follow-ups that probe deeper into the candidate's answer.
- * Uses the weakest STAR dimension and anchors to something the candidate actually said.
- */
-const DEEP_PROBES = {
-  situation: [
-    'What made that situation particularly complex or high-stakes?',
-    'Were there any constraints that limited your options at the time?',
-  ],
-  task: [
-    'How did you prioritize what needed to happen first?',
-    'Was there ambiguity about who owned the problem? How did you handle that?',
-  ],
-  action: [
-    'What alternatives did you consider before committing to that approach?',
-    'What was the biggest risk you took, and how did you mitigate it?',
-  ],
-  result: [
-    'If you could do it again, what would you change and why?',
-    'How did this experience change how you approach similar situations now?',
-  ],
-};
-
-/**
- * Extract a short anchor phrase from the candidate's transcript for
- * context-aware follow-ups ("You mentioned 'X' — ...").
- * Returns the first meaningful sentence, trimmed to 80 chars.
- */
-const extractAnchor = (transcript) => {
-  if (!transcript) return '';
-  const sentences = transcript.split(/[.!?]+/).filter((s) => s.trim().length > 3);
-  if (sentences.length === 0) return '';
-  let anchor = sentences[0].trim();
-  if (anchor.length > 80) anchor = anchor.substring(0, 77) + '...';
-  return anchor;
-};
-
-/**
- * STAR coaching folded into a follow-up: target the weakest STAR dimension
- * and anchor it to something the candidate actually said.
- * Also includes a deep probe from the same dimension for richer follow-ups.
- */
-const buildStarFollowUp = (evaluation, transcript) => {
-  const dims = evaluation.dimensions || {};
-  const keys = Object.keys(STAR_FOLLOWUPS).filter((k) => typeof dims[k] === 'number');
-  let dimKey = 'action';
-  if (keys.length > 0) {
-    keys.sort((a, b) => dims[a] - dims[b]);
-    dimKey = keys[0];
-  }
-  const base = STAR_FOLLOWUPS[dimKey];
-  const anchor = extractAnchor(transcript);
-  const deepProbes = DEEP_PROBES[dimKey] || [];
-  const probe = deepProbes.length > 0 ? deepProbes[Math.floor(Math.random() * deepProbes.length)] : '';
-  
-  if (anchor) {
-    const combined = probe
-      ? `You mentioned "${anchor}" — ${base.charAt(0).toLowerCase() + base.slice(1)} Also, ${probe.charAt(0).toLowerCase() + probe.slice(1)}`
-      : `You mentioned "${anchor}" — ${base.charAt(0).toLowerCase() + base.slice(1)}`;
-    return combined;
-  }
-  return probe ? `${base} ${probe}` : base;
-};
-
 // INVALID_EVALUATION is now imported from scoring.js (Rules §5: only scoring.js constructs evaluations)
-
-/**
- * Close the session with an overall score.
- */
-const completeSession = async (session, evaluation, res) => {
-  session.status = 'completed';
-  session.overallScore = Math.round(
-    session.questions.reduce((sum, q) => sum + (q.evaluation?.score || 0), 0) /
-      session.questions.length
-  );
-  await session.save(); // Final save
-  return res.json({ evaluation, nextAction: 'complete' });
-};
 
 /**
  * Close the current question and advance to the next one (or complete).
@@ -266,7 +156,7 @@ export const answerBehavioral = async (req, res, next) => {
   try {
     const session = await Session.findById(req.params.id);
     if (!session) {
-      return res.status(404).json({ error: 'Session not found' });
+      return res.status(404).json({ code: 404, message: 'Session not found' });
     }
 
     // Mode guard: fall through to technical handler if not behavioral
@@ -285,7 +175,7 @@ export const answerBehavioral = async (req, res, next) => {
     if (session.questions.length === 0) {
       const question = await getFirstQuestion(session);
       if (!question) {
-        return res.status(500).json({ error: 'No behavioral questions available' });
+        return res.status(500).json({ code: 500, message: 'No behavioral questions available' });
       }
 
       // Add question entry to session (without transcript/evaluation yet)
@@ -328,7 +218,7 @@ export const answerBehavioral = async (req, res, next) => {
 
     // Subsequent calls: process the answer
     if (!transcript) {
-      return res.status(400).json({ error: 'Transcript is required' });
+      return res.status(400).json({ code: 400, message: 'Transcript is required' });
     }
 
     // The active question is always the last entry in the session.

@@ -21,7 +21,7 @@ export const TypedFallback = ({ value, onChange, onSubmit, isSpeaking, disabled 
   };
 
   return (
-    <div className="bg-surface-hover rounded-lg p-4">
+    <div className="surface-text bg-surface-hover rounded-lg p-4">
       <div className="flex items-center gap-2 mb-3">
         <Keyboard size={18} className="text-surface-text" />
         <span className="text-sm font-medium text-surface-text">Type your answer</span>

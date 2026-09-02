@@ -98,7 +98,7 @@ export const SignupSignin = ({ onNavigate, onAuthComplete, guestId }) => {
       <div className="flex-1 flex flex-col items-center justify-center p-6 md:p-12">
       <Card className="w-full max-w-md" hover={false}>
         {/* Tab switcher */}
-        <div className="flex mb-6 bg-surface rounded-lg p-1">
+        <div className="surface-text flex mb-6 bg-surface rounded-lg p-1">
           <button
             onClick={() => switchMode('signin')}
             className={`flex-1 py-2 px-4 rounded-md text-sm font-medium transition-all ${
