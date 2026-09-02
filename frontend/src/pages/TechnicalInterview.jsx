@@ -3,7 +3,7 @@
 // Reuses VoiceQuestionPlayer.jsx (shared TTS), MicRecorder, TypedFallback.
 // Wires DifficultyIndicator and EvidenceCard.
 
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '../design-system/Card';
 import { Button } from '../design-system/Button';
 import { Badge } from '../design-system/Badge';
@@ -29,10 +29,11 @@ export const TechnicalInterview = ({ jdAnalysisId, onNavigate, language = 'engli
     isComplete,
     error,
     createSession,
+    createAndFetchFirst,
     answerQuestion,
     resetSession,
     resume,
-  } = useSession({ mode: 'technical' });
+  } = useSession({ mode: 'technical', userId });
 
   const [isSpeaking, setIsSpeaking] = useState(false);
   const [useTypedFallback, setUseTypedFallback] = useState(false);
@@ -49,6 +50,8 @@ export const TechnicalInterview = ({ jdAnalysisId, onNavigate, language = 'engli
   const { isLocked: tabConflict, dismissWarning: dismissTabWarning } = useTabLock(sessionId, 'technical');
 
   const MAX_QUESTIONS = 5;
+  const initRef = useRef(false); // Prevent duplicate initialization
+  const justCreatedRef = useRef(false); // Track when session was just created (to skip resume)
 
   // Cleanup: stop TTS and speech synthesis when component unmounts or navigating away
   useEffect(() => {
@@ -62,7 +65,26 @@ export const TechnicalInterview = ({ jdAnalysisId, onNavigate, language = 'engli
         audio.pause();
         audio.currentTime = 0;
       });
+      // Dispatch cleanup event for other components
+      window.dispatchEvent(new CustomEvent('rozgar:interview-cleanup'));
     };
+  }, []);
+
+  // Listen for cleanup event from other components
+  useEffect(() => {
+    const handleCleanup = () => {
+      // Stop any ongoing speech synthesis
+      if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
+        window.speechSynthesis.cancel();
+      }
+      // Stop any audio playback
+      document.querySelectorAll('audio').forEach(audio => {
+        audio.pause();
+        audio.currentTime = 0;
+      });
+    };
+    window.addEventListener('rozgar:interview-cleanup', handleCleanup);
+    return () => window.removeEventListener('rozgar:interview-cleanup', handleCleanup);
   }, []);
 
   // Auto-translate question to Urdu when language is Urdu and question changes
@@ -157,21 +179,43 @@ export const TechnicalInterview = ({ jdAnalysisId, onNavigate, language = 'engli
     });
   }, [currentQuestion, evaluations.length]);
 
-  // Create a new technical session and fetch first question
+  // Session initialization and resume logic
   useEffect(() => {
-    if (!sessionId && jdAnalysisId && !isComplete) {
-      const initSession = async () => {
-        try {
-          const newSessionId = await createSession('technical', jdAnalysisId, userId);
-          // Fetch first question
-          await answerQuestion(null, '', language);
-        } catch (err) {
-          console.error('Failed to initialize session:', err);
-        }
-      };
-      initSession();
+    // Prevent duplicate initialization
+    if (initRef.current) return;
+
+    if (!sessionId) {
+      // No session exists — create a new one and fetch first question atomically
+      initRef.current = true;
+      justCreatedRef.current = true; // Mark that we just created a session
+      createAndFetchFirst('technical', jdAnalysisId, userId, language)
+        .then(() => {
+          // Session created and first question fetched successfully
+          // State will be updated by createAndFetchFirst
+        })
+        .catch((err) => {
+          console.error('Failed to create session:', err);
+          initRef.current = false; // Allow retry on failure
+          justCreatedRef.current = false;
+        });
+    } else if (!isComplete && !justCreatedRef.current) {
+      // Session exists and was NOT just created — resume it (page refresh recovery)
+      initRef.current = true;
+      resume().catch((err) => {
+        console.error('Failed to resume session:', err);
+        resetSession();
+        initRef.current = false;
+      });
+    } else if (justCreatedRef.current) {
+      // Session was just created — clear the flag
+      justCreatedRef.current = false;
     }
-  }, [sessionId, jdAnalysisId, isComplete]);
+
+    // Reset init flag when session is cleared (for restart)
+    if (!sessionId && !jdAnalysisId) {
+      initRef.current = false;
+    }
+  }, [sessionId, jdAnalysisId, isComplete, createAndFetchFirst, resume, resetSession, userId, language]);
 
   const submitAnswer = useCallback(async () => {
     // Strict limit: prevent submitting more than MAX_QUESTIONS
@@ -215,6 +259,10 @@ export const TechnicalInterview = ({ jdAnalysisId, onNavigate, language = 'engli
     setQuestionCount(0);
     setDifficultyInfo({ current: 'medium', previous: null, ratingDelta: 0 });
     setTerminationMessage(null);
+    setUrduQuestionText(null);
+    setUrduFollowUp(null);
+    // Reset init flag to allow re-initialization
+    initRef.current = false;
   }, [resetSession]);
 
   const activeTranscript = useTypedFallback ? typedTranscript : micTranscript;
@@ -254,8 +302,14 @@ export const TechnicalInterview = ({ jdAnalysisId, onNavigate, language = 'engli
               variant="link"
               className="shrink-0 underline text-danger hover:text-danger"
               onClick={() => {
-                if (!sessionId) createSession('technical', jdAnalysisId, userId);
-                else handleResetSession();
+                // Reset init flag to allow re-initialization
+                initRef.current = false;
+                if (!sessionId) {
+                  // Clear error and trigger re-initialization via useEffect
+                  handleResetSession();
+                } else {
+                  handleResetSession();
+                }
               }}
             >
               {sessionId ? 'Restart interview' : 'Retry'}

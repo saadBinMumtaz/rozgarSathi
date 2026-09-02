@@ -2,7 +2,7 @@
 // Behavioral interview page — orchestrates voice pipeline, session management,
 // answer submission, EvidenceCard, Urdu toggle, and progress tracking.
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import { useSession } from '../hooks/useSession';
 import { useTabLock } from '../hooks/useTabLock';
 import { VoiceQuestionPlayer } from '../components/shared/VoiceQuestionPlayer';
@@ -34,7 +34,7 @@ export const BehavioralInterview = ({ jdAnalysisId, onNavigate, language = 'engl
     answerQuestion,
     resetSession,
     resume,
-  } = useSession({ mode: 'behavioral' });
+  } = useSession({ mode: 'behavioral', userId });
 
   const [isSpeaking, setIsSpeaking] = useState(false);
   const [typedAnswer, setTypedAnswer] = useState('');
@@ -48,20 +48,29 @@ export const BehavioralInterview = ({ jdAnalysisId, onNavigate, language = 'engl
   const [questionCount, setQuestionCount] = useState(0);
   const [terminationMessage, setTerminationMessage] = useState(null);
   const { isLocked: tabConflict, dismissWarning: dismissTabWarning } = useTabLock(sessionId, 'behavioral');
+  const justCreatedRef = useRef(false); // Track if we just created a new session
 
   // Initialize / resume session whenever the session id changes.
   // BUT skip resume if interview is already complete (prevents overwriting local state).
+  // ALSO skip resume if we just created a new session (prevents loading stale data).
   useEffect(() => {
     if (!sessionId) {
+      justCreatedRef.current = true; // Mark that we're about to create a new session
       createSession('behavioral', jdAnalysisId, userId).catch((err) => {
         console.error('Failed to create session:', err);
+        justCreatedRef.current = false; // Reset on failure
       });
-    } else if (!isComplete) {
-      // Only resume if interview is NOT already complete
+    } else if (!isComplete && !justCreatedRef.current) {
+      // Only resume if:
+      // 1. Interview is NOT already complete
+      // 2. We did NOT just create this session (it's a page refresh recovery)
       resume().catch((err) => {
         console.error('Failed to resume session:', err);
         resetSession();
       });
+    } else if (justCreatedRef.current) {
+      // We just created a new session, mark it as handled
+      justCreatedRef.current = false;
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [sessionId]);
@@ -83,7 +92,26 @@ export const BehavioralInterview = ({ jdAnalysisId, onNavigate, language = 'engl
         audio.pause();
         audio.currentTime = 0;
       });
+      // Dispatch cleanup event for other components
+      window.dispatchEvent(new CustomEvent('rozgar:interview-cleanup'));
     };
+  }, []);
+
+  // Listen for cleanup event from other components
+  useEffect(() => {
+    const handleCleanup = () => {
+      // Stop any ongoing speech synthesis
+      if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
+        window.speechSynthesis.cancel();
+      }
+      // Stop any audio playback
+      document.querySelectorAll('audio').forEach(audio => {
+        audio.pause();
+        audio.currentTime = 0;
+      });
+    };
+    window.addEventListener('rozgar:interview-cleanup', handleCleanup);
+    return () => window.removeEventListener('rozgar:interview-cleanup', handleCleanup);
   }, []);
 
   // Auto-translate question to Urdu when language is Urdu and question changes

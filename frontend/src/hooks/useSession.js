@@ -17,11 +17,18 @@ const DEFAULT_STORAGE_KEYS = {
 };
 
 // Load initial state from localStorage synchronously to prevent race conditions
-const loadInitialState = (storageKey) => {
+const loadInitialState = (storageKey, userId) => {
   try {
     const stored = localStorage.getItem(storageKey);
     if (stored) {
       const data = JSON.parse(stored);
+      // Validate that the stored session belongs to the current user
+      // If userId is provided and doesn't match, clear stale data
+      if (userId && data.userId && data.userId !== userId) {
+        console.warn('Stale session data from different user detected, clearing...');
+        localStorage.removeItem(storageKey);
+        return { sessionId: null, currentQuestion: null, evaluations: [], isComplete: false };
+      }
       return {
         sessionId: data.sessionId || null,
         currentQuestion: data.currentQuestion || null,
@@ -35,9 +42,9 @@ const loadInitialState = (storageKey) => {
   return { sessionId: null, currentQuestion: null, evaluations: [], isComplete: false };
 };
 
-export const useSession = ({ mode = 'behavioral', storageKey } = {}) => {
+export const useSession = ({ mode = 'behavioral', storageKey, userId } = {}) => {
   const resolvedStorageKey = storageKey || DEFAULT_STORAGE_KEYS[mode] || DEFAULT_STORAGE_KEYS.behavioral;
-  const initialState = loadInitialState(resolvedStorageKey);
+  const initialState = loadInitialState(resolvedStorageKey, userId);
   const [sessionId, setSessionId] = useState(initialState.sessionId);
   const [currentQuestion, setCurrentQuestion] = useState(initialState.currentQuestion);
   const [evaluations, setEvaluations] = useState(initialState.evaluations);
@@ -63,6 +70,7 @@ export const useSession = ({ mode = 'behavioral', storageKey } = {}) => {
               currentQuestion,
               evaluations,
               isComplete,
+              userId, // Store userId for cross-user validation
             })
           );
         } catch (err) {
@@ -75,7 +83,7 @@ export const useSession = ({ mode = 'behavioral', storageKey } = {}) => {
         clearTimeout(saveTimerRef.current);
       }
     };
-  }, [sessionId, currentQuestion, evaluations, isComplete, resolvedStorageKey]);
+  }, [sessionId, currentQuestion, evaluations, isComplete, resolvedStorageKey, userId]);
 
   const createSession = useCallback(async (mode, jdAnalysisId, userId) => {
     setIsLoading(true);
@@ -98,6 +106,43 @@ export const useSession = ({ mode = 'behavioral', storageKey } = {}) => {
       throw err;
     }
   }, [resolvedStorageKey]);
+
+  // Create session and immediately fetch first question atomically
+  // This avoids race conditions between session creation and question fetching
+  const createAndFetchFirst = useCallback(async (mode, jdAnalysisId, userId, language = 'english') => {
+    setIsLoading(true);
+    setError(null);
+    // Reset state so stale data from a previous session doesn't carry over
+    setEvaluations([]);
+    setCurrentQuestion(null);
+    setFollowUp(null);
+    setNudge(null);
+    setIsComplete(false);
+    localStorage.removeItem(resolvedStorageKey);
+    try {
+      const result = await apiClient.createSession(mode, jdAnalysisId, userId);
+      const newSessionId = result.sessionId;
+      setSessionId(newSessionId);
+      
+      // Immediately fetch first question using the new sessionId
+      // This avoids the race condition of waiting for state propagation
+      const answerResult = mode === 'technical'
+        ? await apiClient.answerTechnical(newSessionId, null, '', language)
+        : await apiClient.answerBehavioral(newSessionId, null, '', language);
+      
+      // Update state with the first question
+      if (answerResult.nextAction === 'first_question' && answerResult.nextQuestion) {
+        setCurrentQuestion(answerResult.nextQuestion);
+      }
+      
+      setIsLoading(false);
+      return { sessionId: newSessionId, firstQuestion: answerResult.nextQuestion };
+    } catch (err) {
+      setError(err.message || 'Failed to create session');
+      setIsLoading(false);
+      throw err;
+    }
+  }, [resolvedStorageKey, mode]);
 
   const loadSession = useCallback(async (id) => {
     setIsLoading(true);
@@ -229,6 +274,7 @@ export const useSession = ({ mode = 'behavioral', storageKey } = {}) => {
     isComplete,
     error,
     createSession,
+    createAndFetchFirst,
     loadSession,
     answerQuestion,
     resetSession,

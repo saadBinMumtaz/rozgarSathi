@@ -77,7 +77,16 @@ const AppContent = () => {
     return 'landing';
   });
 
-  const [jdAnalysis, setJdAnalysis] = useState(null);
+  const [jdAnalysis, setJdAnalysis] = useState(() => {
+    try {
+      const stored = localStorage.getItem(APP_STATE_KEY);
+      if (stored) {
+        const { jdAnalysis } = JSON.parse(stored);
+        return jdAnalysis || null;
+      }
+    } catch {}
+    return null;
+  });
   const [selectedMode, setSelectedMode] = useState(null);
   const [toastMessage, setToastMessage] = useState(null);
   const [pendingSampleJD, setPendingSampleJD] = useState(null);
@@ -136,19 +145,22 @@ const AppContent = () => {
     }
   }, [currentPage, isAuthenticated, authLoading]);
 
-  // Persist current page
+  // Persist current page and JD analysis
   const localStorageTimerRef = useRef(null);
   useEffect(() => {
     if (localStorageTimerRef.current) clearTimeout(localStorageTimerRef.current);
     localStorageTimerRef.current = setTimeout(() => {
       try {
-        localStorage.setItem(APP_STATE_KEY, JSON.stringify({ page: currentPage }));
+        localStorage.setItem(APP_STATE_KEY, JSON.stringify({ 
+          page: currentPage,
+          jdAnalysis: jdAnalysis 
+        }));
       } catch {}
     }, 100);
     return () => {
       if (localStorageTimerRef.current) clearTimeout(localStorageTimerRef.current);
     };
-  }, [currentPage]);
+  }, [currentPage, jdAnalysis]);
 
   // Track visited pages
   const [visitedPages, setVisitedPages] = useState(() => {

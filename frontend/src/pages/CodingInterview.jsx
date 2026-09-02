@@ -225,8 +225,8 @@ export const CodingInterview = ({ jdAnalysisId, onNavigate, userId }) => {
   useEffect(() => {
     if (!question?.interviewerProbes?.length || isSubmitted || practiceMode) return undefined;
     const delay = autoAccelerate ? 15000 : 30000;
-    const startTimer = setTimeout(() => setActiveProbeIndex(0), delay);
-    return () => clearTimeout(startTimer);
+    probeTimerRef.current = setTimeout(() => setActiveProbeIndex(0), delay);
+    return () => clearTimeout(probeTimerRef.current);
   }, [question?.interviewerProbes, isSubmitted, practiceMode, autoAccelerate]);
 
   useEffect(() => {
@@ -234,11 +234,10 @@ export const CodingInterview = ({ jdAnalysisId, onNavigate, userId }) => {
     const probes = question?.interviewerProbes || [];
     if (activeProbeIndex >= probes.length - 1) return undefined;
     const interval = autoAccelerate ? 15000 : 60000;
-    const timer = setTimeout(() => {
+    probeTimerRef.current = setTimeout(() => {
       setActiveProbeIndex((prev) => Math.min(prev + 1, probes.length - 1));
     }, interval);
-    probeTimerRef.current = timer;
-    return () => clearTimeout(timer);
+    return () => clearTimeout(probeTimerRef.current);
   }, [activeProbeIndex, question?.interviewerProbes, isSubmitted, practiceMode, autoAccelerate]);
 
   // --- Cleanup on navigation away ---
@@ -246,10 +245,49 @@ export const CodingInterview = ({ jdAnalysisId, onNavigate, userId }) => {
     const handleCleanup = () => {
       if (timerRef.current) clearInterval(timerRef.current);
       if (probeTimerRef.current) clearTimeout(probeTimerRef.current);
+      if (autosaveTimerRef.current) clearTimeout(autosaveTimerRef.current);
       setActiveProbeIndex(-1);
+      
+      // Stop any ongoing speech synthesis
+      if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
+        window.speechSynthesis.cancel();
+      }
+      
+      // Stop any audio playback
+      document.querySelectorAll('audio').forEach(audio => {
+        audio.pause();
+        audio.currentTime = 0;
+      });
     };
     window.addEventListener('rozgar:interview-cleanup', handleCleanup);
     return () => window.removeEventListener('rozgar:interview-cleanup', handleCleanup);
+  }, []);
+
+  // --- Cleanup on component unmount ---
+  useEffect(() => {
+    return () => {
+      // Clear all timers
+      if (timerRef.current) clearInterval(timerRef.current);
+      if (probeTimerRef.current) clearTimeout(probeTimerRef.current);
+      if (autosaveTimerRef.current) clearTimeout(autosaveTimerRef.current);
+      
+      // Reset probe state
+      setActiveProbeIndex(-1);
+      
+      // Stop any ongoing speech synthesis
+      if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
+        window.speechSynthesis.cancel();
+      }
+      
+      // Stop any audio playback
+      document.querySelectorAll('audio').forEach(audio => {
+        audio.pause();
+        audio.currentTime = 0;
+      });
+      
+      // Dispatch cleanup event for other components
+      window.dispatchEvent(new CustomEvent('rozgar:interview-cleanup'));
+    };
   }, []);
 
   // --- Public test summary for confirmation modal ---
