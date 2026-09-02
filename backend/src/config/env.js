@@ -41,6 +41,9 @@ export const env = Object.freeze({
   FRONTEND_URL: process.env.FRONTEND_URL || 'http://localhost:5173',
   NODE_ENV: process.env.NODE_ENV || 'development',
   VITE_API_BASE_URL: process.env.VITE_API_BASE_URL || 'http://localhost:5000/api',
+  // Job Discovery providers (optional — when unset, those providers are disabled).
+  ADZUNA_APP_ID: process.env.ADZUNA_APP_ID || '',
+  ADZUNA_APP_KEY: process.env.ADZUNA_APP_KEY || '',
 });
 
 export default env;

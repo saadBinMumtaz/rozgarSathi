@@ -1,7 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { Button } from '../design-system/Button';
 import { sampleJDs, sampleSeniorityOrder } from '../data/sampleJD';
-import { Sparkles } from 'lucide-react';
+import { Sparkles, Briefcase } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import Aurora from '../components/shared/Aurora';
 import PageHeader from '../components/shared/PageHeader';
@@ -120,6 +120,14 @@ export const Landing = ({ onNavigate, onTrySampleJD, isAuthenticated, user, isDa
               onClick={() => onNavigate(isAuthenticated ? 'jd-input' : 'auth')}
             >
               {isAuthenticated ? 'Start JD Analysis & Practice →' : 'Get Started →'}
+            </Button>
+
+            <Button
+              size="lg"
+              variant="secondary"
+              onClick={() => onNavigate('find-jobs')}
+            >
+              <Briefcase size={16} className="mr-2" /> Find Jobs
             </Button>
 
             <select

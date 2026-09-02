@@ -1,4 +1,4 @@
-﻿// frontend/src/components/shared/PageHeader.jsx
+// frontend/src/components/shared/PageHeader.jsx
 // Reusable page header with GooeyNav for consistent navigation across all pages.
 // Adapts to dark/light mode and provides standardized spacing.
 // Theme toggle is handled globally in App.jsx (fixed top-4 right-4 z-50).
@@ -16,7 +16,6 @@ const PageHeader = ({
   extraRightContent = null,
 }) => {
   // Define navigation items based on authentication state
-  // "Find Jobs" is only available to authenticated users
   const navItems = isAuthenticated
     ? [
         { label: 'Home', href: '#', page: 'landing' },
@@ -26,6 +25,7 @@ const PageHeader = ({
       ]
     : [
         { label: 'Home', href: '#', page: 'landing' },
+        { label: 'Find Jobs', href: '#', page: 'find-jobs' },
         { label: 'Features', href: '#', page: 'landing' },
         { label: 'Sign Up', href: '#', page: 'auth' },
       ];
@@ -33,12 +33,12 @@ const PageHeader = ({
   // Determine active index based on current page
   const getActiveIndex = () => {
     if (currentPage === 'landing' || currentPage === 'home') return 0;
-    if (currentPage === 'auth') return isAuthenticated ? 0 : 2;
+    if (currentPage === 'auth') return isAuthenticated ? 0 : 3;
     if (currentPage === 'jd-input' || currentPage === 'mode-selection' ||
         currentPage === 'technical-interview' || currentPage === 'behavioral-interview' ||
         currentPage === 'coding-interview') return 1;
-    if (currentPage === 'find-jobs' || currentPage === 'job-detail') return 2;
-    if (currentPage === 'dashboard' || currentPage === 'results' || currentPage === 'session-history') return isAuthenticated ? 3 : 2;
+    if (currentPage === 'find-jobs' || currentPage === 'job-detail') return isAuthenticated ? 2 : 1;
+    if (currentPage === 'dashboard' || currentPage === 'results' || currentPage === 'session-history') return isAuthenticated ? 3 : 3;
     return 0;
   };
 
@@ -84,3 +84,4 @@ const PageHeader = ({
 };
 
 export default PageHeader;
+

@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback, useRef } from 'react';
+﻿import React, { useState, useEffect, useCallback, useRef } from 'react';
 import Landing from './pages/Landing';
 import JDInput from './pages/JDInput';
 import ModeSelection from './pages/ModeSelection';
@@ -11,12 +11,15 @@ import SessionHistory from './pages/SessionHistory';
 import SignupSignin from './pages/SignupSignin';
 import SetPassword from './pages/SetPassword';
 import SharedReport from './pages/SharedReport';
+import FindJobs from './pages/FindJobs';
+import JobDetail from './pages/JobDetail';
 import { ErrorBoundary } from './components/shared/ErrorBoundary';
 import Toast from './design-system/Toast';
 import { ThemeToggle } from './design-system/ThemeToggle';
 import { useLanguage } from './hooks/useLanguage';
 import { useTheme } from './hooks/useTheme';
 import { AuthProvider, useAuth } from './context/AuthContext';
+import { apiClient } from './api/client';
 
 const APP_STATE_KEY = 'rozgar-sathi-app-state-v1';
 const USER_ID_KEY = 'rozgar-sathi-user-id';
@@ -25,7 +28,7 @@ const USER_ID_KEY = 'rozgar-sathi-user-id';
 const INTERVIEW_PAGES = new Set(['behavioral-interview', 'technical-interview', 'coding-interview']);
 
 // Protected pages — require authentication
-const PROTECTED_PAGES = new Set(['dashboard', 'results', 'session-history']);
+const PROTECTED_PAGES = new Set(['dashboard', 'results', 'session-history', 'find-jobs', 'job-detail']);
 
 // Parse share token from URL path: /shared/:shareToken
 const parseShareToken = () => {
@@ -92,6 +95,8 @@ const AppContent = () => {
   const [toastMessage, setToastMessage] = useState(null);
   const [pendingSampleJD, setPendingSampleJD] = useState(null);
   const [showGuestModal, setShowGuestModal] = useState(false);
+  const [selectedJob, setSelectedJob] = useState(null);
+  const [jobPracticingLoading, setJobPracticingLoading] = useState(false);
   const { language, setLanguage, isUrdu } = useLanguage();
   const { theme, toggleTheme, isDark } = useTheme();
 
@@ -242,6 +247,46 @@ const AppContent = () => {
     setToastMessage({ type: 'success', message: 'Password set successfully! Your account is now fully secured.' });
     navigateTo('landing');
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // --- Job Discovery: "Start Practicing" flow ---
+  // When user clicks "Start Practicing" on a job, we:
+  // 1. Take the job's description text
+  // 2. Call the EXISTING JD analysis API (POST /api/jd/analyze)
+  // 3. Store the result in jdAnalysis state
+  // 4. Navigate to mode-selection — the existing interview system takes over
+  const handleJobAction = useCallback(async ({ type, job }) => {
+    if (type === 'view') {
+      setSelectedJob(job);
+      setCurrentPage('job-detail');
+      return;
+    }
+
+    if (type === 'practice' || type === 'start-practice') {
+      if (!job?.description || job.description.trim().length < 50) {
+        setToastMessage({ type: 'error', message: 'This job does not have a usable description for interview practice.' });
+        return;
+      }
+
+      setJobPracticingLoading(true);
+      try {
+        // Use the EXISTING JD analysis pipeline — no parallel system
+        const analysisResult = await apiClient.analyzeJD(job.description);
+        setJdAnalysis(analysisResult);
+        setSelectedJob(job);
+        setToastMessage({ type: 'success', message: `Job analysis complete for "${job.title}". Choose your interview mode.` });
+        navigateTo('mode-selection');
+      } catch (err) {
+        setToastMessage({ type: 'error', message: err.message || 'Failed to analyze job description.' });
+      } finally {
+        setJobPracticingLoading(false);
+      }
+    }
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Called from JobDetail page when user clicks "Start Practicing"
+  const handleStartPracticingFromDetail = useCallback((job) => {
+    handleJobAction({ type: 'practice', job });
+  }, [handleJobAction]);
 
   // Show loading while auth is being restored
   if (authLoading) {
@@ -397,6 +442,31 @@ const AppContent = () => {
         )}
       </div>
 
+      {/* Job Discovery */}
+      <div className={currentPage === 'find-jobs' ? '' : 'hidden'}>
+        {shouldRender('find-jobs') && (
+          <FindJobs
+            onNavigate={navigateTo}
+            onStartPracticing={handleJobAction}
+            isDark={isDark}
+            isAuthenticated={isAuthenticated}
+          />
+        )}
+      </div>
+
+      {/* Job Detail */}
+      <div className={currentPage === 'job-detail' ? '' : 'hidden'}>
+        {shouldRender('job-detail') && (
+          <JobDetail
+            job={selectedJob}
+            onNavigate={navigateTo}
+            onStartPracticing={handleStartPracticingFromDetail}
+            isDark={isDark}
+            isAuthenticated={isAuthenticated}
+          />
+        )}
+      </div>
+
       {/* Guest signup modal */}
       {showGuestModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm">
@@ -457,3 +527,4 @@ export const App = () => (
 );
 
 export default App;
+

@@ -17,7 +17,7 @@ import { apiClient } from '../api/client';
 import {
   ArrowRight, Brain, Code, MessageCircle, Target,
   Award, AlertTriangle, BarChart3, Clock, TrendingUp,
-  CheckCircle2, AlertCircle,
+  CheckCircle2, AlertCircle, Briefcase,
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 
@@ -161,6 +161,9 @@ export const Dashboard = ({ userId = 'guest', onNavigate, isDark, isAuthenticate
             </div>
           </div>
           <div className="flex gap-2">
+            <Button variant="secondary" onClick={() => onNavigate('find-jobs')}>
+              <Briefcase size={14} className="mr-1" /> Find Jobs
+            </Button>
             <Button variant="secondary" onClick={() => onNavigate('session-history')}>
               <Clock size={14} className="mr-1" /> History
             </Button>

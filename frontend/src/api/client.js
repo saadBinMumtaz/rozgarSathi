@@ -457,6 +457,26 @@ export const apiClient = {
     }
     return res.json();
   },
+
+  // --- Job Discovery ---------------------------------------------------
+
+  async searchJobs({ q, location, remote, page = 1, limit = 20 }) {
+    const params = new URLSearchParams();
+    if (q) params.set('q', q);
+    if (location) params.set('location', location);
+    if (remote) params.set('remote', 'true');
+    if (page) params.set('page', String(page));
+    if (limit) params.set('limit', String(limit));
+
+    const res = await fetch(`${API_BASE_URL}/jobs/search?${params.toString()}`, {
+      headers: authHeaders(),
+    });
+    if (!res.ok) {
+      const errorData = await res.json().catch(() => ({ error: 'Job search failed' }));
+      throw new Error(errorData.message || errorData.error || `Server error: ${res.status}`);
+    }
+    return res.json();
+  },
 };
 
 export default apiClient;

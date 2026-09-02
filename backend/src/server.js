@@ -13,6 +13,7 @@ import codingRoutes from './routes/coding.routes.js';
 import dashboardRoutes from './routes/dashboard.routes.js';
 import authRoutes from './routes/auth.routes.js';
 import reportRoutes from './routes/report.routes.js';
+import jobRoutes from './routes/jobRoutes.js';
 
 import errorHandler from './middleware/errorHandler.js';
 import { authMiddleware } from './middleware/authMiddleware.js';
@@ -42,6 +43,8 @@ app.use('/api/coding', codingRoutes);
 app.use('/api/dashboard', authMiddleware, dashboardRoutes);
 // Shareable reports — §15.6 / §22 (unauthenticated GET for shared links)
 app.use('/api/reports', reportRoutes);
+// Job Discovery — search active job listings from external providers
+app.use('/api/jobs', jobRoutes);
 
 // Root endpoint
 app.get('/', (_req, res) => {
