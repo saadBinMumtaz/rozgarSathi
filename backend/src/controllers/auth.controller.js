@@ -2,6 +2,8 @@ import jwt from 'jsonwebtoken';
 import env from '../config/env.js';
 import { User } from '../models/User.model.js';
 import { Session } from '../models/Session.model.js';
+import { verifyGoogleToken, findOrCreateGoogleUser, generateGoogleAuthUrl } from '../services/googleAuth.js';
+import { mergeGuestSessions } from '../services/userMerge.js';
 
 const generateToken = (userId) => {
   return jwt.sign({ userId }, env.JWT_SECRET, { expiresIn: '30d' });
@@ -142,12 +144,141 @@ export const migrateGuest = async (req, res, next) => {
       return res.status(400).json({ code: 400, message: 'guestId is required.' });
     }
 
-    const result = await Session.updateMany(
-      { userId: guestId },
-      { $set: { userId: String(req.user._id) } }
-    );
+    const result = await mergeGuestSessions(guestId, String(req.user._id));
 
-    res.json({ migratedCount: result.modifiedCount || 0 });
+    res.json({ mergedCount: result.mergedSessionCount });
+  } catch (err) {
+    next(err);
+  }
+};
+
+/**
+ * GET /api/auth/google
+ * Redirects to Google OAuth consent screen.
+ */
+export const googleAuth = async (req, res, next) => {
+  try {
+    const redirectUri = env.GOOGLE_REDIRECT_URI || `${env.VITE_API_BASE_URL}/auth/google/callback`;
+    const authUrl = generateGoogleAuthUrl(redirectUri);
+    res.redirect(authUrl);
+  } catch (err) {
+    next(err);
+  }
+};
+
+/**
+ * GET /api/auth/google/callback
+ * Handles Google OAuth callback, verifies token, creates/updates user, returns JWT.
+ */
+export const googleCallback = async (req, res, next) => {
+  try {
+    const { code } = req.query;
+    
+    if (!code) {
+      return res.status(400).json({ code: 400, message: 'Authorization code is required.' });
+    }
+
+    // Exchange code for tokens (in a real app, you'd use the OAuth2Client)
+    // For simplicity, we'll expect the frontend to send the ID token directly
+    // This is a simplified flow - in production, use proper OAuth2 code exchange
+    
+    // For now, we'll redirect to frontend with a temporary token
+    // The frontend will then call /api/auth/google/verify with the ID token
+    const frontendUrl = env.FRONTEND_URL || 'http://localhost:5173';
+    res.redirect(`${frontendUrl}/auth/google/callback?code=${code}`);
+  } catch (err) {
+    next(err);
+  }
+};
+
+/**
+ * POST /api/auth/google/verify
+ * Body: { idToken, guestId? }
+ * Verifies Google ID token and returns JWT + user.
+ * Returns needsPassword flag if user has no password set.
+ */
+export const googleVerify = async (req, res, next) => {
+  try {
+    const { idToken, guestId } = req.body;
+
+    if (!idToken) {
+      return res.status(400).json({ code: 400, message: 'Google ID token is required.' });
+    }
+
+    // Verify Google token
+    const googlePayload = await verifyGoogleToken(idToken);
+
+    // Find or create user
+    const user = await findOrCreateGoogleUser(googlePayload);
+
+    // Merge guest sessions if provided
+    let mergedSessionCount = 0;
+    if (guestId) {
+      const result = await mergeGuestSessions(guestId, String(user._id));
+      mergedSessionCount = result.mergedSessionCount;
+    }
+
+    // Check if user needs to set a password (Google OAuth users without password)
+    const needsPassword = !user.password;
+
+    // Generate JWT
+    const token = generateToken(String(user._id));
+
+    res.json({
+      token,
+      user: user.toJSON(),
+      mergedSessions: mergedSessionCount,
+      needsPassword,
+    });
+  } catch (err) {
+    next(err);
+  }
+};
+
+/**
+ * POST /api/auth/set-password
+ * Body: { password }
+ * Sets password for the authenticated user (used after Google OAuth sign-in).
+ * Requires authentication.
+ */
+export const setPassword = async (req, res, next) => {
+  try {
+    if (!req.user) {
+      return res.status(401).json({ code: 401, message: 'Authentication required.' });
+    }
+
+    const { password } = req.body;
+
+    if (!password || password.length < 6) {
+      return res.status(400).json({ code: 400, message: 'Password must be at least 6 characters.' });
+    }
+
+    // Update user password (hashed by pre-save hook)
+    req.user.password = password;
+    await req.user.save();
+
+    // Generate new JWT (in case token needs refresh)
+    const token = generateToken(String(req.user._id));
+
+    res.json({
+      token,
+      user: req.user.toJSON(),
+      message: 'Password set successfully.',
+    });
+  } catch (err) {
+    next(err);
+  }
+};
+
+/**
+ * POST /api/auth/logout
+ * Clears authentication (client-side only, JWT is stateless).
+ */
+export const logout = async (req, res, next) => {
+  try {
+    // JWT is stateless, so logout is handled client-side by removing the token
+    // This endpoint exists for API completeness
+    res.json({ success: true, message: 'Logged out successfully.' });
   } catch (err) {
     next(err);
   }

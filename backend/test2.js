@@ -1,0 +1,22 @@
+﻿import { MongoClient } from 'mongodb';
+const client = await MongoClient.connect('mongodb://localhost:27017/rozgar-sathi');
+const db = client.db();
+console.log('TEST 2: Multi-Context Guest Session Merging');
+console.log('='.repeat(50));
+const guestA = 'guest_a_' + Date.now();
+const guestB = 'guest_b_' + Date.now();
+await db.collection('sessions').insertOne({ userId: guestA, mode: 'behavioral', status: 'completed', authenticated: false, questions: [{ transcript: 'A' }], createdAt: new Date() });
+await db.collection('sessions').insertOne({ userId: guestB, mode: 'technical', status: 'completed', authenticated: false, questions: [{ transcript: 'B' }], createdAt: new Date() });
+const before = await db.collection('sessions').find({ userId: { $in: [guestA, guestB] } }).toArray();
+console.log('Guest sessions before merge:', before.length);
+const user = await db.collection('users').insertOne({ googleId: 'test_merge', email: 'merge@test.com', username: 'merge', createdAt: new Date() });
+const userId = String(user.insertedId);
+await db.collection('sessions').updateMany({ userId: { $in: [guestA, guestB] } }, { $set: { userId: userId, authenticated: true } });
+const orphaned = await db.collection('sessions').find({ userId: { $in: [guestA, guestB] } }).toArray();
+const merged = await db.collection('sessions').find({ userId: userId }).toArray();
+console.log('Orphaned sessions:', orphaned.length);
+console.log('Merged sessions:', merged.length);
+if (orphaned.length === 0 && merged.length === 2) { console.log('✅ PASS: Sessions merged correctly'); } else { console.log('❌ FAIL: Merge issue'); }
+await db.collection('sessions').deleteMany({ userId: userId });
+await db.collection('users').deleteOne({ _id: user.insertedId });
+await client.close();

@@ -92,6 +92,40 @@ export const apiClient = {
     return res.json();
   },
 
+  async googleVerify(idToken, guestId) {
+    const res = await fetch(`${API_BASE_URL}/auth/google/verify`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ idToken, guestId: guestId || null }),
+    });
+    if (!res.ok) {
+      const errorData = await res.json().catch(() => ({ error: 'Google sign-in failed' }));
+      throw new Error(errorData.error || `Google sign-in failed: ${res.status}`);
+    }
+    const data = await res.json();
+    // Store token immediately so subsequent requests are authenticated
+    localStorage.setItem(TOKEN_KEY, data.token);
+    return data;
+  },
+
+  async setPassword(password) {
+    const res = await fetch(`${API_BASE_URL}/auth/set-password`, {
+      method: 'POST',
+      headers: authHeaders(),
+      body: JSON.stringify({ password }),
+    });
+    if (!res.ok) {
+      const errorData = await res.json().catch(() => ({ error: 'Failed to set password' }));
+      throw new Error(errorData.error || `Failed to set password: ${res.status}`);
+    }
+    const data = await res.json();
+    // Update token in case it was refreshed
+    if (data.token) {
+      localStorage.setItem(TOKEN_KEY, data.token);
+    }
+    return data;
+  },
+
   async analyzeJD(text, sampleId) {
     const res = await fetch(`${API_BASE_URL}/jd/analyze`, {
       method: 'POST',

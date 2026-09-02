@@ -3,6 +3,7 @@ import { Button } from '../design-system/Button';
 import { Card, CardTitle, CardContent } from '../design-system/Card';
 import { Badge } from '../design-system/Badge';
 import { useAuth } from '../context/AuthContext';
+import { GoogleSignInButton } from '../components/auth/GoogleSignInButton';
 import { ArrowLeft, Mail, Lock, User, Eye, EyeOff, Loader2 } from 'lucide-react';
 
 export const SignupSignin = ({ onNavigate, onAuthComplete, guestId }) => {
@@ -15,7 +16,7 @@ export const SignupSignin = ({ onNavigate, onAuthComplete, guestId }) => {
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
 
-  const { signin, signup } = useAuth();
+  const { signin, signup, googleSignIn, completeAuth } = useAuth();
 
   const resetForm = () => {
     setUsername('');
@@ -80,6 +81,36 @@ export const SignupSignin = ({ onNavigate, onAuthComplete, guestId }) => {
     }
   };
 
+  const handleGoogleSuccess = async (result) => {
+    try {
+      setError('');
+      // googleSignIn is already called inside GoogleSignInButton via apiClient
+      // The result contains { token, user, mergedSessions, needsPassword }
+      // Note: AuthContext is NOT yet updated — we decide based on needsPassword
+      
+      // Check if user needs to set a password (new Google OAuth users)
+      if (result.needsPassword) {
+        // Redirect to Set Password page WITHOUT completing auth yet
+        onNavigate?.('set-password');
+        return;
+      }
+      
+      // User already has a password — complete authentication
+      completeAuth(result.token, result.user);
+      
+      if (result.mergedSessions > 0) {
+        // Sessions were merged — could show a toast here
+      }
+      onAuthComplete?.();
+    } catch (err) {
+      setError(err.message || 'Google sign-in failed. Please try again.');
+    }
+  };
+
+  const handleGoogleError = (err) => {
+    setError(err.message || 'Google sign-in failed. Please try again.');
+  };
+
   return (
     <div className="min-h-screen bg-bg-primary text-text-primary flex flex-col pt-8">
       {/* Back button */}
@@ -129,6 +160,27 @@ export const SignupSignin = ({ onNavigate, onAuthComplete, guestId }) => {
             ? 'Sign in to access your dashboard and track your progress.'
             : 'Sign up to save your progress and unlock personalized insights.'}
         </p>
+
+        {/* Google Sign-In Button — prominently displayed at the top */}
+        <div className="mb-4">
+          <GoogleSignInButton
+            onSuccess={handleGoogleSuccess}
+            onError={handleGoogleError}
+            guestId={guestId}
+            variant="primary"
+            size="lg"
+          />
+        </div>
+
+        {/* Divider */}
+        <div className="relative my-6">
+          <div className="absolute inset-0 flex items-center">
+            <div className="w-full border-t border-border"></div>
+          </div>
+          <div className="relative flex justify-center text-xs uppercase">
+            <span className="surface-text bg-surface-hover px-2 text-text-muted">Or continue with</span>
+          </div>
+        </div>
 
         <form onSubmit={handleSubmit} className="space-y-4">
           {/* Username */}

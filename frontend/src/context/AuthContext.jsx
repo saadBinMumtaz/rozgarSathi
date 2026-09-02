@@ -80,6 +80,25 @@ export const AuthProvider = ({ children }) => {
     return result;
   }, []);
 
+  const googleSignIn = useCallback(async (idToken, guestId) => {
+    const result = await apiClient.googleVerify(idToken, guestId);
+    // Don't set token/user yet — let the caller decide based on needsPassword
+    // The token is already stored in localStorage by apiClient.googleVerify
+    return result;
+  }, []);
+
+  const completeAuth = useCallback((token, user) => {
+    setToken(token);
+    setUser(user);
+  }, []);
+
+  const setPassword = useCallback(async (password) => {
+    const result = await apiClient.setPassword(password);
+    setToken(result.token);
+    setUser(result.user);
+    return result;
+  }, []);
+
   const logout = useCallback(() => {
     setToken(null);
     setUser(null);
@@ -90,7 +109,7 @@ export const AuthProvider = ({ children }) => {
   const isAuthenticated = !!user && !!token;
 
   return (
-    <AuthContext.Provider value={{ user, token, isAuthenticated, loading, signup, signin, logout }}>
+    <AuthContext.Provider value={{ user, token, isAuthenticated, loading, signup, signin, googleSignIn, completeAuth, setPassword, logout }}>
       {children}
     </AuthContext.Provider>
   );

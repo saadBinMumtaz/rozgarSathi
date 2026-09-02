@@ -34,6 +34,11 @@ export const env = Object.freeze({
   AZURE_TTS_REGION: process.env.AZURE_TTS_REGION || '',
   AZURE_TTS_VOICE: process.env.AZURE_TTS_VOICE || 'ur-PK-UzmaNeural',
   JWT_SECRET: process.env.JWT_SECRET || 'rozgar-sathi-jwt-secret',
+  // Google OAuth (Phase 2 — Day 8). Optional — when unset, Google sign-in is disabled.
+  GOOGLE_CLIENT_ID: process.env.GOOGLE_CLIENT_ID || '',
+  GOOGLE_CLIENT_SECRET: process.env.GOOGLE_CLIENT_SECRET || '',
+  GOOGLE_REDIRECT_URI: process.env.GOOGLE_REDIRECT_URI || '',
+  FRONTEND_URL: process.env.FRONTEND_URL || 'http://localhost:5173',
   NODE_ENV: process.env.NODE_ENV || 'development',
   VITE_API_BASE_URL: process.env.VITE_API_BASE_URL || 'http://localhost:5000/api',
 });

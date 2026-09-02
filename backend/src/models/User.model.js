@@ -23,7 +23,8 @@ const UserSchema = new mongoose.Schema(
     },
     password: {
       type: String,
-      required: true,
+      // Optional — Google OAuth users don't have a password initially.
+      // They set one later via the /api/auth/set-password endpoint.
       minlength: 6,
     },
     // Google OAuth fields (reserved for Phase 2)

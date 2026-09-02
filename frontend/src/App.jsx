@@ -9,6 +9,7 @@ import Results from './pages/Results';
 import Dashboard from './pages/Dashboard';
 import SessionHistory from './pages/SessionHistory';
 import SignupSignin from './pages/SignupSignin';
+import SetPassword from './pages/SetPassword';
 import SharedReport from './pages/SharedReport';
 import { ErrorBoundary } from './components/shared/ErrorBoundary';
 import Toast from './design-system/Toast';
@@ -237,6 +238,11 @@ const AppContent = () => {
     navigateTo('landing');
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
+  const handlePasswordSet = useCallback(() => {
+    setToastMessage({ type: 'success', message: 'Password set successfully! Your account is now fully secured.' });
+    navigateTo('landing');
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
   // Show loading while auth is being restored
   if (authLoading) {
     return (
@@ -265,6 +271,16 @@ const AppContent = () => {
             onNavigate={navigateTo}
             onAuthComplete={handleAuthComplete}
             guestId={userId}
+          />
+        )}
+      </div>
+
+      {/* Set Password page (after Google OAuth sign-in) */}
+      <div className={currentPage === 'set-password' ? '' : 'hidden'}>
+        {shouldRender('set-password') && (
+          <SetPassword
+            onNavigate={navigateTo}
+            onPasswordSet={handlePasswordSet}
           />
         )}
       </div>
