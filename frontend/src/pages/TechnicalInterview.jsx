@@ -14,11 +14,15 @@ import { TypedFallback } from '../components/behavioral/TypedFallback';
 import { EvidenceCard } from '../components/shared/EvidenceCard';
 import { DifficultyIndicator } from '../components/technical/DifficultyIndicator';
 import { QuestionTraceBadge } from '../components/shared/QuestionTraceBadge';
+import { RobotAvatar } from '../components/shared/RobotAvatar';
+import { WaveformAnimation } from '../components/shared/WaveformAnimation';
+import { TypewriterText } from '../components/shared/TypewriterText';
 import { apiClient } from '../api/client';
 import { useTabLock } from '../hooks/useTabLock';
 import { useSession } from '../hooks/useSession';
+import { useTextToSpeech } from '../hooks/useTextToSpeech';
 
-export const TechnicalInterview = ({ jdAnalysisId, onNavigate, language = 'english', isUrdu = false, userId }) => {
+export const TechnicalInterview = ({ jdAnalysisId, onNavigate, language = 'english', isUrdu = false, userId, isDark = false }) => {
   const {
     sessionId,
     currentQuestion,
@@ -35,7 +39,6 @@ export const TechnicalInterview = ({ jdAnalysisId, onNavigate, language = 'engli
     resume,
   } = useSession({ mode: 'technical', userId });
 
-  const [isSpeaking, setIsSpeaking] = useState(false);
   const [useTypedFallback, setUseTypedFallback] = useState(false);
   const [micTranscript, setMicTranscript] = useState('');
   const [typedTranscript, setTypedTranscript] = useState('');
@@ -48,6 +51,7 @@ export const TechnicalInterview = ({ jdAnalysisId, onNavigate, language = 'engli
   const [urduEvaluations, setUrduEvaluations] = useState([]);
   const [terminationMessage, setTerminationMessage] = useState(null);
   const { isLocked: tabConflict, dismissWarning: dismissTabWarning } = useTabLock(sessionId, 'technical');
+  const { speak, cancel, isSpeaking, isSupported: ttsSupported } = useTextToSpeech();
 
   const MAX_QUESTIONS = 5;
   const initRef = useRef(false); // Prevent duplicate initialization
@@ -179,6 +183,18 @@ export const TechnicalInterview = ({ jdAnalysisId, onNavigate, language = 'engli
     });
   }, [currentQuestion, evaluations.length]);
 
+  // Speak the current question/follow-up aloud when it changes
+  useEffect(() => {
+    if (!currentQuestion) return;
+    const speakText = followUp
+      ? (isUrdu ? urduFollowUp : followUp)
+      : (isUrdu && urduQuestionText ? urduQuestionText : currentQuestion.questionText);
+    if (speakText) {
+      speak(speakText, language, followUp || currentQuestion.questionText);
+    }
+    return () => { cancel(); };
+  }, [currentQuestion?.questionId, followUp, urduQuestionText, urduFollowUp, isUrdu, language, speak, cancel]);
+
   // Session initialization and resume logic
   useEffect(() => {
     // Prevent duplicate initialization
@@ -269,189 +285,182 @@ export const TechnicalInterview = ({ jdAnalysisId, onNavigate, language = 'engli
   const progress = (questionCount / MAX_QUESTIONS) * 100;
 
   return (
-    <div className="min-h-screen bg-bg-primary text-text-primary flex flex-col">
-      {/* Interview Content */}
-      <div className="flex-1 p-4 md:p-8">
-        <div className="max-w-4xl mx-auto space-y-6">
-          {/* Interview Header */}
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <Button variant="ghost" size="sm" onClick={() => onNavigate('mode-selection')}>
-                ← Back
-              </Button>
-              <Badge variant="primary">💻 Technical Q&A</Badge>
-              <Badge variant="success">Question {Math.min(questionCount, MAX_QUESTIONS)} of {MAX_QUESTIONS}</Badge>
-            </div>
-            <DifficultyIndicator
-              current={difficultyInfo.current}
-              previous={difficultyInfo.previous}
-              ratingDelta={difficultyInfo.ratingDelta}
+    <div className="min-h-screen flex flex-col" style={{ backgroundColor: isDark ? '#0a0a0a' : '#fafafa', color: isDark ? '#ffffff' : '#111111' }}>
+      {/* Top bar: Back + En/UR */}
+      <div className="flex items-center justify-between px-6 py-4">
+        <button
+          onClick={() => onNavigate('mode-selection')}
+          className="text-sm font-medium hover:opacity-70 transition-opacity"
+          style={{ color: isDark ? '#ffffff' : '#111111' }}
+        >
+          Back
+        </button>
+        <div className="flex items-center gap-3">
+          <Badge variant="success">Q{Math.min(questionCount, MAX_QUESTIONS)}/{MAX_QUESTIONS}</Badge>
+          <DifficultyIndicator
+            current={difficultyInfo.current}
+            previous={difficultyInfo.previous}
+            ratingDelta={difficultyInfo.ratingDelta}
+          />
+        </div>
+      </div>
+  
+      {/* Progress bar (subtle) */}
+      <div className="px-6">
+        <ProgressBar value={progress} label={`Progress: ${questionCount}/${MAX_QUESTIONS} questions`} />
+      </div>
+  
+      {/* Error banner */}
+      {error && (
+        <div className="mx-6 mt-4 p-3 bg-danger/10 rounded-md text-danger text-sm flex items-center justify-between gap-3" role="alert">
+          <span>{error.includes('Failed to fetch') || error.includes('network')
+            ? 'Server is unreachable. Check your connection and retry.'
+            : error}</span>
+          <Button
+            variant="link"
+            className="shrink-0 underline text-danger hover:text-danger"
+            onClick={() => {
+              initRef.current = false;
+              handleResetSession();
+            }}
+          >
+            {sessionId ? 'Restart interview' : 'Retry'}
+          </Button>
+        </div>
+      )}
+  
+      {/* Tab conflict warning */}
+      {tabConflict && (
+        <div className="mx-6 mt-4 p-3 bg-warning/10 rounded-md text-warning text-sm flex items-center justify-between gap-3" role="alert">
+          <span>Another tab is running this same interview. Answers may conflict — close the other tab or <button onClick={dismissTabWarning} className="underline font-medium">continue here anyway</button>.</span>
+        </div>
+      )}
+  
+      {/* Main immersive stage */}
+      {currentQuestion && !isComplete && (
+        <div className="flex-1 flex flex-col items-center justify-center px-6 py-8">
+          {/* Robot avatar with themed circle */}
+          <div
+            className="rounded-full flex items-center justify-center relative z-10"
+            style={{
+              width: 220,
+              height: 220,
+              backgroundColor: '#ffffff',
+              border: `3px solid ${isDark ? '#ffffff' : '#333333'}`,
+            }}
+          >
+            <RobotAvatar
+              size={180}
+              style={{ color: '#000000' }}
             />
           </div>
-
-        {/* Progress bar */}
-        <ProgressBar value={progress} label={`Progress: ${questionCount}/${MAX_QUESTIONS} questions`} />
-
-        {/* Error banner */}
-        {error && (
-          <div className="p-3 bg-danger/10  rounded-md text-danger text-sm flex items-center justify-between gap-3" role="alert">
-            <span>{error.includes('Failed to fetch') || error.includes('network')
-              ? 'Server is unreachable. Check your connection and retry.'
-              : error}</span>
+  
+          {/* Question text with typewriter effect */}
+          <div className="mt-8 text-center max-w-2xl min-h-[3.5rem]">
+            <p className="text-xl md:text-2xl font-semibold leading-relaxed" style={{ color: isDark ? '#ffffff' : '#111111' }}>
+              <TypewriterText
+                text={followUp
+                  ? ((isUrdu && urduFollowUp) || followUp)
+                  : ((isUrdu && urduQuestionText) || currentQuestion.questionText)}
+                speed={15}
+              />
+            </p>
+          </div>
+  
+          {/* Urdu translation indicator */}
+          {isUrdu && isTranslatingUrdu && (
+            <div className="mt-4 text-xs animate-pulse" style={{ color: isDark ? '#9ca3af' : '#6b7280' }}>Translating to Urdu...</div>
+          )}
+  
+          {/* Listening state with waveform */}
+          {!useTypedFallback && (
+            <div className="mt-8 flex items-center gap-3">
+              <span className="text-2xl font-bold" style={{ color: isDark ? '#ffffff' : '#111111' }}>Listening</span>
+              <WaveformAnimation className={isDark ? 'text-white' : 'text-gray-900'} />
+            </div>
+          )}
+  
+          {/* Follow-up indicator */}
+          {followUp && !currentQuestion?.evaluation && (
+            <div className="mt-6 px-4 py-2 rounded-lg text-sm" style={{ backgroundColor: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.05)', color: isDark ? '#e5e7eb' : '#374151' }}>
+              <div className="text-xs font-medium mb-1" style={{ color: isDark ? '#9ca3af' : '#6b7280' }}>Follow-up question</div>
+              <div className={isUrdu ? 'urdu-text' : ''}>{(isUrdu && urduFollowUp) || followUp}</div>
+            </div>
+          )}
+  
+          {/* Nudge feedback */}
+          {nudge && (
+            <div className={`mt-6 px-4 py-3 rounded-lg text-sm ${isUrdu ? 'urdu-text' : ''}`} style={{ backgroundColor: 'rgba(245, 158, 11, 0.1)', color: '#f59e0b' }}>
+              {!isUrdu && <strong>️ Answer needed:</strong>} {(isUrdu && urduNudge) || nudge}
+            </div>
+          )}
+  
+          {/* JD traceability badge */}
+          {currentQuestion?.matchedTerms && (
+            <div className="mt-6">
+              <QuestionTraceBadge matchedTerms={currentQuestion.matchedTerms} />
+            </div>
+          )}
+        </div>
+      )}
+  
+      {/* Answer input area */}
+      {currentQuestion && !isComplete && (
+        <div className="px-6 pb-8 max-w-2xl mx-auto w-full">
+          {/* Voice / Text toggle */}
+          <div className="flex items-center justify-center gap-3 mb-4">
             <Button
-              variant="link"
-              className="shrink-0 underline text-danger hover:text-danger"
-              onClick={() => {
-                // Reset init flag to allow re-initialization
-                initRef.current = false;
-                if (!sessionId) {
-                  // Clear error and trigger re-initialization via useEffect
-                  handleResetSession();
-                } else {
-                  handleResetSession();
-                }
-              }}
+              variant={useTypedFallback ? 'ghost' : 'secondary'}
+              size="sm"
+              onClick={() => setUseTypedFallback(false)}
             >
-              {sessionId ? 'Restart interview' : 'Retry'}
+              🎤 Voice
+            </Button>
+            <Button
+              variant={useTypedFallback ? 'secondary' : 'ghost'}
+              size="sm"
+              onClick={() => setUseTypedFallback(true)}
+            >
+              ⌨️ Type
             </Button>
           </div>
-        )}
-
-        {/* Tab conflict warning */}
-        {tabConflict && (
-          <div className="p-3 bg-warning/10  rounded-md text-warning text-sm flex items-center justify-between gap-3" role="alert">
-            <span>Another tab is running this same interview. Answers may conflict — close the other tab or <button onClick={dismissTabWarning} className="underline font-medium">continue here anyway</button>.</span>
-          </div>
-        )}
-
-        {/* Voice question player — shows the current question (or follow-up if active).
-            The nudge feedback is shown separately in the amber box below. */}
-        {currentQuestion && (
-          <VoiceQuestionPlayer
-            text={followUp
-              ? (isUrdu ? urduFollowUp : followUp)
-              : (isUrdu && urduQuestionText ? urduQuestionText : currentQuestion.questionText)}
-            fallbackText={followUp || currentQuestion.questionText}
-            onSpeakingChange={setIsSpeaking}
-            language={language}
-          />
-        )}
-
-        {/* Urdu translation indicator */}
-        {isUrdu && isTranslatingUrdu && (
-          <div className="text-xs text-text-muted animate-pulse">Translating to Urdu...</div>
-        )}
-        {isUrdu && urduQuestionText && (
-          <div className="text-xs text-text-muted">Showing question in Urdu</div>
-        )}
-
-        {/* Follow-up display */}
-
-        {/* JD traceability badge */}
-        {currentQuestion?.matchedTerms && (
-          <div className="mb-4 p-3 surface-text bg-surface-hover  rounded-lg">
-            <QuestionTraceBadge matchedTerms={currentQuestion.matchedTerms} />
-          </div>
-        )}
-        {followUp && !currentQuestion?.evaluation && (
-          <div className="surface-text bg-surface-hover  rounded-lg p-4">
-            <div className="text-xs text-icon-active font-medium mb-1">Follow-up question</div>
-            <div className={`text-text-primary ${isUrdu ? 'urdu-text text-right' : ''}`}>{(isUrdu && urduFollowUp) || followUp}</div>
-          </div>
-        )}
-
-        {/* Invalid-answer / nudge feedback — shown + spoken in the active language */}
-        {nudge && (
-          <div className={`mb-4 p-3 bg-warning/10  rounded-md text-warning text-sm ${isUrdu ? 'urdu-text text-right' : ''}`}>
-            {!isUrdu && <strong>⚠️ Answer needed:</strong>} {(isUrdu && urduNudge) || nudge}
-          </div>
-        )}
-
-        {/* Latest evaluation — REMOVED from live view, shown only on completion */}
-
-        {/* Answer input area */}
-        {currentQuestion && !isComplete && (
-          <Card>
-            <CardHeader>
-              <CardTitle>Your Answer</CardTitle>
-              <CardDescription>
-                {followUp
-                  ? 'Answer the follow-up question above.'
-                  : 'Answer the technical question spoken/read above.'}
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              {/* Voice / Text toggle */}
-              <div className="flex items-center gap-3 mb-4">
+  
+          {/* Mic recorder */}
+          {!useTypedFallback && (
+            <div className="space-y-4">
+              <MicRecorder
+                isSpeaking={isSpeaking}
+                onTranscriptChange={setMicTranscript}
+                resetKey={`${currentQuestion?.questionId || ''}|${followUp || ''}`}
+                onUnsupported={() => setUseTypedFallback(true)}
+                autoStart={!isSpeaking}
+                language={language}
+              />
+              <div className="flex gap-2">
                 <Button
-                  variant={useTypedFallback ? 'ghost' : 'secondary'}
-                  size="sm"
-                  onClick={() => setUseTypedFallback(false)}
+                  variant="primary"
+                  onClick={submitAnswer}
+                  disabled={isLoading || isSpeaking || !micTranscript?.trim()}
+                  className="flex-1"
                 >
-                  🎤 Use Voice
-                </Button>
-                <Button
-                  variant={useTypedFallback ? 'secondary' : 'ghost'}
-                  size="sm"
-                  onClick={() => setUseTypedFallback(true)}
-                >
-                  ⌨️ Type Answer
+                  {isLoading ? 'Processing...' : 'Submit Answer'}
                 </Button>
               </div>
-
-              {/* Mic recorder */}
-              {!useTypedFallback && (
-                <div className="space-y-4">
-                  <MicRecorder
-                    isSpeaking={isSpeaking}
-                    onTranscriptChange={setMicTranscript}
-                    resetKey={`${currentQuestion?.questionId || ''}|${followUp || ''}`}
-                    onUnsupported={() => setUseTypedFallback(true)}
-                    autoStart={!isSpeaking}
-                    language={language}
-                  />
-                  <div className="flex gap-2">
-                    <Button
-                      variant="primary"
-                      onClick={submitAnswer}
-                      disabled={isLoading || isSpeaking || !micTranscript?.trim()}
-                      className="flex-1"
-                    >
-                      {isLoading ? 'Processing...' : 'Submit Answer'}
-                    </Button>
-                    <Button
-                      variant="ghost"
-                      onClick={() => setUseTypedFallback(true)}
-                      disabled={isLoading || isSpeaking}
-                    >
-                      Switch to typing
-                    </Button>
-                  </div>
-                </div>
-              )}
-
-              {/* Typed fallback */}
-              {useTypedFallback && (
-                <TypedFallback
-                  value={typedTranscript}
-                  onChange={setTypedTranscript}
-                  onSubmit={submitAnswer}
-                  isSpeaking={isSpeaking}
-                  disabled={isLoading}
-                />
-              )}
-
-              {/* Switch back to voice */}
-              {useTypedFallback && (
-                <div className="mt-3 text-center">
-                  <Button variant="link" onClick={() => setUseTypedFallback(false)}>
-                    Switch back to voice input
-                  </Button>
-                </div>
-              )}
-            </CardContent>
-          </Card>
-        )}
+            </div>
+          )}
+  
+          {/* Typed fallback */}
+          {useTypedFallback && (
+            <TypedFallback
+              value={typedTranscript}
+              onChange={setTypedTranscript}
+              onSubmit={submitAnswer}
+              isSpeaking={isSpeaking}
+              disabled={isLoading}
+            />
+          )}
+        </div>
+      )}
 
         {/* Completion screen */}
         {isComplete && (() => {
@@ -464,96 +473,98 @@ export const TechnicalInterview = ({ jdAnalysisId, onNavigate, language = 'engli
           const lowScores = evaluations.filter(e => e?.score < 40).length;
 
           return (
-            <div className="space-y-6">
-              <Card className={terminationMessage ? 'border-danger/30/50' : 'border-success/30'}>
-                <CardContent className="text-center py-8 space-y-4">
-                  {terminationMessage ? (
-                    <>
-                      <div className="text-2xl font-bold text-danger">Interview Terminated</div>
-                      <div className="text-danger text-sm max-w-md mx-auto">{terminationMessage}</div>
-                    </>
-                  ) : (
-                    <>
-                      <div className="text-2xl font-bold text-success">Technical Interview Complete!</div>
-                      
-                      {/* Overall Score Display */}
-                      <div className="inline-flex items-center gap-4 surface-text bg-surface-hover rounded-xl px-6 py-4 ">
-                        <div className="text-center">
-                          <div className={`text-4xl font-bold ${avgScore >= 70 ? 'text-success' : avgScore >= 40 ? 'text-warning' : 'text-danger'}`}>
-                            {avgScore}
-                          </div>
-                          <div className="text-xs text-text-muted uppercase tracking-wide">Overall Score</div>
-                        </div>
-                        <div className="h-12 w-px bg-bg-hover"></div>
-                        <div className="text-left space-y-1">
-                          <div className="text-sm text-text-muted">
-                            <span className="text-text-muted">Questions:</span> {evaluations.length}
-                          </div>
-                          <div className="text-sm text-text-muted">
-                            <span className="text-success">✓ {highScores}</span> strong answers
-                          </div>
-                          {lowScores > 0 && (
-                            <div className="text-sm text-text-muted">
-                              <span className="text-danger">⚠ {lowScores}</span> need improvement
+            <div className="flex-1 flex items-center justify-center px-6 py-8">
+              <div className="max-w-2xl w-full space-y-6">
+                <Card className={terminationMessage ? 'border-danger/30/50' : 'border-success/30'}>
+                  <CardContent className="text-center py-8 space-y-4">
+                    {terminationMessage ? (
+                      <>
+                        <div className="text-2xl font-bold text-danger">Interview Terminated</div>
+                        <div className="text-danger text-sm max-w-md mx-auto">{terminationMessage}</div>
+                      </>
+                    ) : (
+                      <>
+                        <div className="text-2xl font-bold text-success">Technical Interview Complete!</div>
+                        
+                        {/* Overall Score Display */}
+                        <div className="inline-flex items-center gap-4 surface-text bg-surface-hover rounded-xl px-6 py-4 ">
+                          <div className="text-center">
+                            <div className={`text-4xl font-bold ${avgScore >= 70 ? 'text-success' : avgScore >= 40 ? 'text-warning' : 'text-danger'}`}>
+                              {avgScore}
                             </div>
-                          )}
+                            <div className="text-xs text-text-muted uppercase tracking-wide">Overall Score</div>
+                          </div>
+                          <div className="h-12 w-px bg-bg-hover"></div>
+                          <div className="text-left space-y-1">
+                            <div className="text-sm text-text-muted">
+                              <span className="text-text-muted">Questions:</span> {evaluations.length}
+                            </div>
+                            <div className="text-sm text-text-muted">
+                              <span className="text-success">✓ {highScores}</span> strong answers
+                            </div>
+                            {lowScores > 0 && (
+                              <div className="text-sm text-text-muted">
+                                <span className="text-danger">⚠ {lowScores}</span> need improvement
+                              </div>
+                            )}
+                          </div>
                         </div>
-                      </div>
 
-                      {/* Performance Summary */}
-                      <div className="text-sm text-text-muted max-w-md mx-auto">
-                        {avgScore >= 70 
-                          ? 'Great performance! Your technical knowledge and explanations were solid.'
-                          : avgScore >= 40
-                          ? 'Good effort! Review the feedback below to deepen your technical understanding.'
-                          : 'Review the detailed feedback below to strengthen your technical answers.'}
-                      </div>
-                    </>
-                  )}
-                  <div className="flex justify-center gap-3 mt-4">
-                    <Button variant="secondary" onClick={() => onNavigate('results')}>
-                      View Results
-                    </Button>
-                    <Button variant="primary" onClick={() => onNavigate('mode-selection')}>
-                      Try Another Mode
-                    </Button>
-                    <Button variant="secondary" onClick={handleResetSession}>
-                      Restart Technical
-                    </Button>
+                        {/* Performance Summary */}
+                        <div className="text-sm text-text-muted max-w-md mx-auto">
+                          {avgScore >= 70 
+                            ? 'Great performance! Your technical knowledge and explanations were solid.'
+                            : avgScore >= 40
+                            ? 'Good effort! Review the feedback below to deepen your technical understanding.'
+                            : 'Review the detailed feedback below to strengthen your technical answers.'}
+                        </div>
+                      </>
+                    )}
+                    <div className="flex justify-center gap-3 mt-4">
+                      <Button variant="secondary" onClick={() => onNavigate('results')}>
+                        View Results
+                      </Button>
+                      <Button variant="primary" onClick={() => onNavigate('mode-selection')}>
+                        Try Another Mode
+                      </Button>
+                      <Button variant="secondary" onClick={handleResetSession}>
+                        Restart Technical
+                      </Button>
+                    </div>
+                  </CardContent>
+                </Card>
+
+                {/* Summary of all evaluations */}
+                {evaluations.length > 0 && (
+                  <div className="space-y-6">
+                    <h3 className="text-lg font-semibold text-text-primary flex items-center gap-2">
+                      <span>Detailed Feedback</span>
+                      <span className="text-sm font-normal text-text-muted">({evaluations.length} questions)</span>
+                    </h3>
+                    {evaluations.map((evaluation, idx) => (
+                      <EvidenceCard
+                        key={idx}
+                        evaluation={urduEvaluations[idx] || evaluation}
+                        language={language}
+                      />
+                    ))}
                   </div>
-                </CardContent>
-              </Card>
-
-              {/* Summary of all evaluations */}
-              {evaluations.length > 0 && (
-                <div className="space-y-6">
-                  <h3 className="text-lg font-semibold text-text-primary flex items-center gap-2">
-                    <span>Detailed Feedback</span>
-                    <span className="text-sm font-normal text-text-muted">({evaluations.length} questions)</span>
-                  </h3>
-                  {evaluations.map((evaluation, idx) => (
-                    <EvidenceCard
-                      key={idx}
-                      evaluation={urduEvaluations[idx] || evaluation}
-                      language={language}
-                    />
-                  ))}
-                </div>
-              )}
+                )}
+              </div>
             </div>
           );
         })()}
 
         {/* Loading state */}
         {isLoading && !currentQuestion && !isComplete && (
-          <Card>
-            <CardContent className="text-center py-8">
-              <div className="text-text-muted">Setting up your technical interview...</div>
-            </CardContent>
-          </Card>
+          <div className="flex-1 flex items-center justify-center">
+            <Card>
+              <CardContent className="text-center py-8">
+                <div className="text-text-muted">Setting up your technical interview...</div>
+              </CardContent>
+            </Card>
+          </div>
         )}
-        </div>
-      </div>
     </div>
   );
 };

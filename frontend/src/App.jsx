@@ -375,6 +375,7 @@ const AppContent = () => {
               language={language}
               isUrdu={isUrdu}
               userId={isAuthenticated && user ? String(user._id) : userId}
+              isDark={isDark}
             />
           </ErrorBoundary>
         )}
@@ -389,6 +390,7 @@ const AppContent = () => {
               language={language}
               isUrdu={isUrdu}
               userId={isAuthenticated && user ? String(user._id) : userId}
+              isDark={isDark}
             />
           </ErrorBoundary>
         )}
