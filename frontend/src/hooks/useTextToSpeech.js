@@ -99,7 +99,7 @@ export const useTextToSpeech = () => {
   }, [stopCloudAudio]);
 
   // Local SpeechSynthesis utterance (English, or Urdu when a local Urdu voice exists).
-  const speakWithUtterance = useCallback((text, { lang, voice, rate = 0.9 }, requestId) => {
+  const speakWithUtterance = useCallback((text, { lang, voice, rate = 1.23 }, requestId) => {
     const utterance = new SpeechSynthesisUtterance(text);
     if (voice) utterance.voice = voice;
     utterance.lang = lang;
@@ -143,7 +143,7 @@ export const useTextToSpeech = () => {
           // Fallback to English
           const utterance = new SpeechSynthesisUtterance(fallbackText || text);
           utterance.lang = 'en-US';
-          utterance.rate = 0.9;
+          utterance.rate = 1.23;
           utterance.onend = () => { if (requestId === speakIdRef.current) setIsSpeaking(false); };
           utterance.onerror = () => { if (requestId === speakIdRef.current) setIsSpeaking(false); };
           window.speechSynthesis.speak(utterance);
@@ -154,7 +154,7 @@ export const useTextToSpeech = () => {
           setUrduVoiceUnavailable(true);
           const utterance = new SpeechSynthesisUtterance(fallbackText || text);
           utterance.lang = 'en-US';
-          utterance.rate = 0.9;
+          utterance.rate = 1.23;
           utterance.onend = () => { if (requestId === speakIdRef.current) setIsSpeaking(false); };
           utterance.onerror = () => { if (requestId === speakIdRef.current) setIsSpeaking(false); };
           window.speechSynthesis.speak(utterance);
@@ -167,7 +167,7 @@ export const useTextToSpeech = () => {
         // Fallback to English
         const utterance = new SpeechSynthesisUtterance(fallbackText || text);
         utterance.lang = 'en-US';
-        utterance.rate = 0.9;
+        utterance.rate = 1.23;
         utterance.onend = () => { if (requestId === speakIdRef.current) setIsSpeaking(false); };
         utterance.onerror = () => { if (requestId === speakIdRef.current) setIsSpeaking(false); };
         window.speechSynthesis.speak(utterance);
@@ -196,7 +196,7 @@ export const useTextToSpeech = () => {
         // English: use local SpeechSynthesis
         const utterance = new SpeechSynthesisUtterance(text);
         utterance.lang = 'en-US';
-        utterance.rate = 0.9;
+        utterance.rate = 1.23;
         utterance.onend = () => { if (requestId === speakIdRef.current) setIsSpeaking(false); };
         utterance.onerror = () => { if (requestId === speakIdRef.current) setIsSpeaking(false); };
         window.speechSynthesis.speak(utterance);

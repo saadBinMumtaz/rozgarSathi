@@ -352,6 +352,28 @@ export const apiClient = {
     return res.json();
   },
 
+  async tailorResume(file, jobDescription) {
+    const formData = new FormData();
+    if (file) {
+      formData.append('resume', file);
+    }
+    if (jobDescription) {
+      formData.append('jobDescription', jobDescription);
+    }
+
+    const res = await fetch(`${API_BASE_URL}/resume/tailor`, {
+      method: 'POST',
+      body: formData,
+    });
+
+    if (!res.ok) {
+      const errorData = await res.json().catch(() => ({ error: 'Failed to tailor resume' }));
+      throw new Error(errorData.message || errorData.error || `Server error: ${res.status}`);
+    }
+
+    return res.json();
+  },
+
   // --- Dashboard (Day 5) -------------------------------------------------
 
   async getDashboardData(userId) {

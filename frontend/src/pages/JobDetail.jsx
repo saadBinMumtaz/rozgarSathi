@@ -9,8 +9,9 @@ import PageHeader from '../components/shared/PageHeader';
 import { useAuth } from '../context/AuthContext';
 import {
   ArrowLeft, MapPin, Building2, Briefcase, Clock,
-  ExternalLink, Target, Globe,
+  ExternalLink, Target, Globe, FileText,
 } from 'lucide-react';
+import { t } from '../i18n/translations';
 
 const formatDate = (dateStr) => {
   if (!dateStr) return null;
@@ -27,8 +28,9 @@ const sourceLabels = {
   adzuna: 'Adzuna',
 };
 
-export const JobDetail = ({ job, onNavigate, onStartPracticing, isDark, isAuthenticated }) => {
+export const JobDetail = ({ job, onNavigate, onStartPracticing, onTailorResume, isDark, isAuthenticated, language = 'english', setLanguage }) => {
   const { logout } = useAuth();
+  const L = (key) => t(key, language);
 
   if (!job) {
     return (
@@ -39,12 +41,14 @@ export const JobDetail = ({ job, onNavigate, onStartPracticing, isDark, isAuthen
           currentPage="find-jobs"
           isAuthenticated={isAuthenticated}
           onLogout={() => { logout(); onNavigate('landing'); }}
+          language={language}
+          setLanguage={setLanguage}
         />
         <div className="flex-1 flex items-center justify-center p-6">
           <div className="text-center space-y-4">
-            <p className="text-text-muted">No job selected.</p>
+            <p className="text-text-muted">{L('jobDetail.noJobSelected')}</p>
             <Button variant="secondary" onClick={() => onNavigate('find-jobs')}>
-              <ArrowLeft size={16} className="mr-1" /> Back to Jobs
+              <ArrowLeft size={16} className="mr-1" /> {L('jobDetail.backToJobs')}
             </Button>
           </div>
         </div>
@@ -64,6 +68,8 @@ export const JobDetail = ({ job, onNavigate, onStartPracticing, isDark, isAuthen
         currentPage="find-jobs"
         isAuthenticated={isAuthenticated}
         onLogout={() => { logout(); onNavigate('landing'); }}
+        language={language}
+        setLanguage={setLanguage}
       />
 
       <main className="flex-1 w-full max-w-4xl mx-auto px-6 md:px-12 pb-12 space-y-6">
@@ -74,7 +80,7 @@ export const JobDetail = ({ job, onNavigate, onStartPracticing, isDark, isAuthen
           onClick={() => onNavigate('find-jobs')}
           className="text-text-muted hover:text-text-primary"
         >
-          <ArrowLeft size={16} className="mr-1" /> Back to Jobs
+          <ArrowLeft size={16} className="mr-1" /> {L('jobDetail.backToJobs')}
         </Button>
 
         {/* Job Header */}
@@ -90,7 +96,7 @@ export const JobDetail = ({ job, onNavigate, onStartPracticing, isDark, isAuthen
               </div>
               {job.source && (
                 <Badge variant="secondary" className="text-xs">
-                  via {sourceLabels[job.source] || job.source}
+                  {L('jobDetail.via')} {sourceLabels[job.source] || job.source}
                 </Badge>
               )}
             </div>
@@ -107,7 +113,7 @@ export const JobDetail = ({ job, onNavigate, onStartPracticing, isDark, isAuthen
               )}
               {postedDate && (
                 <span className="flex items-center gap-1.5">
-                  <Clock size={14} /> Posted {postedDate}
+                  <Clock size={14} /> {L('jobDetail.posted')} {postedDate}
                 </span>
               )}
               {job.salary && (
@@ -118,7 +124,7 @@ export const JobDetail = ({ job, onNavigate, onStartPracticing, isDark, isAuthen
             {/* Skills */}
             {job.skills && job.skills.length > 0 && (
               <div className="space-y-2">
-                <h3 className="text-xs font-semibold text-text-muted uppercase tracking-wide">Skills</h3>
+                <h3 className="text-xs font-semibold text-text-muted uppercase tracking-wide">{L('jobDetail.skills')}</h3>
                 <div className="flex flex-wrap gap-2">
                   {job.skills.map((skill, i) => (
                     <Badge key={i} variant="primary" className="text-xs">
@@ -137,7 +143,7 @@ export const JobDetail = ({ job, onNavigate, onStartPracticing, isDark, isAuthen
                 rel="noopener noreferrer"
                 className="inline-flex items-center gap-1.5 text-sm text-text-primary hover:underline"
               >
-                <ExternalLink size={14} /> Apply on {sourceLabels[job.source] || 'provider site'}
+                <ExternalLink size={14} /> {L('jobDetail.applyOn')} {sourceLabels[job.source] || L('jobDetail.providerSite')}
               </a>
             )}
           </CardContent>
@@ -146,7 +152,7 @@ export const JobDetail = ({ job, onNavigate, onStartPracticing, isDark, isAuthen
         {/* Job Description */}
         <Card className="surface-text bg-surface" hover={false}>
           <CardHeader>
-            <CardTitle className="text-base">Job Description</CardTitle>
+            <CardTitle className="text-base">{L('jobDetail.jobDescription')}</CardTitle>
           </CardHeader>
           <CardContent>
             {hasDescription ? (
@@ -155,7 +161,7 @@ export const JobDetail = ({ job, onNavigate, onStartPracticing, isDark, isAuthen
               </div>
             ) : (
               <p className="text-text-muted text-sm italic">
-                No detailed description available for this listing.
+                {L('jobDetail.noDescAvailable')}
               </p>
             )}
           </CardContent>
@@ -164,17 +170,27 @@ export const JobDetail = ({ job, onNavigate, onStartPracticing, isDark, isAuthen
         {/* Action Bar */}
         <div className="flex flex-col sm:flex-row gap-3">
           {hasDescription ? (
-            <Button
-              variant="primary"
-              size="lg"
-              onClick={() => onStartPracticing(job)}
-              className="flex-1"
-            >
-              <Target size={16} className="mr-2" /> Start Practicing for This Job
-            </Button>
+            <>
+              <Button
+                variant="primary"
+                size="lg"
+                onClick={() => onStartPracticing(job)}
+                className="flex-1"
+              >
+                <Target size={16} className="mr-2" /> {L('jobDetail.startPracticing')}
+              </Button>
+              <Button
+                variant="secondary"
+                size="lg"
+                onClick={() => onTailorResume?.(job)}
+                className="flex-1"
+              >
+                <FileText size={16} className="mr-2" /> {L('jobDetail.tailorResume')}
+              </Button>
+            </>
           ) : (
             <Button variant="ghost" size="lg" disabled className="flex-1">
-              Description not available for practice
+              {L('jobDetail.descNotAvailable')}
             </Button>
           )}
           {job.applicationUrl && (
@@ -185,7 +201,7 @@ export const JobDetail = ({ job, onNavigate, onStartPracticing, isDark, isAuthen
               className="flex-1"
             >
               <Button variant="secondary" size="lg" className="w-full">
-                <Globe size={16} className="mr-2" /> Apply Now
+                <Globe size={16} className="mr-2" /> {L('jobDetail.applyNow')}
               </Button>
             </a>
           )}

@@ -1,5 +1,6 @@
 import React from 'react';
 import { Badge } from '../../design-system/Badge';
+import { t } from '../../i18n/translations';
 
 /**
  * QuestionTraceBadge — displays which JD skills/keywords triggered
@@ -7,13 +8,16 @@ import { Badge } from '../../design-system/Badge';
  * 
  * @param {Object} props
  * @param {string[]} props.matchedTerms - JD terms that matched this question
+ * @param {string} props.language - UI language ('english' | 'urdu')
  */
-export const QuestionTraceBadge = ({ matchedTerms = [] }) => {
+export const QuestionTraceBadge = ({ matchedTerms = [], language = 'english' }) => {
+  const L = (key) => t(key, language);
+
   if (!matchedTerms || matchedTerms.length === 0) {
     return (
       <div className="flex items-center gap-2 text-xs text-gray-500 dark:text-gray-400">
-        <span className="font-medium">JD Match:</span>
-        <span className="italic">No matches</span>
+        <span className="font-medium">{L('questionTrace.jdMatch')}</span>
+        <span className="italic">{L('questionTrace.noMatches')}</span>
       </div>
     );
   }
@@ -21,7 +25,7 @@ export const QuestionTraceBadge = ({ matchedTerms = [] }) => {
   return (
     <div className="flex items-center gap-2 flex-wrap">
       <span className="text-xs font-medium text-gray-600 dark:text-gray-400">
-        JD Match:
+        {L('questionTrace.jdMatch')}
       </span>
       {matchedTerms.map((term, idx) => (
         <Badge key={`${term}-${idx}`} variant="info" size="sm">

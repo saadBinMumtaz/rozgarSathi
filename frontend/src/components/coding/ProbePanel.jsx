@@ -12,6 +12,7 @@ import {
   ChevronDown, ChevronUp, CheckCircle2, Volume2, MessageSquare,
   Zap, PenLine, Send, Loader2, X,
 } from 'lucide-react';
+import { t } from '../../i18n/translations';
 
 export const ProbePanel = ({
   probes = [],
@@ -33,8 +34,10 @@ export const ProbePanel = ({
   isEvaluating = false,
   practiceFeedback = null,
   onClearFeedback = () => {},
+  language = 'english',
 }) => {
   const [isExpanded, setIsExpanded] = useState(true);
+  const L = (key) => t(key, language);
 
   if (!probes.length) return null;
 
@@ -59,7 +62,7 @@ export const ProbePanel = ({
       >
         <div className="flex items-center gap-2">
           <MessageSquare size={15} className={personaAccent} />
-          <span className="text-sm font-semibold text-text-primary">Interviewer</span>
+          <span className="text-sm font-semibold text-text-primary">{L('probe.interviewer')}</span>
           {questionTitle && (
             <span className="text-xs text-text-muted hidden sm:inline">
               — {questionTitle}
@@ -71,7 +74,7 @@ export const ProbePanel = ({
             </span>
           )}
           {practiceMode && !isExpanded && (
-            <span className="text-xs text-icon-active ml-2">Practice mode active</span>
+            <span className="text-xs text-icon-active ml-2">{L('probe.practiceActive')}</span>
           )}
         </div>
         <div className="flex items-center gap-2">
@@ -86,7 +89,7 @@ export const ProbePanel = ({
             title={autoAccelerate ? 'Probes appear faster (click to slow down)' : 'Speed up probe timing'}
           >
             <Zap size={12} />
-            <span className="hidden sm:inline">{autoAccelerate ? 'Fast' : 'Normal'}</span>
+            <span className="hidden sm:inline">{autoAccelerate ? L('probe.fast') : L('probe.normal')}</span>
           </button>
 
           {/* Practice mode toggle */}
@@ -100,7 +103,7 @@ export const ProbePanel = ({
             title={practiceMode ? 'Exit practice mode' : 'Practice probes manually'}
           >
             <PenLine size={12} />
-            <span className="hidden sm:inline">{practiceMode ? 'Practicing' : 'Practice'}</span>
+            <span className="hidden sm:inline">{practiceMode ? L('probe.practicing') : L('probe.practice')}</span>
           </button>
 
           {activeProbe && !isExpanded && !practiceMode && (
@@ -124,7 +127,7 @@ export const ProbePanel = ({
           {practiceMode ? (
             <div className="pt-3 space-y-3">
               <p className="text-xs text-text-primary/80">
-                Click a probe below to practice answering it. Type your response and get instant feedback.
+                {L('probe.practiceHint')}
               </p>
 
               {/* Probe selector chips */}
@@ -168,13 +171,13 @@ export const ProbePanel = ({
                   <textarea
                     value={practiceAnswer}
                     onChange={(e) => onAnswerChange(e.target.value)}
-                    placeholder="Type your answer here... Explain your reasoning, approach, or thought process."
+                    placeholder={L('probe.typePlaceholder')}
                     className="w-full h-24 px-3 py-2 surface-text bg-surface-hover rounded-lg text-sm text-text-primary placeholder-text-muted focus:outline-none focus:ring-1 focus:ring-border-strong focus:border-border-strong resize-none"
                     disabled={isEvaluating}
                   />
                   <div className="flex items-center justify-between">
                     <span className="text-xs text-text-muted">
-                      {practiceAnswer.trim().split(/\s+/).filter(Boolean).length} words
+                      {practiceAnswer.trim().split(/\s+/).filter(Boolean).length} {L('probe.words')}
                     </span>
                     <Button
                       variant="primary"
@@ -184,9 +187,9 @@ export const ProbePanel = ({
                       isLoading={isEvaluating}
                     >
                       {isEvaluating ? (
-                        <><Loader2 size={14} className="animate-spin mr-1" /> Evaluating...</>
+                        <><Loader2 size={14} className="animate-spin mr-1" /> {L('probe.evaluating')}</>
                       ) : (
-                        <><Send size={14} className="mr-1" /> Submit Answer</>
+                        <><Send size={14} className="mr-1" /> {L('interview.submitAnswer')}</>
                       )}
                     </Button>
                   </div>
@@ -197,12 +200,12 @@ export const ProbePanel = ({
               {practiceFeedback && practiceProbeIndex >= 0 && practiceFeedback[practiceProbeIndex] && (
                 <div className="space-y-2">
                   <div className="flex items-center justify-between">
-                    <span className="text-xs font-medium text-text-primary">Feedback</span>
+                    <span className="text-xs font-medium text-text-primary">{L('probe.feedback')}</span>
                     <button
                       onClick={onClearFeedback}
                       className="text-xs text-text-muted hover:text-text-muted"
                     >
-                      Dismiss
+                      {L('probe.dismiss')}
                     </button>
                   </div>
                   <EvidenceCard evaluation={practiceFeedback[practiceProbeIndex]} />
@@ -256,7 +259,7 @@ export const ProbePanel = ({
               {autoAccelerate && (
                 <p className="text-xs text-warning/70 flex items-center gap-1">
                   <Zap size={11} />
-                  Probes appearing at accelerated pace (15s / 30s intervals)
+                  {L('probe.accelerated')}
                 </p>
               )}
             </>

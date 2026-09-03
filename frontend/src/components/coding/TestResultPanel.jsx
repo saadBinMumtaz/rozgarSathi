@@ -22,6 +22,7 @@ import {
   Clock,
   Loader2,
 } from 'lucide-react';
+import { t } from '../../i18n/translations';
 
 // Distinct readable state per fatal error type (icon + heading + tone).
 const ERROR_STATE_CONFIG = {
@@ -104,7 +105,8 @@ const ExecutionErrorState = memo(({ error }) => {
 });
 ExecutionErrorState.displayName = 'ExecutionErrorState';
 
-const TestRow = memo(({ test, index }) => {
+const TestRow = memo(({ test, index, language = 'english' }) => {
+  const L = (key) => t(key, language);
   const passed = Boolean(test.passed);
   const executionTime = test.executionTime;
   return (
@@ -120,8 +122,8 @@ const TestRow = memo(({ test, index }) => {
           ) : (
             <XCircle size={16} className="text-danger" />
           )}
-          <span className="text-sm font-medium text-text-primary">Test {index + 1}</span>
-          <Badge variant={passed ? 'success' : 'destructive'}>{passed ? 'Passed' : 'Failed'}</Badge>
+          <span className="text-sm font-medium text-text-primary">{L('test.test')} {index + 1}</span>
+          <Badge variant={passed ? 'success' : 'destructive'}>{passed ? L('test.passed') : L('test.failed')}</Badge>
         </div>
         {executionTime !== null && executionTime !== undefined && (
           <div className="flex items-center gap-1 text-xs text-text-muted">
@@ -157,7 +159,9 @@ export const TestResultPanel = memo(({
   executionError = null,
   isEmpty = false,
   isExecuting = false,
+  language = 'english',
 }) => {
+  const L = (key) => t(key, language);
   return (
     <Card className="border-border-theme surface-text bg-surface">
       <CardHeader className="pb-3">
@@ -166,7 +170,7 @@ export const TestResultPanel = memo(({
           {isExecuting && (
             <div className="flex items-center gap-2 text-xs text-icon-active">
               <Loader2 size={14} className="animate-spin" />
-              <span>Executing...</span>
+              <span>{L('test.executing')}</span>
             </div>
           )}
         </div>
@@ -176,12 +180,12 @@ export const TestResultPanel = memo(({
 
         {!executionError && !isExecuting && isEmpty && (
           <div className="text-sm text-text-muted py-4 text-center">
-            Run your code against the public tests to see results here.
+            {L('test.runPrompt')}
           </div>
         )}
 
         {results.map((test, index) => (
-          <TestRow key={index} test={test} index={index} />
+          <TestRow key={index} test={test} index={index} language={language} />
         ))}
       </CardContent>
     </Card>

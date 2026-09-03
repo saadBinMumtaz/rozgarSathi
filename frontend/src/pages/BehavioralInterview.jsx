@@ -18,13 +18,14 @@ import { ProgressBar } from '../design-system/ProgressBar';
 import { RobotAvatar } from '../components/shared/RobotAvatar';
 import { WaveformAnimation } from '../components/shared/WaveformAnimation';
 import { TypewriterText } from '../components/shared/TypewriterText';
-import { Loader2, CheckCircle2 } from 'lucide-react';
+import { Loader2, CheckCircle2, RefreshCw } from 'lucide-react';
 import { apiClient } from '../api/client';
 import { useTextToSpeech } from '../hooks/useTextToSpeech';
+import { t } from '../i18n/translations';
 
 const MAX_QUESTIONS = 5;
 
-export const BehavioralInterview = ({ jdAnalysisId, onNavigate, language = 'english', isUrdu = false, userId, isDark = false }) => {
+export const BehavioralInterview = ({ jdAnalysisId, onNavigate, language = 'english', isUrdu = false, userId, isDark = false, isActive = true }) => {
   const {
     sessionId,
     currentQuestion,
@@ -53,6 +54,8 @@ export const BehavioralInterview = ({ jdAnalysisId, onNavigate, language = 'engl
   const { isLocked: tabConflict, dismissWarning: dismissTabWarning } = useTabLock(sessionId, 'behavioral');
   const { speak, cancel, isSpeaking, isSupported: ttsSupported } = useTextToSpeech();
   const justCreatedRef = useRef(false); // Track if we just created a new session
+
+  const L = (key) => t(key, language);
 
   // Initialize / resume session whenever the session id changes.
   // BUT skip resume if interview is already complete (prevents overwriting local state).
@@ -95,6 +98,13 @@ export const BehavioralInterview = ({ jdAnalysisId, onNavigate, language = 'engl
     }
     return () => { cancel(); };
   }, [currentQuestion?.questionId, followUp, urduQuestionText, urduFollowUp, isUrdu, language, speak, cancel]);
+
+  // Cancel TTS when page becomes inactive (hidden but still mounted)
+  useEffect(() => {
+    if (!isActive) {
+      cancel();
+    }
+  }, [isActive, cancel]);
 
   // Cleanup: stop TTS and speech synthesis when component unmounts or navigating away
   useEffect(() => {
@@ -275,13 +285,13 @@ export const BehavioralInterview = ({ jdAnalysisId, onNavigate, language = 'engl
             <CardContent className="text-center py-8 space-y-4">
               {terminationMessage ? (
                 <>
-                  <div className="text-2xl font-bold text-danger">Interview Terminated</div>
+                  <div className="text-2xl font-bold text-danger">{L('interview.terminated')}</div>
                   <div className="text-danger text-sm max-w-md mx-auto">{terminationMessage}</div>
                 </>
               ) : (
                 <>
                   <CheckCircle2 className="text-success mx-auto" size={48} />
-                  <div className="text-2xl font-bold text-success">Behavioral Interview Complete!</div>
+                  <div className="text-2xl font-bold text-success">{L('interview.behavioral.complete')}</div>
                   
                   {/* Overall Score Display */}
                   <div className="inline-flex items-center gap-4 surface-text bg-surface-hover rounded-xl px-6 py-4 ">
@@ -289,19 +299,19 @@ export const BehavioralInterview = ({ jdAnalysisId, onNavigate, language = 'engl
                       <div className={`text-4xl font-bold ${avgScore >= 70 ? 'text-success' : avgScore >= 40 ? 'text-warning' : 'text-danger'}`}>
                         {avgScore}
                       </div>
-                      <div className="text-xs text-text-muted uppercase tracking-wide">Overall Score</div>
+                      <div className="text-xs text-text-muted uppercase tracking-wide">{L('interview.overallScore')}</div>
                     </div>
                     <div className="h-12 w-px bg-bg-hover"></div>
                     <div className="text-left space-y-1">
                       <div className="text-sm text-text-muted">
-                        <span className="text-text-muted">Questions:</span> {evaluations.length}
+                        <span className="text-text-muted">{L('interview.questionsCount')}</span> {evaluations.length}
                       </div>
                       <div className="text-sm text-text-muted">
-                        <span className="text-success">✓ {highScores}</span> strong answers
+                        <span className="text-success">✓ {highScores}</span> {L('interview.strongAnswers')}
                       </div>
                       {lowScores > 0 && (
                         <div className="text-sm text-text-muted">
-                          <span className="text-danger">⚠ {lowScores}</span> need improvement
+                          <span className="text-danger">⚠ {lowScores}</span> {L('interview.needImprovement')}
                         </div>
                       )}
                     </div>
@@ -310,22 +320,22 @@ export const BehavioralInterview = ({ jdAnalysisId, onNavigate, language = 'engl
                   {/* Performance Summary */}
                   <div className="text-sm text-text-muted max-w-md mx-auto">
                     {avgScore >= 70 
-                      ? 'Great performance! Your answers demonstrated strong behavioral competencies.'
+                      ? L('interview.behavioral.perfGreat')
                       : avgScore >= 40
-                      ? 'Good effort! Review the feedback below to strengthen your answers.'
-                      : 'Review the detailed feedback below to improve your STAR method responses.'}
+                      ? L('interview.behavioral.perfGood')
+                      : L('interview.behavioral.perfPoor')}
                   </div>
                 </>
               )}
               <div className="flex justify-center gap-3 mt-4">
                 <Button variant="secondary" onClick={() => onNavigate('results')}>
-                  View Results
+                  {L('interview.viewResults')}
                 </Button>
                 <Button variant="primary" onClick={() => { resetSession(); onNavigate('mode-selection'); }}>
-                  Try Another Mode
+                  {L('interview.tryAnotherMode')}
                 </Button>
                 <Button variant="secondary" onClick={resetSession}>
-                  Restart Behavioral
+                  {L('interview.behavioral.restart')}
                 </Button>
               </div>
             </CardContent>
@@ -334,8 +344,8 @@ export const BehavioralInterview = ({ jdAnalysisId, onNavigate, language = 'engl
           {evaluations.length > 0 && (
             <div className="space-y-6">
               <h3 className="text-lg font-semibold text-text-primary flex items-center gap-2">
-                <span>Detailed Feedback</span>
-                <span className="text-sm font-normal text-text-muted">({evaluations.length} questions)</span>
+                <span>{L('interview.detailedFeedback')}</span>
+                <span className="text-sm font-normal text-text-muted">({evaluations.length} {L('interview.questionsLabel')})</span>
               </h3>
               {evaluations.map((evaluation, idx) => (
                 <EvidenceCard
@@ -360,7 +370,7 @@ export const BehavioralInterview = ({ jdAnalysisId, onNavigate, language = 'engl
           className="text-sm font-medium hover:opacity-70 transition-opacity"
           style={{ color: isDark ? '#ffffff' : '#111111' }}
         >
-          Back
+          {L('interview.back')}
         </button>
         <div className="flex items-center gap-3">
           <Badge variant="success">Q{displayCount}/{MAX_QUESTIONS}</Badge>
@@ -370,14 +380,14 @@ export const BehavioralInterview = ({ jdAnalysisId, onNavigate, language = 'engl
 
       {/* Progress bar (subtle) */}
       <div className="px-6">
-        <ProgressBar value={progress} label={`Progress: ${displayCount}/${MAX_QUESTIONS} questions`} />
+        <ProgressBar value={progress} label={`${L('interview.progress')}: ${displayCount}/${MAX_QUESTIONS} ${L('interview.questionsLabel')}`} />
       </div>
 
       {/* Error banner */}
       {error && (
         <div className="mx-6 mt-4 p-3 bg-danger/10 rounded-md text-danger text-sm flex items-center justify-between gap-3" role="alert">
           <span>{error.includes('Failed to fetch') || error.includes('network')
-            ? 'Server is unreachable. Check your connection and retry.'
+            ? L('interview.serverUnreachable')
             : error}</span>
           <Button
             variant="link"
@@ -390,7 +400,7 @@ export const BehavioralInterview = ({ jdAnalysisId, onNavigate, language = 'engl
               }
             }}
           >
-            {sessionId ? 'Restart interview' : 'Retry'}
+            {sessionId ? L('interview.restartInterview') : L('interview.retry')}
           </Button>
         </div>
       )}
@@ -398,7 +408,7 @@ export const BehavioralInterview = ({ jdAnalysisId, onNavigate, language = 'engl
       {/* Tab conflict warning */}
       {tabConflict && (
         <div className="mx-6 mt-4 p-3 bg-warning/10 rounded-md text-warning text-sm flex items-center justify-between gap-3" role="alert">
-          <span>Another tab is running this same interview. Answers may conflict — close the other tab or <button onClick={dismissTabWarning} className="underline font-medium">continue here anyway</button>.</span>
+          <span>{L('interview.tabConflict')} <button onClick={dismissTabWarning} className="underline font-medium">{L('interview.continueHere')}</button>.</span>
         </div>
       )}
 
@@ -424,22 +434,30 @@ export const BehavioralInterview = ({ jdAnalysisId, onNavigate, language = 'engl
           {/* Question text with typewriter effect */}
           <div className="mt-8 text-center max-w-2xl min-h-[3.5rem]">
             <p className="text-xl md:text-2xl font-semibold leading-relaxed" style={{ color: isDark ? '#ffffff' : '#111111' }}>
-              <TypewriterText text={speakText} speed={15} />
+              <TypewriterText text={speakText} speed={33} />
             </p>
           </div>
 
           {/* Urdu translation indicator */}
           {isUrdu && isTranslatingUrdu && (
-            <div className="mt-4 text-xs animate-pulse" style={{ color: isDark ? '#9ca3af' : '#6b7280' }}>Translating to Urdu...</div>
+            <div className="mt-4 text-xs animate-pulse" style={{ color: isDark ? '#9ca3af' : '#6b7280' }}>{L('interview.translating')}</div>
           )}
 
-          {/* Listening state with waveform */}
-          {!useTypedFallback && (
-            <div className="mt-8 flex items-center gap-3">
-              <span className="text-2xl font-bold" style={{ color: isDark ? '#ffffff' : '#111111' }}>Listening</span>
-              <WaveformAnimation className={isDark ? 'text-white' : 'text-gray-900'} />
-            </div>
-          )}
+          {/* Repeat Question button */}
+          <div className="mt-8">
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => {
+                speak(speakText, language, followUp || currentQuestion.questionText);
+              }}
+              className="flex items-center gap-2"
+              style={{ color: isDark ? '#ffffff' : '#111111' }}
+            >
+              <RefreshCw size={18} />
+              {L('interview.repeatQuestion')}
+            </Button>
+          </div>
 
           {/* Follow-up bubble */}
           {followUp && <FollowUpBubble text={displayFollowUp} language={language} />}
@@ -447,14 +465,14 @@ export const BehavioralInterview = ({ jdAnalysisId, onNavigate, language = 'engl
           {/* Nudge feedback */}
           {nudge && (
             <div className={`mt-6 px-4 py-3 rounded-lg text-sm ${isUrdu ? 'urdu-text' : ''}`} style={{ backgroundColor: 'rgba(245, 158, 11, 0.1)', color: '#f59e0b' }}>
-              {!isUrdu && <strong>️ Answer needed:</strong>} {displayNudge}
+              {!isUrdu && <strong>️ {L('interview.answerNeeded')}</strong>} {displayNudge}
             </div>
           )}
 
           {/* JD traceability badge */}
           {currentQuestion?.matchedTerms && currentQuestion.matchedTerms.length > 0 && (
             <div className="mt-6">
-              <QuestionTraceBadge matchedTerms={currentQuestion.matchedTerms} />
+              <QuestionTraceBadge matchedTerms={currentQuestion.matchedTerms} language={language} />
             </div>
           )}
         </div>
@@ -470,14 +488,14 @@ export const BehavioralInterview = ({ jdAnalysisId, onNavigate, language = 'engl
               size="sm"
               onClick={() => setUseTypedFallback(false)}
             >
-              🎤 Voice
+              🎤 {L('interview.voice')}
             </Button>
             <Button
               variant={useTypedFallback ? 'secondary' : 'ghost'}
               size="sm"
               onClick={() => setUseTypedFallback(true)}
             >
-              ⌨️ Type
+              ⌨️ {L('interview.type')}
             </Button>
           </div>
 
@@ -506,7 +524,7 @@ export const BehavioralInterview = ({ jdAnalysisId, onNavigate, language = 'engl
                   disabled={isLoading || isSpeaking || !micTranscript?.trim()}
                   className="flex-1"
                 >
-                  {isLoading ? 'Processing...' : 'Submit Answer'}
+                  {isLoading ? L('interview.processing') : L('interview.submitAnswer')}
                 </Button>
               </div>
             </div>
@@ -519,7 +537,7 @@ export const BehavioralInterview = ({ jdAnalysisId, onNavigate, language = 'engl
         <div className="flex-1 flex items-center justify-center">
           <Card>
             <CardContent className="text-center py-8">
-              <div className="text-text-muted">Setting up your behavioral interview...</div>
+              <div className="text-text-muted">{L('interview.behavioral.setup')}</div>
             </CardContent>
           </Card>
         </div>

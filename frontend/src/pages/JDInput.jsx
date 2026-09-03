@@ -8,19 +8,22 @@ import { Skeleton } from '../design-system/Skeleton';
 import { apiClient } from '../api/client';
 import { sampleJDs, sampleSeniorityOrder } from '../data/sampleJD';
 import { ArrowLeft } from 'lucide-react';
+import { t } from '../i18n/translations';
 
-export const JDInput = ({ onAnalysisComplete, onNavigate, pendingSampleJD, onSampleJDConsumed }) => {
+export const JDInput = ({ onAnalysisComplete, onNavigate, pendingSampleJD, onSampleJDConsumed, language = 'english' }) => {
   const [jdText, setJdText] = useState('');
   const [currentSampleId, setCurrentSampleId] = useState(null);
   const [resumeFile, setResumeFile] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
 
+  const L = (key) => t(key, language);
+
   // Core analyze flow — used by both the form submit and the sample-JD button
   // so the existing POST /api/jd/analyze path stays identical.
   const runAnalysis = async (text) => {
     if (!text.trim()) {
-      setError('Please paste a Job Description before proceeding.');
+      setError(L('jdInput.errorEmpty'));
       return;
     }
 
@@ -46,7 +49,7 @@ export const JDInput = ({ onAnalysisComplete, onNavigate, pendingSampleJD, onSam
       onAnalysisComplete({ ...jdResult, resumeAnalysis: resumeResult });
     } catch (err) {
       setIsLoading(false);
-      setError(err.message || 'Failed to analyze Job Description. Please try again.');
+      setError(err.message || L('jdInput.errorGeneric'));
     }
   };
 
@@ -87,14 +90,14 @@ export const JDInput = ({ onAnalysisComplete, onNavigate, pendingSampleJD, onSam
             onClick={() => onNavigate('landing')}
             className="text-text-muted hover:text-text-primary"
           >
-            <ArrowLeft size={16} className="mr-1" /> Back to Home
+            <ArrowLeft size={16} className="mr-1" /> {L('jdInput.backHome')}
           </Button>
         </div>
 
         <div className="text-center space-y-2">
-          <h1 className="text-3xl md:text-4xl font-extrabold text-text-primary">Paste Job Description</h1>
+          <h1 className="text-3xl md:text-4xl font-extrabold text-text-primary">{L('jdInput.title')}</h1>
           <p className="text-text-muted text-sm md:text-base">
-            Rozgar Sathi will analyze key technical skills, experience level, and behavioral competencies.
+            {L('jdInput.subtitle')}
           </p>
         </div>
 
@@ -103,17 +106,17 @@ export const JDInput = ({ onAnalysisComplete, onNavigate, pendingSampleJD, onSam
           <Card className="flex items-center gap-4 surface-text bg-surface">
             <ScoreRing score={9.0} max={10} size={55} strokeWidth={6} label="Target Fit" />
             <div>
-              <h4 className="text-sm font-bold text-text-primary">Personalized Twin Engine</h4>
-              <p className="text-xs text-text-muted">Questions are 100% matched to your pasted job context.</p>
+              <h4 className="text-sm font-bold text-text-primary">{L('jdInput.twinEngine')}</h4>
+              <p className="text-xs text-text-muted">{L('jdInput.twinEngineDesc')}</p>
             </div>
           </Card>
 
           <Card className="flex flex-col justify-center surface-text bg-surface">
             <div className="flex justify-between items-center mb-2">
-              <span className="text-xs font-semibold text-text-muted">Extraction Pipeline</span>
-              <Badge variant="success">Ready</Badge>
+              <span className="text-xs font-semibold text-text-muted">{L('jdInput.pipeline')}</span>
+              <Badge variant="success">{L('jdInput.pipelineReady')}</Badge>
             </div>
-            <ProgressBar value={100} label="AI Schema Validation" showValue={false} />
+            <ProgressBar value={100} label={L('jdInput.aiValidation')} showValue={false} />
           </Card>
         </div>
 
@@ -124,7 +127,7 @@ export const JDInput = ({ onAnalysisComplete, onNavigate, pendingSampleJD, onSam
             <div>
               <div className="flex justify-between items-center mb-2">
                 <label className="text-sm font-semibold text-text-primary">
-                  Job Description Text <span className="text-danger">*</span>
+                  {L('jdInput.jdLabel')} <span className="text-danger">*</span>
                 </label>
                 {/* Sample JD picker — fixtures grouped by seniority (sampleJD.js) */}
                 <select
@@ -135,7 +138,7 @@ export const JDInput = ({ onAnalysisComplete, onNavigate, pendingSampleJD, onSam
                   className="text-xs bg-surface rounded-md px-2 py-1.5 text-surface-text hover:border-border-strong focus:outline-none focus:border-border-strong cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   <option value="" disabled>
-                    ✨ Try a sample JD…
+                    {L('jdInput.sampleJD')}
                   </option>
                   {sampleSeniorityOrder.map((group) => (
                     <optgroup key={group} label={group}>
@@ -156,7 +159,7 @@ export const JDInput = ({ onAnalysisComplete, onNavigate, pendingSampleJD, onSam
                   setJdText(e.target.value);
                   setCurrentSampleId(null); // manual edit ≠ sample
                 }}
-                placeholder="Paste the full job description text here..."
+                placeholder={L('jdInput.jdPlaceholder')}
                 rows={10}
                 className="w-full bg-surface rounded-lg p-4 text-sm text-surface-text placeholder-surface-text-muted focus:outline-none focus:border-border-strong focus:ring-1 focus:ring-border-strong transition-all font-mono"
               />
@@ -166,7 +169,7 @@ export const JDInput = ({ onAnalysisComplete, onNavigate, pendingSampleJD, onSam
             <div className="pt-2 border-t">
               <div className="flex justify-between items-center mb-2">
                 <label className="text-sm font-semibold text-text-primary">
-                  Candidate Résumé <span className="text-xs text-text-muted font-normal">(Optional — PDF/Text)</span>
+                  {L('jdInput.resumeLabel')} <span className="text-xs text-text-muted font-normal">{L('jdInput.resumeOptional')}</span>
                 </label>
                 <Badge variant="secondary">Day 3 Gap Analysis</Badge>
               </div>
@@ -177,7 +180,7 @@ export const JDInput = ({ onAnalysisComplete, onNavigate, pendingSampleJD, onSam
                   onChange={(e) => setResumeFile(e.target.files?.[0] || null)}
                   className="text-xs text-surface-text file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-xs file:font-semibold file:surface-text file:bg-surface-hover file:text-surface-text hover:file:bg-surface-hover"
                 />
-                {resumeFile && <span className="text-xs text-success font-medium">✓ {resumeFile.name} attached</span>}
+                {resumeFile && <span className="text-xs text-success font-medium">✓ {resumeFile.name} {L('jdInput.resumeAttached')}</span>}
               </div>
             </div>
 
@@ -191,7 +194,7 @@ export const JDInput = ({ onAnalysisComplete, onNavigate, pendingSampleJD, onSam
             {isLoading && (
               <div className="space-y-3 py-4">
                 <p className="text-xs text-icon-active animate-pulse font-medium">
-                  ⚡ Analyzing Job Description with Qwen AI...
+                  {L('jdInput.analyzing')}
                 </p>
                 <Skeleton height="h-4" width="w-3/4" />
                 <Skeleton height="h-4" width="w-1/2" />
@@ -208,7 +211,7 @@ export const JDInput = ({ onAnalysisComplete, onNavigate, pendingSampleJD, onSam
                 isLoading={isLoading}
                 disabled={!jdText.trim()}
               >
-                Analyze JD & Select Interview Mode →
+                {L('jdInput.submit')}
               </Button>
             </div>
           </form>

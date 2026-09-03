@@ -5,6 +5,7 @@ import { Sparkles, Briefcase } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import Aurora from '../components/shared/Aurora';
 import PageHeader from '../components/shared/PageHeader';
+import { t } from '../i18n/translations';
 
 /* ─── TypeWriter Hook ─── */
 const useTypeWriter = (words, typingSpeed = 70, deletingSpeed = 40, pauseDuration = 1500) => {
@@ -40,16 +41,16 @@ const useTypeWriter = (words, typingSpeed = 70, deletingSpeed = 40, pauseDuratio
 };
 
 /* ─── Landing Page ─── */
-export const Landing = ({ onNavigate, onTrySampleJD, isAuthenticated, user, isDark }) => {
+export const Landing = ({ onNavigate, onTrySampleJD, isAuthenticated, user, isDark, language, setLanguage }) => {
   const { logout } = useAuth();
   const videoRef = useRef(null);
 
-  const typewriterWord = useTypeWriter(
-    ['Behavioral', 'Technical', 'Coding'],
-    70,   // typing speed (ms per char)
-    40,   // deleting speed
-    1500  // pause at end of word
-  );
+  // Typewriter words change based on language
+  const typewriterWords = language === 'urdu'
+    ? [t('landing.typewriterBehavioral', language), t('landing.typewriterTechnical', language), t('landing.typewriterCoding', language)]
+    : ['Behavioral', 'Technical', 'Coding'];
+
+  const typewriterWord = useTypeWriter(typewriterWords, 70, 40, 1500);
 
   // Force video to loop between 0–6 seconds
   useEffect(() => {
@@ -64,6 +65,8 @@ export const Landing = ({ onNavigate, onTrySampleJD, isAuthenticated, user, isDa
     video.addEventListener('timeupdate', handleTimeUpdate);
     return () => video.removeEventListener('timeupdate', handleTimeUpdate);
   }, []);
+
+  const L = (key) => t(key, language);
 
   return (
     <div className="min-h-screen bg-bg-primary text-text-primary flex flex-col relative overflow-hidden">
@@ -87,6 +90,8 @@ export const Landing = ({ onNavigate, onTrySampleJD, isAuthenticated, user, isDa
         currentPage="landing"
         isAuthenticated={isAuthenticated}
         onLogout={() => { logout(); onNavigate('landing'); }}
+        language={language}
+        setLanguage={setLanguage}
       />
 
       {/* ─── Split-Screen Hero ─── */}
@@ -94,7 +99,7 @@ export const Landing = ({ onNavigate, onTrySampleJD, isAuthenticated, user, isDa
         {/* Left Column — Text & CTAs */}
         <div className="space-y-6">
           <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-[3.25rem] font-extrabold text-text-primary tracking-tight leading-tight">
-            Get ready for
+            {L('landing.heroPrefix')}
             <br />
             <span className="inline-block min-w-[1ch] mt-1">
               {typewriterWord}
@@ -103,13 +108,11 @@ export const Landing = ({ onNavigate, onTrySampleJD, isAuthenticated, user, isDa
                 style={{ animation: 'tw-cursor-blink 0.7s steps(2, start) infinite' }}
               />
             </span>
-            {' '}interview
+            {' '}{L('landing.heroSuffix')}
           </h1>
 
           <p className="text-base md:text-lg text-text-muted max-w-xl leading-relaxed">
-            Practice spoken Behavioral, Technical, and Live Coding interviews tailored
-            to your target Job Description — with adaptive difficulty, bilingual support,
-            and evidence-backed scoring.
+            {L('landing.heroDesc')}
           </p>
 
           {/* Action Buttons */}
@@ -119,7 +122,7 @@ export const Landing = ({ onNavigate, onTrySampleJD, isAuthenticated, user, isDa
               variant="primary"
               onClick={() => onNavigate(isAuthenticated ? 'jd-input' : 'auth')}
             >
-              {isAuthenticated ? 'Start JD Analysis & Practice →' : 'Get Started →'}
+              {isAuthenticated ? L('landing.ctaAuth') : L('landing.ctaGuest')}
             </Button>
 
             <Button
@@ -127,7 +130,7 @@ export const Landing = ({ onNavigate, onTrySampleJD, isAuthenticated, user, isDa
               variant="secondary"
               onClick={() => onNavigate('find-jobs')}
             >
-              <Briefcase size={16} className="mr-2" /> Find Jobs
+              <Briefcase size={16} className="mr-2" /> {L('landing.findJobs')}
             </Button>
 
             <select
@@ -140,7 +143,7 @@ export const Landing = ({ onNavigate, onTrySampleJD, isAuthenticated, user, isDa
               className="text-base font-semibold surface-text bg-surface rounded-lg px-4 py-3 text-text-primary hover:border-border-strong focus:outline-none focus:border-border-strong cursor-pointer"
             >
               <option value="" disabled>
-                <span className="flex items-center gap-1"><Sparkles size={14} /> Try a sample JD…</span>
+                {L('landing.sampleJD')}
               </option>
               {sampleSeniorityOrder.map((group) => (
                 <optgroup key={group} label={group}>
@@ -159,11 +162,11 @@ export const Landing = ({ onNavigate, onTrySampleJD, isAuthenticated, user, isDa
           {/* Guest hint */}
           {!isAuthenticated && (
             <p className="text-xs text-text-muted">
-              Try a sample JD without signing up, or{' '}
+              {L('landing.guestHint')}{' '}
               <button onClick={() => onNavigate('auth')} className="text-text-primary font-medium hover:underline">
-                create an account
+                {L('landing.createAccount')}
               </button>{' '}
-              to track your progress.
+              {L('landing.guestHintEnd')}
             </p>
           )}
         </div>

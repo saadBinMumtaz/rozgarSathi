@@ -25,12 +25,8 @@ const GooeyNav = ({
   const textRef = useRef(null);
   const [activeIndex, setActiveIndex] = useState(initialActiveIndex);
 
-  // Sync activeIndex with initialActiveIndex prop when it changes (page navigation)
-  useEffect(() => {
-    if (initialActiveIndex !== activeIndex) {
-      setActiveIndex(initialActiveIndex);
-    }
-  }, [initialActiveIndex]);
+  // Track the last initialActiveIndex we synced, so we only react to actual prop changes.
+  const lastPropIndexRef = useRef(initialActiveIndex);
 
   const noise = (n = 1) => n / 2 - Math.random() * n;
   const getXY = (distance, pointIndex, totalPoints) => {
@@ -97,6 +93,30 @@ const GooeyNav = ({
     textRef.current.innerText = element.innerText;
   }, []);
 
+  // Sync activeIndex with initialActiveIndex prop when it changes (page navigation).
+  // Uses requestAnimationFrame to wait for the new page's DOM layout to settle before
+  // repositioning the gooey pill, preventing stale measurements on re-mounted components.
+  // NOTE: must be defined AFTER updateEffectPosition to avoid temporal dead zone.
+  useEffect(() => {
+    if (initialActiveIndex === lastPropIndexRef.current) return;
+    lastPropIndexRef.current = initialActiveIndex;
+    setActiveIndex(initialActiveIndex);
+    // After React re-renders with the new activeIndex, wait for the browser to lay out
+    // the DOM, then reposition the gooey pill at the correct nav item.
+    requestAnimationFrame(() => {
+      if (!navRef.current || !containerRef.current) return;
+      const activeLi = navRef.current.querySelectorAll('li')[initialActiveIndex];
+      if (activeLi) {
+        updateEffectPosition(activeLi);
+        if (textRef.current) {
+          textRef.current.classList.remove('active');
+          void textRef.current.offsetWidth;
+          textRef.current.classList.add('active');
+        }
+      }
+    });
+  }, [initialActiveIndex, updateEffectPosition]);
+
   const triggerEffects = useCallback((liEl) => {
     updateEffectPosition(liEl);
     if (filterRef.current) {
@@ -134,40 +154,36 @@ const GooeyNav = ({
     }
   }, [handleClick]);
 
+  // Reposition the gooey pill whenever activeIndex changes (from click or prop sync).
+  // Uses requestAnimationFrame to ensure DOM layout is settled before measuring positions.
   useEffect(() => {
     if (!navRef.current || !containerRef.current) return;
-    const activeLi = navRef.current.querySelectorAll('li')[activeIndex];
-    if (activeLi) {
-      updateEffectPosition(activeLi);
-      textRef.current?.classList.add('active');
-    }
+    const raf = requestAnimationFrame(() => {
+      const activeLi = navRef.current.querySelectorAll('li')[activeIndex];
+      if (activeLi) {
+        updateEffectPosition(activeLi);
+        textRef.current?.classList.add('active');
+      }
+    });
     const resizeObserver = new ResizeObserver(() => {
       const currentActiveLi = navRef.current?.querySelectorAll('li')[activeIndex];
       if (currentActiveLi) updateEffectPosition(currentActiveLi);
     });
     resizeObserver.observe(containerRef.current);
-    return () => resizeObserver.disconnect();
+    return () => {
+      cancelAnimationFrame(raf);
+      resizeObserver.disconnect();
+    };
   }, [activeIndex, updateEffectPosition]);
 
-  // Theme-aware CSS variables
-  const pillBg = isDark ? 'rgba(255,255,255,0.95)' : 'rgba(15,23,42,0.92)';
-  const pillText = isDark ? '#0f172a' : '#f8fafc';
-  const navText = isDark ? 'rgba(255,255,255,0.85)' : 'rgba(15,23,42,0.75)';
-  const navTextHover = isDark ? 'rgba(255,255,255,1)' : 'rgba(15,23,42,0.95)';
+  // Particle accent colors (theme-aware, scoped to container via CSS custom properties)
   const particleColors = isDark
     ? { 1: '#96abc9', 2: '#e5b10c', 3: '#38bdf8', 4: '#a78bfa' }
     : { 1: '#64748b', 2: '#d97706', 3: '#0284c7', 4: '#7c3aed' };
-  const glowColor = isDark ? 'rgba(255,255,255,0.2)' : 'rgba(15,23,42,0.1)';
 
   return (
     <>
       <style>{`
-        :root {
-          --color-1: ${particleColors[1]};
-          --color-2: ${particleColors[2]};
-          --color-3: ${particleColors[3]};
-          --color-4: ${particleColors[4]};
-        }
         .gooey-effect {
           position: absolute;
           opacity: 1;
@@ -179,36 +195,36 @@ const GooeyNav = ({
                       width 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
         }
         .gooey-effect.text {
-          color: ${pillText};
+          color: var(--color-surface-text);
           transition: color 0.15s ease;
           font-weight: 600;
           font-size: 0.875rem;
           z-index: 3;
         }
         .gooey-effect.text.active {
-          color: ${pillText};
+          color: var(--color-surface-text);
         }
         .gooey-effect.filter {
           filter: blur(5px) contrast(12) blur(0);
           mix-blend-mode: normal;
         }
         .gooey-effect.filter::before {
-          content: "";
+          content: '';
           position: absolute;
           inset: 0;
           z-index: -2;
           background: transparent;
         }
         .gooey-effect.filter::after {
-          content: "";
+          content: '';
           position: absolute;
           inset: -2px;
-          background: ${pillBg};
+          background: var(--color-surface);
           transform: scale(0);
           opacity: 0;
           z-index: -1;
           border-radius: 9999px;
-          box-shadow: 0 0 0 1px ${glowColor}, 0 4px 12px ${isDark ? 'rgba(0,0,0,0.3)' : 'rgba(0,0,0,0.1)'};
+          box-shadow: 0 0 0 1px var(--color-border), 0 4px 12px var(--color-overlay);
         }
         .gooey-effect.active::after {
           animation: gooey-pill 0.3s cubic-bezier(0.34, 1.56, 0.64, 1) both;
@@ -281,13 +297,13 @@ const GooeyNav = ({
           cursor: pointer;
         }
         .gooey-li a:hover {
-          color: ${navTextHover} !important;
+          color: var(--color-text-primary) !important;
         }
         .gooey-li a:active {
           transform: scale(0.95);
         }
         .gooey-li.active a {
-          color: ${pillText} !important;
+          color: var(--color-surface-text) !important;
           font-weight: 600;
         }
       `}</style>
@@ -298,22 +314,23 @@ const GooeyNav = ({
           <div
             className="absolute inset-0 rounded-full pointer-events-none"
             style={{
-              background: isDark
-                ? 'rgba(255,255,255,0.06)'
-                : 'rgba(15,23,42,0.04)',
+              background: 'var(--color-bg-hover)',
               backdropFilter: 'blur(16px)',
               WebkitBackdropFilter: 'blur(16px)',
-              border: `1px solid ${isDark ? 'rgba(255,255,255,0.12)' : 'rgba(15,23,42,0.1)'}`,
-              boxShadow: isDark
-                ? '0 4px 24px rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.08)'
-                : '0 4px 24px rgba(0,0,0,0.08), inset 0 1px 0 rgba(255,255,255,0.6)',
+              border: '1px solid var(--color-border)',
+              boxShadow: '0 4px 24px var(--color-overlay), inset 0 1px 0 rgba(255,255,255,0.08)',
+              // Scope particle accent colors + surface tokens to this navbar instance
+              '--color-1': particleColors[1],
+              '--color-2': particleColors[2],
+              '--color-3': particleColors[3],
+              '--color-4': particleColors[4],
             }}
           />
 
           <ul
             ref={navRef}
             className="flex gap-3 sm:gap-4 md:gap-6 list-none p-1.5 sm:p-2 px-3 sm:px-4 m-0 relative z-[3]"
-            style={{ color: navText }}
+            style={{ color: 'var(--color-text-muted)' }}
           >
             {items.map((item, index) => (
               <li
@@ -328,7 +345,7 @@ const GooeyNav = ({
                   onKeyDown={(e) => handleKeyDown(e, index)}
                   className="outline-none py-2 px-3 sm:px-4 md:px-5 inline-block select-none no-underline"
                   style={{
-                    color: activeIndex === index ? pillText : navText,
+                    color: activeIndex === index ? 'var(--color-surface-text)' : 'var(--color-text-muted)',
                   }}
                 >
                   {item.label}

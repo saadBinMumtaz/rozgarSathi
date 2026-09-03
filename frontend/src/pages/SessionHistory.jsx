@@ -14,11 +14,12 @@ import {
   Brain, Code, MessageCircle, Clock, ChevronDown, ChevronUp,
   AlertCircle, FileText, MessageSquare, TrendingUp,
 } from 'lucide-react';
+import { t } from '../i18n/translations';
 
 const MODE_CONFIG = {
-  behavioral: { label: 'Behavioral', icon: MessageCircle, color: 'text-text-muted', bg: 'bg-text-muted/10', border: '' },
-  technical: { label: 'Technical', icon: Brain, color: 'text-text-muted', bg: 'surface-text bg-surface-hover', border: '' },
-  coding: { label: 'Coding', icon: Code, color: 'text-success', bg: 'bg-success/10', border: 'border-success/30/20' },
+  behavioral: { label: 'Behavioral', labelUr: 'سلوکی', icon: MessageCircle, color: 'text-text-muted', bg: 'bg-text-muted/10', border: '' },
+  technical: { label: 'Technical', labelUr: 'تکنیکی', icon: Brain, color: 'text-text-muted', bg: 'surface-text bg-surface-hover', border: '' },
+  coding: { label: 'Coding', labelUr: 'کوڈنگ', icon: Code, color: 'text-success', bg: 'bg-success/10', border: 'border-success/30/20' },
 };
 
 const formatDate = (dateStr) => {
@@ -45,11 +46,13 @@ const getScoreLabel = (score) => {
 /**
  * Expandable session card — shows summary by default, full details when expanded.
  */
-const SessionCard = ({ session }) => {
+const SessionCard = ({ session, language = 'english' }) => {
   const [expanded, setExpanded] = useState(false);
   const config = MODE_CONFIG[session.mode] || MODE_CONFIG.behavioral;
   const ModeIcon = config.icon;
   const scoreLabel = getScoreLabel(session.overallScore);
+  const L = (key) => t(key, language);
+  const modeLabel = language === 'urdu' ? (config.labelUr || config.label) : config.label;
 
   return (
     <Card className={`border-border-theme surface-text bg-surface transition-colors ${expanded ? 'ring-1 ring-border-theme' : ''}`}>
@@ -58,7 +61,7 @@ const SessionCard = ({ session }) => {
         onClick={() => setExpanded(!expanded)}
         className="w-full text-left px-4 pt-4 pb-3 flex items-center justify-between gap-3 hover:surface-text bg-surface-hover transition-colors rounded-t-lg focus:outline-none focus:ring-2 focus:ring-border-strong focus:ring-inset"
         aria-expanded={expanded}
-        aria-label={`${config.label} interview on ${formatDate(session.date)}, score ${session.overallScore ?? 'unknown'}. ${expanded ? 'Collapse' : 'Expand'} details.`}
+        aria-label={`${modeLabel} ${L('sessionHistory.interview')} ${formatDate(session.date)}, score ${session.overallScore ?? 'unknown'}. ${expanded ? L('sessionHistory.collapse') : L('sessionHistory.expand')} details.`}
       >
         <div className="flex items-center gap-3 min-w-0">
           <div className={`w-10 h-10 rounded-lg ${config.bg} flex items-center justify-center flex-shrink-0`}>
@@ -66,13 +69,13 @@ const SessionCard = ({ session }) => {
           </div>
           <div className="min-w-0">
             <p className="text-sm font-medium text-text-primary truncate">
-              {config.label} Interview
+              {modeLabel} {L('sessionHistory.interview')}
             </p>
             <div className="flex items-center gap-2 text-xs text-text-muted">
               <Clock size={11} aria-hidden="true" />
               <span>{formatDate(session.date)}</span>
               <span className="text-text-muted">·</span>
-              <span>{session.questionCount} question{session.questionCount !== 1 ? 's' : ''}</span>
+              <span>{session.questionCount} {session.questionCount !== 1 ? L('common.questions') : L('common.question')}</span>
             </div>
           </div>
         </div>
@@ -98,10 +101,10 @@ const SessionCard = ({ session }) => {
           {session.jdSnapshot && (
             <div className="surface-text bg-surface-hover rounded-lg p-3">
               <p className="text-xs font-medium text-text-muted mb-1 flex items-center gap-1">
-                <FileText size={11} aria-hidden="true" /> Job Description
+                <FileText size={11} aria-hidden="true" /> {L('sessionHistory.jobDescription')}
               </p>
               <p className="text-xs text-text-muted line-clamp-2">
-                {session.jdSnapshot.title || session.jdSnapshot.role || 'Custom JD'}
+                {session.jdSnapshot.title || session.jdSnapshot.role || L('sessionHistory.customJD')}
                 {session.jdSnapshot.company && ` at ${session.jdSnapshot.company}`}
               </p>
             </div>
@@ -112,7 +115,7 @@ const SessionCard = ({ session }) => {
             <div className="space-y-4">
               <h4 className="text-sm font-semibold text-text-muted flex items-center gap-2">
                 <MessageSquare size={14} className="text-text-muted" aria-hidden="true" />
-                Questions & Feedback
+                {L('sessionHistory.questionsFeedback')}
               </h4>
               {session.questions.map((q, idx) => (
                 <div key={idx} className="surface-text bg-surface-hover rounded-lg p-3 space-y-2">
@@ -136,7 +139,7 @@ const SessionCard = ({ session }) => {
                   {/* Transcript */}
                   {q.transcript && (
                     <div className="surface-text bg-surface rounded p-2">
-                      <p className="text-xs text-text-muted mb-1">Your answer:</p>
+                      <p className="text-xs text-text-muted mb-1">{L('sessionHistory.yourAnswer')}</p>
                       <p className="text-xs text-text-muted italic line-clamp-3">{q.transcript}</p>
                     </div>
                   )}
@@ -157,7 +160,7 @@ const SessionCard = ({ session }) => {
               ))}
             </div>
           ) : (
-            <p className="text-sm text-text-muted">No question details recorded for this session.</p>
+            <p className="text-sm text-text-muted">{L('sessionHistory.noDetails')}</p>
           )}
         </CardContent>
       )}
@@ -165,11 +168,17 @@ const SessionCard = ({ session }) => {
   );
 };
 
-export const SessionHistory = ({ userId = 'guest', onNavigate }) => {
+export const SessionHistory = ({ userId = 'guest', onNavigate, language = 'english' }) => {
   const [sessions, setSessions] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [filterMode, setFilterMode] = useState('all');
+
+  const L = (key) => t(key, language);
+  const getModeLabel = (mode) => {
+    if (mode === 'all') return L('common.all');
+    return language === 'urdu' ? (MODE_CONFIG[mode]?.labelUr || mode) : (MODE_CONFIG[mode]?.label || mode);
+  };
 
   useEffect(() => {
     let cancelled = false;
@@ -215,10 +224,10 @@ export const SessionHistory = ({ userId = 'guest', onNavigate }) => {
             <p className="text-danger">{error}</p>
             <div className="flex gap-3 justify-center">
               <Button variant="ghost" onClick={() => onNavigate?.('dashboard')}>
-                Back to Dashboard
+                {L('sessionHistory.backDashboard')}
               </Button>
               <Button variant="secondary" onClick={() => window.location.reload()}>
-                Retry
+                {L('common.retry')}
               </Button>
             </div>
           </CardContent>
@@ -235,14 +244,14 @@ export const SessionHistory = ({ userId = 'guest', onNavigate }) => {
           {/* Page Title */}
           <div className="flex items-center justify-between">
             <div>
-              <h1 className="text-2xl font-bold text-text-primary">Session History</h1>
+              <h1 className="text-2xl font-bold text-text-primary">{L('sessionHistory.title')}</h1>
               <p className="text-sm text-text-muted mt-1">
-                {sessions.length} completed session{sessions.length !== 1 ? 's' : ''}
+                {sessions.length} {L('dashboard.sessionsTracked')}{sessions.length !== 1 ? 's' : ''}
               </p>
             </div>
             <div className="flex gap-2">
               <Button variant="secondary" onClick={() => onNavigate('dashboard')}>
-                <TrendingUp size={14} className="mr-1" /> Dashboard
+                <TrendingUp size={14} className="mr-1" /> {L('sessionHistory.dashboard')}
               </Button>
             </div>
           </div>
@@ -251,8 +260,7 @@ export const SessionHistory = ({ userId = 'guest', onNavigate }) => {
       <div className="flex items-center gap-2" role="group" aria-label="Filter sessions by mode">
         {['all', 'behavioral', 'technical', 'coding'].map((mode) => {
           const isActive = filterMode === mode;
-          const config = MODE_CONFIG[mode];
-          const label = mode === 'all' ? 'All' : config?.label || mode;
+          const label = getModeLabel(mode);
           return (
             <button
               key={mode}
@@ -277,18 +285,18 @@ export const SessionHistory = ({ userId = 'guest', onNavigate }) => {
             <Clock size={32} className="text-text-muted mx-auto" aria-hidden="true" />
             <p className="text-sm text-text-muted">
               {filterMode === 'all'
-                ? 'No completed sessions yet. Start an interview to build your history.'
-                : `No completed ${filterMode} sessions yet.`}
+                ? L('sessionHistory.noSessions')
+                : `${L('sessionHistory.noModeSessions')} ${filterMode} ${L('dashboard.sessionsTracked')}.`}
             </p>
             <Button variant="secondary" onClick={() => onNavigate('mode-selection')}>
-              Start an interview
+              {L('common.startInterview')}
             </Button>
           </CardContent>
         </Card>
       ) : (
         <div className="space-y-3">
           {filteredSessions.map((session) => (
-            <SessionCard key={session.sessionId || Math.random()} session={session} />
+            <SessionCard key={session.sessionId || Math.random()} session={session} language={language} />
           ))}
         </div>
       )}

@@ -13,10 +13,12 @@ import SetPassword from './pages/SetPassword';
 import SharedReport from './pages/SharedReport';
 import FindJobs from './pages/FindJobs';
 import JobDetail from './pages/JobDetail';
+import ResumeTailor from './pages/ResumeTailor';
 import { ErrorBoundary } from './components/shared/ErrorBoundary';
 import Toast from './design-system/Toast';
 import { ThemeToggle } from './design-system/ThemeToggle';
 import { useLanguage } from './hooks/useLanguage';
+import { t as translate } from './i18n/translations';
 import { useTheme } from './hooks/useTheme';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import { apiClient } from './api/client';
@@ -288,6 +290,21 @@ const AppContent = () => {
     handleJobAction({ type: 'practice', job });
   }, [handleJobAction]);
 
+  // Called from FindJobs/JobDetail when user clicks "Tailor Resume for This Job"
+  const handleTailorResumeFromJob = useCallback((job) => {
+    if (!isAuthenticated) {
+      setToastMessage({ type: 'error', message: 'Please sign in to tailor your resume.' });
+      return;
+    }
+    if (!job?.description || job.description.trim().length < 50) {
+      setToastMessage({ type: 'error', message: 'This job does not have a usable description for resume tailoring.' });
+      return;
+    }
+    // Store job data for the ResumeTailor page to use as pre-filled JD
+    setSelectedJob(job);
+    setCurrentPage('resume-tailor');
+  }, [isAuthenticated]);
+
   // Show loading while auth is being restored
   if (authLoading) {
     return (
@@ -296,7 +313,7 @@ const AppContent = () => {
           <div className="w-10 h-10 rounded-xl bg-text-primary flex items-center justify-center font-black text-xl text-bg-primary mx-auto">
             RS
           </div>
-          <p className="text-sm text-text-muted animate-pulse">Loading...</p>
+          <p className="text-sm text-text-muted animate-pulse">{translate('app.loading', language)}</p>
         </div>
       </div>
     );
@@ -316,6 +333,7 @@ const AppContent = () => {
             onNavigate={navigateTo}
             onAuthComplete={handleAuthComplete}
             guestId={userId}
+            language={language}
           />
         )}
       </div>
@@ -339,6 +357,8 @@ const AppContent = () => {
             isAuthenticated={isAuthenticated}
             user={user}
             isDark={isDark}
+            language={language}
+            setLanguage={setLanguage}
           />
         )}
       </div>
@@ -350,6 +370,7 @@ const AppContent = () => {
             onNavigate={navigateTo}
             pendingSampleJD={pendingSampleJD}
             onSampleJDConsumed={() => setPendingSampleJD(null)}
+            language={language}
           />
         )}
       </div>
@@ -376,6 +397,7 @@ const AppContent = () => {
               isUrdu={isUrdu}
               userId={isAuthenticated && user ? String(user._id) : userId}
               isDark={isDark}
+              isActive={currentPage === 'behavioral-interview'}
             />
           </ErrorBoundary>
         )}
@@ -391,6 +413,7 @@ const AppContent = () => {
               isUrdu={isUrdu}
               userId={isAuthenticated && user ? String(user._id) : userId}
               isDark={isDark}
+              isActive={currentPage === 'technical-interview'}
             />
           </ErrorBoundary>
         )}
@@ -403,6 +426,8 @@ const AppContent = () => {
               jdAnalysisId={jdAnalysis?._id || jdAnalysis?.id}
               onNavigate={navigateTo}
               userId={isAuthenticated && user ? String(user._id) : userId}
+              language={language}
+              isUrdu={isUrdu}
             />
           </ErrorBoundary>
         )}
@@ -413,6 +438,7 @@ const AppContent = () => {
           <Results
             userId={isAuthenticated && user ? String(user._id) : userId}
             onNavigate={navigateTo}
+            language={language}
           />
         )}
       </div>
@@ -424,6 +450,8 @@ const AppContent = () => {
             onNavigate={navigateTo}
             isDark={isDark}
             isAuthenticated={isAuthenticated}
+            language={language}
+            setLanguage={setLanguage}
           />
         )}
       </div>
@@ -433,6 +461,7 @@ const AppContent = () => {
           <SessionHistory
             userId={isAuthenticated && user ? String(user._id) : userId}
             onNavigate={navigateTo}
+            language={language}
           />
         )}
       </div>
@@ -450,8 +479,11 @@ const AppContent = () => {
           <FindJobs
             onNavigate={navigateTo}
             onStartPracticing={handleJobAction}
+            onTailorResume={handleTailorResumeFromJob}
             isDark={isDark}
             isAuthenticated={isAuthenticated}
+            language={language}
+            setLanguage={setLanguage}
           />
         )}
       </div>
@@ -463,8 +495,23 @@ const AppContent = () => {
             job={selectedJob}
             onNavigate={navigateTo}
             onStartPracticing={handleStartPracticingFromDetail}
+            onTailorResume={handleTailorResumeFromJob}
             isDark={isDark}
             isAuthenticated={isAuthenticated}
+            language={language}
+            setLanguage={setLanguage}
+          />
+        )}
+      </div>
+
+      {/* Resume Tailor */}
+      <div className={currentPage === 'resume-tailor' ? '' : 'hidden'}>
+        {shouldRender('resume-tailor') && (
+          <ResumeTailor
+            onNavigate={navigateTo}
+            isDark={isDark}
+            prefilledJob={selectedJob}
+            language={language}
           />
         )}
       </div>
@@ -477,9 +524,9 @@ const AppContent = () => {
               <div className="w-14 h-14 rounded-full bg-text-primary/20 flex items-center justify-center mx-auto">
                 <span className="text-2xl">🔒</span>
               </div>
-              <h3 className="text-lg font-bold text-text-primary">Sign Up to Track Progress</h3>
+              <h3 className="text-lg font-bold text-text-primary">{translate('guest.modalTitle', language)}</h3>
               <p className="text-sm text-text-muted">
-                Create a free account to save your interview sessions, view your dashboard, and track your readiness scores over time.
+                {translate('guest.modalDesc', language)}
               </p>
             </div>
 
@@ -491,7 +538,7 @@ const AppContent = () => {
                 }}
                 className="w-full bg-text-primary text-bg-primary hover:opacity-90 rounded-lg px-4 py-2.5 text-sm font-medium transition-all"
               >
-                Create Account / Sign In
+                {translate('guest.createAccount', language)}
               </button>
               <button
                 onClick={() => {
@@ -500,12 +547,12 @@ const AppContent = () => {
                 }}
                 className="w-full surface-text bg-surface-hover text-text-muted hover:bg-surface-hover/80 rounded-lg px-4 py-2.5 text-sm font-medium transition-all"
               >
-                Continue as Guest
+                {translate('guest.continueGuest', language)}
               </button>
             </div>
 
             <p className="text-xs text-text-muted text-center">
-              Guest sessions are temporary. Sign up to keep your progress.
+              {translate('guest.footerHint', language)}
             </p>
           </div>
         </div>

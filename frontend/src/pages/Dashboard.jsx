@@ -17,22 +17,24 @@ import { apiClient } from '../api/client';
 import {
   ArrowRight, Brain, Code, MessageCircle, Target,
   Award, AlertTriangle, BarChart3, Clock, TrendingUp,
-  CheckCircle2, AlertCircle, Briefcase,
+  CheckCircle2, AlertCircle, Briefcase, FileText,
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
+import { t } from '../i18n/translations';
 
 const MODE_CONFIG = {
-  behavioral: { label: 'Behavioral', icon: MessageCircle, color: 'text-text-muted', bg: 'bg-text-muted/10', border: '', route: 'behavioral-interview' },
-  technical: { label: 'Technical', icon: Brain, color: 'text-text-muted', bg: 'surface-text bg-surface-hover', border: '', route: 'technical-interview' },
-  coding: { label: 'Coding', icon: Code, color: 'text-success', bg: 'bg-success/10', border: 'border-success/30/20', route: 'coding-interview' },
+  behavioral: { label: 'Behavioral', labelUr: 'سلوکی', icon: MessageCircle, color: 'text-text-muted', bg: 'bg-text-muted/10', border: '', route: 'behavioral-interview' },
+  technical: { label: 'Technical', labelUr: 'تکنیکی', icon: Brain, color: 'text-text-muted', bg: 'surface-text bg-surface-hover', border: '', route: 'technical-interview' },
+  coding: { label: 'Coding', labelUr: 'کوڈنگ', icon: Code, color: 'text-success', bg: 'bg-success/10', border: 'border-success/30/20', route: 'coding-interview' },
 };
 
-const getReadinessLabel = (score) => {
-  if (score >= 80) return { text: 'Excellent', color: 'text-success' };
-  if (score >= 60) return { text: 'Good', color: 'text-text-muted' };
-  if (score >= 40) return { text: 'Fair', color: 'text-warning' };
-  if (score > 0) return { text: 'Needs Work', color: 'text-danger' };
-  return { text: 'No Data', color: 'text-text-muted' };
+const getReadinessLabel = (score, language = 'english') => {
+  const L = (key) => t(key, language);
+  if (score >= 80) return { text: L('dashboard.excellent'), color: 'text-success' };
+  if (score >= 60) return { text: L('dashboard.good'), color: 'text-text-muted' };
+  if (score >= 40) return { text: L('dashboard.fair'), color: 'text-warning' };
+  if (score > 0) return { text: L('dashboard.needsWork'), color: 'text-danger' };
+  return { text: L('common.noData'), color: 'text-text-muted' };
 };
 
 const formatDate = (dateStr) => {
@@ -41,12 +43,15 @@ const formatDate = (dateStr) => {
   return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
 };
 
-export const Dashboard = ({ userId = 'guest', onNavigate, isDark, isAuthenticated }) => {
+export const Dashboard = ({ userId = 'guest', onNavigate, isDark, isAuthenticated, language = 'english', setLanguage }) => {
   const { logout } = useAuth();
   const [data, setData] = useState(null);
   const [history, setHistory] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+
+  const L = (key) => t(key, language);
+  const getModeLabel = (mode) => language === 'urdu' ? (MODE_CONFIG[mode]?.labelUr || mode) : (MODE_CONFIG[mode]?.label || mode);
 
   useEffect(() => {
     let cancelled = false;
@@ -95,13 +100,13 @@ export const Dashboard = ({ userId = 'guest', onNavigate, isDark, isAuthenticate
         <Card className="max-w-md w-full border-danger/30">
           <CardContent className="pt-6 text-center space-y-4">
             <AlertCircle className="mx-auto text-danger" size={32} aria-hidden="true" />
-            <p className="text-danger">{error || 'Failed to load dashboard.'}</p>
+            <p className="text-danger">{error || L('dashboard.failedLoad')}</p>
             <div className="flex gap-3 justify-center">
               <Button variant="secondary" onClick={() => onNavigate?.('mode-selection')}>
-                Start an interview
+                {L('common.startInterview')}
               </Button>
               <Button variant="ghost" onClick={() => window.location.reload()}>
-                Retry
+                {L('common.retry')}
               </Button>
             </div>
           </CardContent>
@@ -111,7 +116,7 @@ export const Dashboard = ({ userId = 'guest', onNavigate, isDark, isAuthenticate
   }
 
   const { overallReadiness, perMode, weakestCompetency, crossModeInsight, weights, weightsReason, sessionCount } = data;
-  const readiness = getReadinessLabel(overallReadiness);
+  const readiness = getReadinessLabel(overallReadiness, language);
   const sessions = history?.history || [];
   const latestSession = sessions[0] || null;
 
@@ -128,10 +133,14 @@ export const Dashboard = ({ userId = 'guest', onNavigate, isDark, isAuthenticate
   let recommendationReason = '';
   if (incompleteModes.length > 0) {
     recommendedMode = incompleteModes[0];
-    recommendationReason = `You haven't tried ${MODE_CONFIG[recommendedMode]?.label || recommendedMode} yet.`;
+    recommendationReason = language === 'urdu'
+      ? `آپ نے ابھی تک ${getModeLabel(recommendedMode)} نہیں آزمایا۔`
+      : `You haven't tried ${MODE_CONFIG[recommendedMode]?.label || recommendedMode} yet.`;
   } else if (weakestMode) {
     recommendedMode = weakestMode[0];
-    recommendationReason = `${MODE_CONFIG[recommendedMode]?.label || recommendedMode} has the lowest score — practice to improve.`;
+    recommendationReason = language === 'urdu'
+      ? `${getModeLabel(recommendedMode)} کا اسکور سب سے کم ہے — بہتری کے لیے مشق کریں۔`
+      : `${MODE_CONFIG[recommendedMode]?.label || recommendedMode} has the lowest score — practice to improve.`;
   }
 
   return (
@@ -143,6 +152,8 @@ export const Dashboard = ({ userId = 'guest', onNavigate, isDark, isAuthenticate
         currentPage="dashboard"
         isAuthenticated={isAuthenticated}
         onLogout={() => { logout(); onNavigate('landing'); }}
+        language={language}
+        setLanguage={setLanguage}
       />
 
       {/* Content */}
@@ -150,22 +161,25 @@ export const Dashboard = ({ userId = 'guest', onNavigate, isDark, isAuthenticate
         {/* Page Title */}
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-2xl font-bold text-text-primary">Your Dashboard</h1>
+            <h1 className="text-2xl font-bold text-text-primary">{L('dashboard.title')}</h1>
             <p className="text-sm text-text-muted mt-1">
               {sessionCount > 0
-                ? `${sessionCount} completed session${sessionCount !== 1 ? 's' : ''} tracked`
-                : 'Start your first interview to begin tracking'}
+                ? `${sessionCount} ${L('dashboard.sessionsTracked')}${sessionCount !== 1 ? 's' : ''}`
+                : L('dashboard.startFirst')}
             </p>
             <div className="mt-1">
               <StreakBadge userId={userId} />
             </div>
           </div>
           <div className="flex gap-2">
+            <Button variant="secondary" onClick={() => onNavigate('resume-tailor')}>
+              <FileText size={14} className="mr-1" /> {L('dashboard.resumeTailor')}
+            </Button>
             <Button variant="secondary" onClick={() => onNavigate('find-jobs')}>
-              <Briefcase size={14} className="mr-1" /> Find Jobs
+              <Briefcase size={14} className="mr-1" /> {L('dashboard.findJobs')}
             </Button>
             <Button variant="secondary" onClick={() => onNavigate('session-history')}>
-              <Clock size={14} className="mr-1" /> History
+              <Clock size={14} className="mr-1" /> {L('dashboard.history')}
             </Button>
           </div>
         </div>
@@ -175,12 +189,12 @@ export const Dashboard = ({ userId = 'guest', onNavigate, isDark, isAuthenticate
         {/* Overall readiness ring */}
         <Card className="md:col-span-1 surface-text bg-surface">
           <CardContent className="pt-6 flex flex-col items-center">
-            <ScoreRing score={overallReadiness} max={100} label="Overall Readiness" size={120} strokeWidth={10} />
+            <ScoreRing score={overallReadiness} max={100} label={L('dashboard.overallReadiness')} size={120} strokeWidth={10} />
             <div className={`mt-2 text-sm font-semibold ${readiness.color}`} aria-label={`Readiness: ${readiness.text}`}>
               {readiness.text}
             </div>
             {sessionCount === 0 && (
-              <p className="text-xs text-text-muted mt-2 text-center">Complete interviews to see your score</p>
+              <p className="text-xs text-text-muted mt-2 text-center">{L('dashboard.completeToSee')}</p>
             )}
           </CardContent>
         </Card>
@@ -190,7 +204,7 @@ export const Dashboard = ({ userId = 'guest', onNavigate, isDark, isAuthenticate
           <CardHeader>
             <CardTitle className="text-base flex items-center gap-2">
               <BarChart3 size={16} className="text-text-muted" aria-hidden="true" />
-              Mode Breakdown
+              {L('dashboard.modeBreakdown')}
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
@@ -203,9 +217,9 @@ export const Dashboard = ({ userId = 'guest', onNavigate, isDark, isAuthenticate
                     <ModeIcon size={16} className={config.color} aria-hidden="true" />
                   </div>
                   <div className="flex-1">
-                    <ProgressBar value={score} max={100} label={config.label} />
+                    <ProgressBar value={score} max={100} label={getModeLabel(mode)} />
                   </div>
-                  <span className={`text-lg font-bold ${config.color} w-12 text-right`} aria-label={`${config.label} score: ${score}`}>
+                  <span className={`text-lg font-bold ${config.color} w-12 text-right`} aria-label={`${getModeLabel(mode)} score: ${score}`}>
                     {score}
                   </span>
                 </div>
@@ -221,7 +235,7 @@ export const Dashboard = ({ userId = 'guest', onNavigate, isDark, isAuthenticate
           <CardHeader>
             <CardTitle className="text-base flex items-center gap-2">
               <Target size={16} className="text-warning" aria-hidden="true" />
-              Weakest Competency
+              {L('dashboard.weakestCompetency')}
             </CardTitle>
           </CardHeader>
           <CardContent>
@@ -231,7 +245,7 @@ export const Dashboard = ({ userId = 'guest', onNavigate, isDark, isAuthenticate
               </div>
               <div>
                 <p className="text-lg font-semibold text-text-primary">{weakestCompetency}</p>
-                <p className="text-xs text-text-muted">Focus your next practice session here</p>
+                <p className="text-xs text-text-muted">{L('dashboard.focusNext')}</p>
               </div>
             </div>
           </CardContent>
@@ -242,7 +256,7 @@ export const Dashboard = ({ userId = 'guest', onNavigate, isDark, isAuthenticate
           <CardHeader>
             <CardTitle className="text-base flex items-center gap-2">
               <Award size={16} className="text-icon-active" aria-hidden="true" />
-              Recommended Next
+              {L('dashboard.recommendedNext')}
             </CardTitle>
           </CardHeader>
           <CardContent>
@@ -258,7 +272,7 @@ export const Dashboard = ({ userId = 'guest', onNavigate, isDark, isAuthenticate
                           <Icon size={20} className={config.color} aria-hidden="true" />
                         </div>
                         <div>
-                          <p className="text-lg font-semibold text-text-primary">{config.label} Interview</p>
+                          <p className="text-lg font-semibold text-text-primary">{getModeLabel(recommendedMode)} {L('sessionHistory.interview')}</p>
                           <p className="text-xs text-text-muted">{recommendationReason}</p>
                         </div>
                       </>
@@ -271,16 +285,16 @@ export const Dashboard = ({ userId = 'guest', onNavigate, isDark, isAuthenticate
                   onClick={() => onNavigate(MODE_CONFIG[recommendedMode]?.route || 'mode-selection')}
                   className="w-full"
                 >
-                  Start {MODE_CONFIG[recommendedMode]?.label || recommendedMode} <ArrowRight size={14} className="ml-1" />
+                  {L('common.startInterview')} — {getModeLabel(recommendedMode)} <ArrowRight size={14} className="ml-1" />
                 </Button>
               </div>
             ) : (
               <div className="text-center py-2">
                 <CheckCircle2 size={24} className="text-success mx-auto mb-2" aria-hidden="true" />
-                <p className="text-sm text-text-muted">All modes complete!</p>
-                <p className="text-xs text-text-muted mt-1">Practice any mode again to improve your scores.</p>
+                <p className="text-sm text-text-muted">{L('dashboard.allComplete')}</p>
+                <p className="text-xs text-text-muted mt-1">{L('dashboard.practiceImprove')}</p>
                 <Button variant="secondary" size="sm" className="mt-3" onClick={() => onNavigate('mode-selection')}>
-                  Choose a mode
+                  {L('dashboard.chooseMode')}
                 </Button>
               </div>
             )}
@@ -294,8 +308,8 @@ export const Dashboard = ({ userId = 'guest', onNavigate, isDark, isAuthenticate
           <CardHeader>
             <CardTitle className="text-base flex items-center gap-2">
               <Brain size={16} className="text-icon-active" aria-hidden="true" />
-              Cross-Mode Insight
-              <Badge variant="secondary">AI-Powered</Badge>
+              {L('dashboard.crossModeInsight')}
+              <Badge variant="secondary">{L('dashboard.aiPowered')}</Badge>
             </CardTitle>
           </CardHeader>
           <CardContent>
@@ -305,7 +319,7 @@ export const Dashboard = ({ userId = 'guest', onNavigate, isDark, isAuthenticate
       )}
 
       {/* Progress Trend Chart */}
-      <ProgressTrendChart userId={userId} />
+      <ProgressTrendChart userId={userId} language={language} />
 
       {/* Latest Session Snapshot */}
       {latestSession && (
@@ -313,7 +327,7 @@ export const Dashboard = ({ userId = 'guest', onNavigate, isDark, isAuthenticate
           <CardHeader>
             <CardTitle className="text-base flex items-center gap-2">
               <Clock size={16} className="text-text-muted" aria-hidden="true" />
-              Latest Session
+              {L('dashboard.latestSession')}
             </CardTitle>
           </CardHeader>
           <CardContent>
@@ -330,10 +344,10 @@ export const Dashboard = ({ userId = 'guest', onNavigate, isDark, isAuthenticate
                 })()}
                 <div>
                   <p className="text-sm font-medium text-text-primary">
-                    {MODE_CONFIG[latestSession.mode]?.label || latestSession.mode} Interview
+                    {getModeLabel(latestSession.mode)} {L('sessionHistory.interview')}
                   </p>
                   <p className="text-xs text-text-muted">
-                    {formatDate(latestSession.date)} · {latestSession.questionCount} questions
+                    {formatDate(latestSession.date)} · {latestSession.questionCount} {L('common.questions')}
                   </p>
                 </div>
               </div>
@@ -344,7 +358,7 @@ export const Dashboard = ({ userId = 'guest', onNavigate, isDark, isAuthenticate
                 }`}>
                   {latestSession.overallScore ?? '—'}
                 </p>
-                <p className="text-xs text-text-muted">Score</p>
+                <p className="text-xs text-text-muted">{L('common.score')}</p>
               </div>
             </div>
           </CardContent>
@@ -357,7 +371,7 @@ export const Dashboard = ({ userId = 'guest', onNavigate, isDark, isAuthenticate
           <CardHeader>
             <CardTitle className="text-base flex items-center gap-2">
               <TrendingUp size={16} className="text-icon-active" aria-hidden="true" />
-              Readiness Weights
+              {L('dashboard.readinessWeights')}
             </CardTitle>
           </CardHeader>
           <CardContent>
@@ -380,7 +394,7 @@ export const Dashboard = ({ userId = 'guest', onNavigate, isDark, isAuthenticate
               })}
             </div>
             <p className="text-xs text-text-muted mt-3">
-              {weightsReason || 'Weights reflect the role profile used during interview setup.'}
+              {weightsReason || L('dashboard.weightsNote')}
             </p>
           </CardContent>
         </Card>

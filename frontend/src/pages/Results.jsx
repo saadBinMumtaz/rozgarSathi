@@ -28,10 +28,12 @@ import {
   Copy,
   Check,
 } from 'lucide-react';
+import { t } from '../i18n/translations';
 
 const MODE_CONFIG = {
   behavioral: {
     label: 'Behavioral',
+    labelUr: 'سلوکی',
     icon: MessageCircle,
     color: 'text-text-muted',
     bg: 'bg-text-muted/10',
@@ -39,6 +41,7 @@ const MODE_CONFIG = {
   },
   technical: {
     label: 'Technical',
+    labelUr: 'تکنیکی',
     icon: Brain,
     color: 'text-text-muted',
     bg: 'surface-text bg-surface-hover',
@@ -46,6 +49,7 @@ const MODE_CONFIG = {
   },
   coding: {
     label: 'Coding',
+    labelUr: 'کوڈنگ',
     icon: Code,
     color: 'text-success',
     bg: 'bg-success/10',
@@ -53,15 +57,16 @@ const MODE_CONFIG = {
   },
 };
 
-const getReadinessLabel = (score) => {
-  if (score >= 80) return { text: 'Excellent', color: 'text-success' };
-  if (score >= 60) return { text: 'Good', color: 'text-text-muted' };
-  if (score >= 40) return { text: 'Fair', color: 'text-warning' };
-  if (score > 0) return { text: 'Needs Work', color: 'text-danger' };
-  return { text: 'No Data', color: 'text-text-muted' };
+const getReadinessLabel = (score, language = 'english') => {
+  const L = (key) => t(key, language);
+  if (score >= 80) return { text: L('dashboard.excellent'), color: 'text-success' };
+  if (score >= 60) return { text: L('dashboard.good'), color: 'text-text-muted' };
+  if (score >= 40) return { text: L('dashboard.fair'), color: 'text-warning' };
+  if (score > 0) return { text: L('dashboard.needsWork'), color: 'text-danger' };
+  return { text: L('common.noData'), color: 'text-text-muted' };
 };
 
-export const Results = ({ userId = 'guest', onNavigate }) => {
+export const Results = ({ userId = 'guest', onNavigate, language = 'english' }) => {
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -69,6 +74,9 @@ export const Results = ({ userId = 'guest', onNavigate }) => {
   const [shareLoading, setShareLoading] = useState(false);
   const [copied, setCopied] = useState(false);
   const [latestSessionId, setLatestSessionId] = useState(null);
+
+  const L = (key) => t(key, language);
+  const getModeLabel = (mode) => language === 'urdu' ? (MODE_CONFIG[mode]?.labelUr || mode) : (MODE_CONFIG[mode]?.label || mode);
 
   useEffect(() => {
     let cancelled = false;
@@ -151,13 +159,13 @@ export const Results = ({ userId = 'guest', onNavigate }) => {
         <Card className="max-w-md w-full border-danger/30">
           <CardContent className="pt-6 text-center space-y-4">
             <AlertTriangle className="mx-auto text-danger" size={32} />
-            <p className="text-danger">{error || 'Failed to load interview results.'}</p>
+            <p className="text-danger">{error || L('results.failedLoad')}</p>
             <div className="flex gap-3 justify-center">
               <Button variant="secondary" onClick={() => onNavigate?.('mode-selection')}>
-                Start an interview
+                {L('common.startInterview')}
               </Button>
               <Button variant="ghost" onClick={() => window.location.reload()}>
-                Retry
+                {L('common.retry')}
               </Button>
             </div>
           </CardContent>
@@ -167,7 +175,7 @@ export const Results = ({ userId = 'guest', onNavigate }) => {
   }
 
   const { overallReadiness, perMode, weakestCompetency, trend, crossModeInsight, weights, weightsReason, sessionCount } = data;
-  const readiness = getReadinessLabel(overallReadiness);
+  const readiness = getReadinessLabel(overallReadiness, language);
 
   return (
     <div className="min-h-screen bg-bg-primary text-text-primary flex flex-col">
@@ -182,18 +190,18 @@ export const Results = ({ userId = 'guest', onNavigate }) => {
               onClick={() => onNavigate('mode-selection')}
               className="text-text-muted hover:text-text-primary"
             >
-              <ArrowLeft size={16} className="mr-1" /> Back to Mode Selection
+              <ArrowLeft size={16} className="mr-1" /> {L('results.backToMode')}
             </Button>
           </div>
 
           {/* Page Title */}
           <div className="flex items-center justify-between">
             <div>
-              <h1 className="text-2xl font-bold text-text-primary">Interview Results</h1>
+              <h1 className="text-2xl font-bold text-text-primary">{L('results.title')}</h1>
               <p className="text-sm text-text-muted mt-1">
                 {sessionCount > 0
-                  ? `Based on ${sessionCount} completed session${sessionCount !== 1 ? 's' : ''}`
-                  : 'Complete interviews to see your results'}
+                  ? `${L('results.basedOn')} ${sessionCount} ${L('dashboard.sessionsTracked')}${sessionCount !== 1 ? 's' : ''}`
+                  : L('results.completeToSee')}
               </p>
             </div>
             {onNavigate && (
@@ -208,17 +216,17 @@ export const Results = ({ userId = 'guest', onNavigate }) => {
                   {shareLink ? (
                     <>
                       {copied ? <Check size={14} className="mr-1" /> : <Copy size={14} className="mr-1" />}
-                      {copied ? 'Copied!' : 'Copy Link'}
+                      {copied ? L('results.copied') : L('results.copyLink')}
                     </>
                   ) : (
                     <>
                       <Share2 size={14} className="mr-1" />
-                      Share Report
+                      {L('results.shareReport')}
                     </>
                   )}
                 </Button>
                 <Button variant="secondary" onClick={() => onNavigate('mode-selection')}>
-                  Practice More
+                  {L('results.practiceMore')}
                 </Button>
           </div>
         )}
@@ -249,7 +257,7 @@ export const Results = ({ userId = 'guest', onNavigate }) => {
             <ScoreRing
               score={overallReadiness}
               max={100}
-              label="Overall Readiness"
+              label={L('results.overallReadiness')}
               size={120}
               strokeWidth={10}
             />
@@ -264,7 +272,7 @@ export const Results = ({ userId = 'guest', onNavigate }) => {
           <CardHeader>
             <CardTitle className="text-base flex items-center gap-2">
               <BarChart3 size={16} className="text-text-muted" />
-              Mode Breakdown
+              {L('results.modeBreakdown')}
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
@@ -277,7 +285,7 @@ export const Results = ({ userId = 'guest', onNavigate }) => {
                     <ModeIcon size={16} className={config.color} />
                   </div>
                   <div className="flex-1">
-                    <ProgressBar value={score} max={100} label={config.label} />
+                    <ProgressBar value={score} max={100} label={getModeLabel(mode)} />
                   </div>
                   <span className={`text-lg font-bold ${config.color} w-12 text-right`}>
                     {score}
@@ -295,7 +303,7 @@ export const Results = ({ userId = 'guest', onNavigate }) => {
           <CardHeader>
             <CardTitle className="text-base flex items-center gap-2">
               <Target size={16} className="text-warning" />
-              Weakest Competency
+              {L('results.weakestCompetency')}
             </CardTitle>
           </CardHeader>
           <CardContent>
@@ -306,7 +314,7 @@ export const Results = ({ userId = 'guest', onNavigate }) => {
               <div>
                 <p className="text-lg font-semibold text-text-primary">{weakestCompetency}</p>
                 <p className="text-xs text-text-muted">
-                  Focus your next practice session on this area
+                  {L('results.focusArea')}
                 </p>
               </div>
             </div>
@@ -318,7 +326,7 @@ export const Results = ({ userId = 'guest', onNavigate }) => {
           <CardHeader>
             <CardTitle className="text-base flex items-center gap-2">
               <Award size={16} className="text-icon-active" />
-              Readiness Weights
+              {L('results.readinessWeights')}
             </CardTitle>
           </CardHeader>
           <CardContent>
@@ -344,7 +352,7 @@ export const Results = ({ userId = 'guest', onNavigate }) => {
               })}
             </div>
             <p className="text-xs text-text-muted mt-3">
-              {weightsReason || 'Weights reflect the role profile used during interview setup.'}
+              {weightsReason || L('results.weightsNote')}
             </p>
           </CardContent>
         </Card>
@@ -356,8 +364,8 @@ export const Results = ({ userId = 'guest', onNavigate }) => {
           <CardHeader>
             <CardTitle className="text-base flex items-center gap-2">
               <Brain size={16} className="text-icon-active" />
-              Cross-Mode Insight
-              <Badge variant="secondary">AI-Powered</Badge>
+              {L('results.crossModeInsight')}
+              <Badge variant="secondary">{L('results.aiPowered')}</Badge>
             </CardTitle>
           </CardHeader>
           <CardContent>
@@ -372,7 +380,7 @@ export const Results = ({ userId = 'guest', onNavigate }) => {
           <CardHeader>
             <CardTitle className="text-base flex items-center gap-2">
               <TrendingUp size={16} className="text-success" />
-              Session Trend
+              {L('results.sessionTrend')}
             </CardTitle>
           </CardHeader>
           <CardContent>

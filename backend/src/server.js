@@ -14,6 +14,7 @@ import dashboardRoutes from './routes/dashboard.routes.js';
 import authRoutes from './routes/auth.routes.js';
 import reportRoutes from './routes/report.routes.js';
 import jobRoutes from './routes/jobRoutes.js';
+import resumeTailorRoutes from './routes/resumeTailor.routes.js';
 
 import errorHandler from './middleware/errorHandler.js';
 import { authMiddleware } from './middleware/authMiddleware.js';
@@ -45,6 +46,8 @@ app.use('/api/dashboard', authMiddleware, dashboardRoutes);
 app.use('/api/reports', reportRoutes);
 // Job Discovery — search active job listings from external providers
 app.use('/api/jobs', jobRoutes);
+// Resume Tailoring — AI-powered resume customization
+app.use('/api/resume', resumeTailorRoutes);
 
 // Root endpoint
 app.get('/', (_req, res) => {

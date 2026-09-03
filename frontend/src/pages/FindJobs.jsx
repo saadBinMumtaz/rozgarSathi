@@ -13,7 +13,9 @@ import { useAuth } from '../context/AuthContext';
 import {
   Search, MapPin, Briefcase, ExternalLink, Target,
   ArrowLeft, AlertCircle, Clock, Building2, Loader2,
+  FileText,
 } from 'lucide-react';
+import { t } from '../i18n/translations';
 
 const formatDate = (dateStr) => {
   if (!dateStr) return null;
@@ -37,7 +39,7 @@ const sourceLabels = {
   adzuna: { label: 'Adzuna', color: 'bg-purple-500/10 text-purple-400' },
 };
 
-export const FindJobs = ({ onNavigate, onStartPracticing, isDark, isAuthenticated }) => {
+export const FindJobs = ({ onNavigate, onStartPracticing, onTailorResume, isDark, isAuthenticated, language = 'english', setLanguage }) => {
   const { logout } = useAuth();
   const [query, setQuery] = useState('');
   const [location, setLocation] = useState('');
@@ -48,10 +50,12 @@ export const FindJobs = ({ onNavigate, onStartPracticing, isDark, isAuthenticate
   const [hasSearched, setHasSearched] = useState(false);
   const [providerStatus, setProviderStatus] = useState(null);
 
+  const L = (key) => t(key, language);
+
   const handleSearch = useCallback(async (e) => {
     e?.preventDefault();
     if (!query.trim() && !location.trim()) {
-      setError('Please enter a keyword or location.');
+      setError(L('findJobs.errorKeyword'));
       return;
     }
 
@@ -68,7 +72,7 @@ export const FindJobs = ({ onNavigate, onStartPracticing, isDark, isAuthenticate
       setJobs(result.jobs || []);
       setProviderStatus(result.providers);
     } catch (err) {
-      setError(err.message || 'Job search failed. Please try again.');
+      setError(err.message || L('findJobs.errorSearch'));
       setJobs([]);
     } finally {
       setLoading(false);
@@ -81,11 +85,23 @@ export const FindJobs = ({ onNavigate, onStartPracticing, isDark, isAuthenticate
 
   const handlePracticeJob = useCallback((job) => {
     if (!job.description || job.description.trim().length < 50) {
-      setError('This job does not have a usable description for interview practice.');
+      setError(L('findJobs.errorNoDescription'));
       return;
     }
     onStartPracticing?.({ type: 'practice', job });
   }, [onStartPracticing]);
+
+  const handleTailorResume = useCallback((job) => {
+    if (!isAuthenticated) {
+      setError(L('findJobs.errorSignIn'));
+      return;
+    }
+    if (!job.description || job.description.trim().length < 50) {
+      setError(L('findJobs.errorResumeDesc'));
+      return;
+    }
+    onTailorResume?.(job);
+  }, [onTailorResume, isAuthenticated]);
 
   return (
     <div className="min-h-screen bg-bg-primary text-text-primary flex flex-col">
@@ -96,14 +112,16 @@ export const FindJobs = ({ onNavigate, onStartPracticing, isDark, isAuthenticate
         currentPage="find-jobs"
         isAuthenticated={isAuthenticated}
         onLogout={() => { logout(); onNavigate('landing'); }}
+        language={language}
+        setLanguage={setLanguage}
       />
 
       <main className="flex-1 w-full max-w-5xl mx-auto px-6 md:px-12 pb-12 space-y-6">
         {/* Page Title */}
         <div>
-          <h1 className="text-2xl font-bold text-text-primary">Find Jobs</h1>
+          <h1 className="text-2xl font-bold text-text-primary">{L('findJobs.title')}</h1>
           <p className="text-sm text-text-muted mt-1">
-            Search active job listings and start interview practice instantly.
+            {L('findJobs.subtitle')}
           </p>
         </div>
 
@@ -119,7 +137,7 @@ export const FindJobs = ({ onNavigate, onStartPracticing, isDark, isAuthenticate
                     type="text"
                     value={query}
                     onChange={(e) => setQuery(e.target.value)}
-                    placeholder="Job title, skill, or keyword..."
+                    placeholder={L('findJobs.keywordPlaceholder')}
                     className="w-full bg-bg-primary rounded-lg pl-10 pr-4 py-2.5 text-sm text-text-primary placeholder-text-muted focus:outline-none focus:ring-1 focus:ring-border-strong border border-border"
                   />
                 </div>
@@ -131,7 +149,7 @@ export const FindJobs = ({ onNavigate, onStartPracticing, isDark, isAuthenticate
                     type="text"
                     value={location}
                     onChange={(e) => setLocation(e.target.value)}
-                    placeholder="City or region..."
+                    placeholder={L('findJobs.locationPlaceholder')}
                     className="w-full bg-bg-primary rounded-lg pl-10 pr-4 py-2.5 text-sm text-text-primary placeholder-text-muted focus:outline-none focus:ring-1 focus:ring-border-strong border border-border"
                   />
                 </div>
@@ -145,7 +163,7 @@ export const FindJobs = ({ onNavigate, onStartPracticing, isDark, isAuthenticate
                   disabled={loading}
                 >
                   {loading ? <Loader2 size={16} className="animate-spin mr-2" /> : <Search size={16} className="mr-2" />}
-                  Search
+                  {L('common.search')}
                 </Button>
               </div>
 
@@ -158,7 +176,7 @@ export const FindJobs = ({ onNavigate, onStartPracticing, isDark, isAuthenticate
                     onChange={(e) => setRemote(e.target.checked)}
                     className="rounded border-border text-text-primary focus:ring-border-strong"
                   />
-                  Remote only
+                  {L('findJobs.remoteOnly')}
                 </label>
               </div>
             </form>
@@ -176,7 +194,7 @@ export const FindJobs = ({ onNavigate, onStartPracticing, isDark, isAuthenticate
         {/* Provider Status */}
         {providerStatus && hasSearched && !loading && (
           <div className="flex items-center gap-3 text-xs text-text-muted">
-            <span>Sources:</span>
+            <span>{L('findJobs.sources')}</span>
             {Object.entries(providerStatus).map(([name, status]) => (
               <span key={name} className={`flex items-center gap-1 ${status.ok ? 'text-success' : 'text-danger'}`}>
                 {status.ok ? '✓' : '✗'} {sourceLabels[name]?.label || name}
@@ -206,7 +224,7 @@ export const FindJobs = ({ onNavigate, onStartPracticing, isDark, isAuthenticate
         {!loading && hasSearched && jobs.length > 0 && (
           <div className="space-y-4">
             <p className="text-sm text-text-muted">
-              Found {jobs.length} job{jobs.length !== 1 ? 's' : ''}
+              {L('findJobs.foundJobs')} {jobs.length} {jobs.length !== 1 ? L('findJobs.jobs') : L('findJobs.job')}
             </p>
             {jobs.map((job) => (
               <JobCard
@@ -214,6 +232,8 @@ export const FindJobs = ({ onNavigate, onStartPracticing, isDark, isAuthenticate
                 job={job}
                 onView={handleViewJob}
                 onPractice={handlePracticeJob}
+                onTailorResume={handleTailorResume}
+                language={language}
               />
             ))}
           </div>
@@ -223,9 +243,9 @@ export const FindJobs = ({ onNavigate, onStartPracticing, isDark, isAuthenticate
         {!loading && hasSearched && jobs.length === 0 && !error && (
           <div className="text-center py-12">
             <Briefcase size={40} className="text-text-muted mx-auto mb-4" />
-            <p className="text-lg font-semibold text-text-primary">No jobs found</p>
+            <p className="text-lg font-semibold text-text-primary">{L('findJobs.noJobsFound')}</p>
             <p className="text-sm text-text-muted mt-1">
-              Try different keywords or broaden your search.
+              {L('findJobs.noJobsDesc')}
             </p>
           </div>
         )}
@@ -234,9 +254,9 @@ export const FindJobs = ({ onNavigate, onStartPracticing, isDark, isAuthenticate
         {!hasSearched && (
           <div className="text-center py-12">
             <Target size={40} className="text-text-muted mx-auto mb-4" />
-            <p className="text-lg font-semibold text-text-primary">Search for jobs</p>
+            <p className="text-lg font-semibold text-text-primary">{L('findJobs.searchForJobs')}</p>
             <p className="text-sm text-text-muted mt-1">
-              Enter a job title, skill, or company to find active listings.
+              {L('findJobs.searchDesc')}
             </p>
           </div>
         )}
@@ -248,10 +268,11 @@ export const FindJobs = ({ onNavigate, onStartPracticing, isDark, isAuthenticate
 /**
  * Individual job card component.
  */
-const JobCard = ({ job, onView, onPractice }) => {
+const JobCard = ({ job, onView, onPractice, onTailorResume, language = 'english' }) => {
   const postedDate = formatDate(job.postedAt);
   const sourceInfo = sourceLabels[job.source] || { label: job.source, color: 'bg-surface-hover text-text-muted' };
   const hasDescription = job.description && job.description.trim().length >= 50;
+  const L = (key) => t(key, language);
 
   return (
     <Card className="surface-text bg-surface hover:border-border-strong transition-colors" hover={false}>
@@ -299,7 +320,7 @@ const JobCard = ({ job, onView, onPractice }) => {
               </Badge>
             ))}
             {job.skills.length > 8 && (
-              <span className="text-[10px] text-text-muted">+{job.skills.length - 8} more</span>
+              <span className="text-[10px] text-text-muted">+{job.skills.length - 8} {L('findJobs.more')}</span>
             )}
           </div>
         )}
@@ -312,26 +333,37 @@ const JobCard = ({ job, onView, onPractice }) => {
             onClick={() => onView(job)}
             className="flex-1"
           >
-            <ExternalLink size={14} className="mr-1" /> View Job
+            <ExternalLink size={14} className="mr-1" /> {L('findJobs.viewJob')}
           </Button>
           {hasDescription ? (
-            <Button
-              variant="primary"
-              size="sm"
-              onClick={() => onPractice(job)}
-              className="flex-1"
-            >
-              <Target size={14} className="mr-1" /> Start Practicing
-            </Button>
+            <>
+              <Button
+                variant="primary"
+                size="sm"
+                onClick={() => onPractice(job)}
+                className="flex-1"
+              >
+                <Target size={14} className="mr-1" /> {L('findJobs.practice')}
+              </Button>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => onTailorResume(job)}
+                className="flex-1"
+                title={L('findJobs.tooltipTailor')}
+              >
+                <FileText size={14} className="mr-1" /> {L('findJobs.tailorResume')}
+              </Button>
+            </>
           ) : (
             <Button
               variant="ghost"
               size="sm"
               disabled
               className="flex-1 text-text-muted"
-              title="This job does not have a usable description for interview practice."
+              title={L('findJobs.tooltipNoDesc')}
             >
-              No description available
+              {L('findJobs.noDescription')}
             </Button>
           )}
         </div>

@@ -6,13 +6,14 @@
 import React, { useState, useEffect } from 'react';
 import { apiClient } from '../../api/client';
 import { TrendingUp, TrendingDown, Minus, AlertCircle } from 'lucide-react';
+import { t } from '../../i18n/translations';
 
 // Mode differentiation by stroke pattern + shade (no decorative color)
-const MODE_COLORS = {
-  behavioral: { line: 'text-text-primary', bg: 'bg-text-primary', dot: 'bg-text-primary', label: 'Behavioral', stroke: 'var(--color-text-primary)', dasharray: '' },
-  technical: { line: 'text-text-muted', bg: 'bg-text-muted', dot: 'bg-text-muted', label: 'Technical', stroke: 'var(--color-text-muted)', dasharray: '6 3' },
-  coding: { line: 'text-icon-active', bg: 'bg-icon-active', dot: 'bg-icon-active', label: 'Coding', stroke: 'var(--color-icon-active)', dasharray: '2 3' },
-};
+const getModeColors = (language) => ({
+  behavioral: { line: 'text-text-primary', bg: 'bg-text-primary', dot: 'bg-text-primary', label: t('chart.behavioral', language), stroke: 'var(--color-text-primary)', dasharray: '' },
+  technical: { line: 'text-text-muted', bg: 'bg-text-muted', dot: 'bg-text-muted', label: t('chart.technical', language), stroke: 'var(--color-text-muted)', dasharray: '6 3' },
+  coding: { line: 'text-icon-active', bg: 'bg-icon-active', dot: 'bg-icon-active', label: t('chart.coding', language), stroke: 'var(--color-icon-active)', dasharray: '2 3' },
+});
 
 const CHART_HEIGHT = 120;
 const CHART_PADDING = 8;
@@ -24,7 +25,9 @@ const CHART_PADDING = 8;
  *   trendData: object — optional pre-fetched { behavioral: [], technical: [], coding: [] }
  *   compact: boolean — if true, render a smaller version
  */
-export const ProgressTrendChart = ({ userId, trendData: externalTrend, compact = false }) => {
+export const ProgressTrendChart = ({ userId, trendData: externalTrend, compact = false, language = 'english' }) => {
+  const L = (key) => t(key, language);
+  const MODE_COLORS = getModeColors(language);
   const [trend, setTrend] = useState(externalTrend || null);
   const [loading, setLoading] = useState(!externalTrend);
   const [error, setError] = useState(null);
@@ -70,7 +73,7 @@ export const ProgressTrendChart = ({ userId, trendData: externalTrend, compact =
       <div className={`surface-text bg-surface  rounded-lg ${compact ? 'p-3' : 'p-4'}`}>
         <div className="flex items-center gap-2 text-danger text-sm">
           <AlertCircle size={14} aria-hidden="true" />
-          <span>Trend unavailable: {error}</span>
+          <span>{L('chart.trendUnavailable')} {error}</span>
         </div>
       </div>
     );
@@ -81,7 +84,7 @@ export const ProgressTrendChart = ({ userId, trendData: externalTrend, compact =
     return (
       <div className={`surface-text bg-surface  rounded-lg ${compact ? 'p-3' : 'p-4'}`}>
         <p className="text-sm text-text-muted">
-          Complete at least 2 sessions to see your progress trend.
+          {L('chart.needMoreSessions')}
         </p>
       </div>
     );
@@ -93,7 +96,7 @@ export const ProgressTrendChart = ({ userId, trendData: externalTrend, compact =
     return (
       <div className={`surface-text bg-surface  rounded-lg ${compact ? 'p-3' : 'p-4'}`}>
         <p className="text-sm text-text-muted">
-          Need more sessions to draw a trend chart.
+          {L('chart.needMoreData')}
         </p>
       </div>
     );
@@ -137,10 +140,10 @@ export const ProgressTrendChart = ({ userId, trendData: externalTrend, compact =
           ) : (
             <Minus size={16} className="text-text-muted" aria-label="Stable" />
           )}
-          <span className="text-sm font-semibold text-text-primary">Progress Trend</span>
+          <span className="text-sm font-semibold text-text-primary">{L('chart.progressTrend')}</span>
         </div>
         <span className="text-xs text-text-muted">
-          {direction > 5 ? `+${Math.round(direction)} pts` : direction < -5 ? `${Math.round(direction)} pts` : 'Stable'}
+          {direction > 5 ? `+${Math.round(direction)} ${L('chart.pts')}` : direction < -5 ? `${Math.round(direction)} ${L('chart.pts')}` : L('chart.stable')}
         </span>
       </div>
 

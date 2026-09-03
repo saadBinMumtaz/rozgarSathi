@@ -5,7 +5,20 @@
 
 import { createRequire } from 'module';
 const require = createRequire(import.meta.url);
-const pdfParse = require('pdf-parse');
+const pdfParseModule = require('pdf-parse');
+// pdf-parse v2+ exports PDFParse class
+const pdfParse = async (buffer) => {
+  try {
+    const parser = new pdfParseModule.PDFParse({ data: buffer });
+    const result = await parser.getText();
+    const text = result.text || '';
+    logger.info(`PDF parsed: ${text.length} characters extracted`);
+    return text;
+  } catch (err) {
+    logger.error(`pdf-parse error: ${err.message}`);
+    throw new Error(`PDF parsing failed: ${err.message}`);
+  }
+};
 import mammoth from 'mammoth';
 import fs from 'fs';
 import path from 'path';
@@ -20,8 +33,8 @@ export const extractTextFromFile = async (fileBuffer, mimetype, originalname) =>
 
   try {
     if (mimetype === 'application/pdf' || ext === '.pdf') {
-      const data = await pdfParse(fileBuffer);
-      return data.text;
+      const text = await pdfParse(fileBuffer);
+      return text;
     }
 
     if (

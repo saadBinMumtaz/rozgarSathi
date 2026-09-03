@@ -6,7 +6,7 @@ import React, { useState, useEffect } from 'react';
 
 export const TypewriterText = ({
   text,
-  speed = 18,
+  speed = 33,
   className = '',
   onComplete,
 }) => {

@@ -44,6 +44,9 @@ export const env = Object.freeze({
   // Job Discovery providers (optional — when unset, those providers are disabled).
   ADZUNA_APP_ID: process.env.ADZUNA_APP_ID || '',
   ADZUNA_APP_KEY: process.env.ADZUNA_APP_KEY || '',
+  // OpenRouter for AI Resume Tailoring (optional — falls back to Groq when unset).
+  OPENROUTER_API_KEY: process.env.OPENROUTER_API_KEY || '',
+  OPENROUTER_MODEL: process.env.OPENROUTER_MODEL || '',
 });
 
 export default env;

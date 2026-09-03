@@ -20,6 +20,7 @@ import {
   ArrowLeft, Play, Send, Clock, Timer, RotateCcw, Users, User,
   CheckCircle2, AlertTriangle, Lightbulb, Eye, EyeOff, X,
 } from 'lucide-react';
+import { t } from '../i18n/translations';
 
 const DIFFICULTY_VARIANT = { easy: 'success', medium: 'warning', hard: 'destructive' };
 const AUTOSAVE_KEY_PREFIX = 'rozgar-sathi-coding-code-';
@@ -30,11 +31,11 @@ const formatElapsed = (seconds) => {
   return `${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
 };
 
-export const CodingInterview = ({ jdAnalysisId, onNavigate, userId }) => {
+export const CodingInterview = ({ jdAnalysisId, onNavigate, userId, language = 'english', isUrdu = false }) => {
   const [sessionId, setSessionId] = useState(null);
   const [question, setQuestion] = useState(null);
   const [code, setCode] = useState('');
-  const [language] = useState('javascript');
+  const [codeLang] = useState('javascript');
   const [isSettingUp, setIsSettingUp] = useState(true);
   const [setupError, setSetupError] = useState(null);
   const [isSubmitted, setIsSubmitted] = useState(false);
@@ -71,6 +72,8 @@ export const CodingInterview = ({ jdAnalysisId, onNavigate, userId }) => {
     runTests,
     submitSolution,
   } = useCodeExecution();
+
+  const L = (key) => t(key, language);
 
   // --- Soft timer (informational only) ---
   useEffect(() => {
@@ -128,14 +131,14 @@ export const CodingInterview = ({ jdAnalysisId, onNavigate, userId }) => {
 
   // --- Run tests handler ---
   const handleRun = useCallback(async () => {
-    try { await runTests(sessionId, code, language); } catch { /* surfaced via hook */ }
-  }, [sessionId, code, language, runTests]);
+    try { await runTests(sessionId, code, codeLang); } catch { /* surfaced via hook */ }
+  }, [sessionId, code, codeLang, runTests]);
 
   // --- Submit handler (called after confirmation) ---
   const handleConfirmSubmit = useCallback(async () => {
     setSubmitError(null);
     try {
-      const result = await submitSolution(sessionId, code, language);
+      const result = await submitSolution(sessionId, code, codeLang);
       // Mark submitted regardless of executionError so user sees results/error screen
       setIsSubmitted(true);
       submittedCodeRef.current = code;
@@ -147,7 +150,7 @@ export const CodingInterview = ({ jdAnalysisId, onNavigate, userId }) => {
       console.error('[CodingInterview] Submit failed:', err);
       setSubmitError(err.message || 'Submission failed. Please try again.');
     }
-  }, [sessionId, code, language, submitSolution]);
+  }, [sessionId, code, codeLang, submitSolution]);
 
   // --- Reset code to starter ---
   const handleResetCode = useCallback(() => {
@@ -292,7 +295,7 @@ export const CodingInterview = ({ jdAnalysisId, onNavigate, userId }) => {
 
   // --- Public test summary for confirmation modal ---
   const publicTestSummary = publicTestResults
-    ? `${publicTestResults.filter(t => t.passed).length}/${publicTestResults.length} public tests passed`
+    ? `${publicTestResults.filter(t => t.passed).length}/${publicTestResults.length} ${L('test.publicPassed')}`
     : null;
 
   // --- Loading / setup error states ---
@@ -304,7 +307,7 @@ export const CodingInterview = ({ jdAnalysisId, onNavigate, userId }) => {
           <Skeleton className="h-96" />
           <Skeleton className="h-96" />
         </div>
-        <p className="text-sm text-text-muted text-center">Preparing your coding challenge...</p>
+        <p className="text-sm text-text-muted text-center">{L('coding.preparing')}</p>
       </div>
     );
   }
@@ -314,9 +317,9 @@ export const CodingInterview = ({ jdAnalysisId, onNavigate, userId }) => {
       <div className="min-h-screen flex items-center justify-center p-6">
         <Card className="max-w-md w-full border-danger/30">
           <CardContent className="pt-6 text-center space-y-4">
-            <p className="text-danger">{setupError || 'Failed to load the coding challenge. Please try again.'}</p>
+            <p className="text-danger">{setupError || L('coding.loadFailed')}</p>
             <Button variant="secondary" onClick={() => onNavigate('mode-selection')}>
-              Back to mode selection
+              {L('coding.backToMode')}
             </Button>
           </CardContent>
         </Card>
@@ -333,7 +336,7 @@ export const CodingInterview = ({ jdAnalysisId, onNavigate, userId }) => {
           <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-success/10 border-2 border-success/30 mb-2">
             <CheckCircle2 size={32} className="text-success" />
           </div>
-          <h1 className="text-2xl font-bold text-text-primary">Interview Complete</h1>
+          <h1 className="text-2xl font-bold text-text-primary">{L('coding.interviewComplete')}</h1>
           <div className="flex items-center justify-center gap-4 text-sm text-text-muted">
             <span className="flex items-center gap-1">
               <Clock size={14} /> {formatElapsed(elapsed)}
@@ -343,8 +346,7 @@ export const CodingInterview = ({ jdAnalysisId, onNavigate, userId }) => {
         </div>
 
         <p className="text-sm text-text-muted text-center">
-          Question: <span className="text-text-primary font-medium">{question.title}</span> — your
-          solution was judged on hidden test cases.
+          {L('coding.questionLabel')} <span className="text-text-primary font-medium">{question.title}</span> — {L('coding.judgedOnHidden')}
         </p>
 
         {evaluation ? (
@@ -353,8 +355,8 @@ export const CodingInterview = ({ jdAnalysisId, onNavigate, userId }) => {
           <div className="surface-text bg-surface rounded-lg p-4 text-center">
             <p className="text-sm text-text-muted">
               {executionError
-                ? 'Your solution encountered an error during evaluation. See details below.'
-                : 'Submission recorded. Evaluation is being processed.'}
+                ? L('coding.evalError')
+                : L('coding.evalPending')}
             </p>
           </div>
         )}
@@ -362,13 +364,13 @@ export const CodingInterview = ({ jdAnalysisId, onNavigate, userId }) => {
         {/* Coding report dimensions */}
         {codingReport && (
           <div className="surface-text bg-surface rounded-lg p-4">
-            <h3 className="text-sm font-semibold text-text-muted mb-3">Coding Report</h3>
+            <h3 className="text-sm font-semibold text-text-muted mb-3">{L('coding.report')}</h3>
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
               {[
-                { label: 'Correctness', value: codingReport.correctness },
-                { label: 'Complexity', value: codingReport.complexity },
-                { label: 'Code Quality', value: codingReport.codeQuality },
-                { label: 'Reasoning', value: codingReport.reasoning },
+                { label: L('coding.correctness'), value: codingReport.correctness },
+                { label: L('coding.complexity'), value: codingReport.complexity },
+                { label: L('coding.codeQuality'), value: codingReport.codeQuality },
+                { label: L('coding.reasoning'), value: codingReport.reasoning },
               ].map(({ label, value }) => (
                 <div key={label} className="text-center">
                   <div className={`text-2xl font-bold ${
@@ -383,7 +385,7 @@ export const CodingInterview = ({ jdAnalysisId, onNavigate, userId }) => {
 
         {/* Hidden test results */}
         {hiddenTestResults && hiddenTestResults.length > 0 && (
-          <TestResultPanel title="Hidden Test Results" results={hiddenTestResults} />
+          <TestResultPanel title={L('coding.hiddenTestResults')} results={hiddenTestResults} language={language} />
         )}
 
         {/* Review your code toggle */}
@@ -393,7 +395,7 @@ export const CodingInterview = ({ jdAnalysisId, onNavigate, userId }) => {
             className="flex items-center gap-2 text-sm text-text-muted hover:text-text-primary transition-colors"
           >
             {showReviewCode ? <EyeOff size={14} /> : <Eye size={14} />}
-            {showReviewCode ? 'Hide your code' : 'Review your submitted code'}
+            {showReviewCode ? L('coding.hideCode') : L('coding.reviewCode')}
           </button>
           {showReviewCode && (
             <div className="mt-3">
@@ -402,7 +404,7 @@ export const CodingInterview = ({ jdAnalysisId, onNavigate, userId }) => {
                 onChange={() => {}}
                 height="300px"
                 readOnly
-                language={language}
+                language={codeLang}
               />
             </div>
           )}
@@ -411,13 +413,13 @@ export const CodingInterview = ({ jdAnalysisId, onNavigate, userId }) => {
         {/* Navigation buttons */}
         <div className="flex gap-3 justify-end">
           <Button variant="secondary" onClick={() => onNavigate('results')}>
-            View Results
+            {L('interview.viewResults')}
           </Button>
           <Button variant="secondary" onClick={() => onNavigate('mode-selection')}>
-            Practice another mode
+            {L('coding.practiceAnother')}
           </Button>
           <Button variant="primary" onClick={() => onNavigate('landing')}>
-            Back to home
+            {L('coding.backToHome')}
           </Button>
         </div>
       </div>
@@ -437,9 +439,9 @@ export const CodingInterview = ({ jdAnalysisId, onNavigate, userId }) => {
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
               <Button variant="ghost" size="sm" onClick={() => onNavigate('mode-selection')}>
-                <ArrowLeft size={16} className="mr-1" /> Exit
+                <ArrowLeft size={16} className="mr-1" /> {L('interview.exit')}
               </Button>
-              <h1 className="text-lg font-semibold text-text-primary">Live Coding Interview</h1>
+              <h1 className="text-lg font-semibold text-text-primary">{L('coding.liveCoding')}</h1>
             </div>
 
         {/* Tab conflict warning */}
@@ -459,9 +461,9 @@ export const CodingInterview = ({ jdAnalysisId, onNavigate, userId }) => {
                   ? 'bg-success/10 text-success font-medium'
                   : 'text-text-muted hover:text-text-muted'
               }`}
-              title="Friendly Mentor — encouraging tone, more hints"
+              title={L('coding.tooltipFriendlyMentor')}
             >
-              <Users size={12} /> Mentor
+              <Users size={12} /> {L('coding.mentor')}
             </button>
             <button
               onClick={() => setPersona('strict')}
@@ -470,9 +472,9 @@ export const CodingInterview = ({ jdAnalysisId, onNavigate, userId }) => {
                   ? 'bg-warning/10 text-warning font-medium'
                   : 'text-text-muted hover:text-text-muted'
               }`}
-              title="Strict Panel — terse, less forgiving"
+              title={L('coding.tooltipStrictPanel')}
             >
-              <User size={12} /> Panel
+              <User size={12} /> {L('coding.panel')}
             </button>
           </div>
           {/* Timer */}
@@ -505,7 +507,7 @@ export const CodingInterview = ({ jdAnalysisId, onNavigate, userId }) => {
               {question.examples?.length > 0 && (
                 <div>
                   <div className="text-xs font-semibold text-text-muted uppercase mb-2">
-                    Examples
+                    {L('coding.examples')}
                   </div>
                   <div className="space-y-2">
                     {question.examples.map((ex, i) => (
@@ -528,7 +530,7 @@ export const CodingInterview = ({ jdAnalysisId, onNavigate, userId }) => {
               {question.constraints?.length > 0 && (
                 <div>
                   <div className="text-xs font-semibold text-text-muted uppercase mb-2">
-                    Constraints
+                    {L('coding.constraints')}
                   </div>
                   <ul className="space-y-1">
                     {question.constraints.map((c, i) => (
@@ -558,7 +560,7 @@ export const CodingInterview = ({ jdAnalysisId, onNavigate, userId }) => {
                 <div>
                   <div className="flex items-center gap-1.5 text-xs font-semibold text-text-muted uppercase mb-2">
                     <Lightbulb size={12} className="text-warning" />
-                    Think Deeper
+                    {L('coding.thinkDeeper')}
                   </div>
                   <div className="space-y-1.5">
                     {question.followUpPrompts.map((prompt, i) => (
@@ -581,16 +583,16 @@ export const CodingInterview = ({ jdAnalysisId, onNavigate, userId }) => {
           {/* Toolbar */}
           <div className="flex items-center justify-between gap-3 flex-wrap">
             <div className="flex items-center gap-2">
-              <LanguageSelector value={language} />
+              <LanguageSelector value={codeLang} />
               <button
                 onClick={handleResetCode}
                 className="flex items-center gap-1 px-2 py-1.5 rounded-md text-xs text-text-muted hover:text-text-primary hover:surface-text bg-surface-hover transition-colors"
-                title="Reset code to starter template"
+                title={L('coding.tooltipResetCode')}
               >
-                <RotateCcw size={13} /> Reset
+                <RotateCcw size={13} /> {L('coding.reset')}
               </button>
               {resetToast && (
-                <span className="text-xs text-success animate-pulse">Code reset!</span>
+                <span className="text-xs text-success animate-pulse">{L('coding.codeReset')}</span>
               )}
             </div>
             <div className="flex items-center gap-2">
@@ -601,7 +603,7 @@ export const CodingInterview = ({ jdAnalysisId, onNavigate, userId }) => {
                 disabled={isRunning || isSubmitting}
                 title={`Run public tests (${modKey}+Enter)`}
               >
-                <Play size={14} className="mr-1.5" /> Run Tests
+                <Play size={14} className="mr-1.5" /> {L('coding.runTests')}
               </Button>
               <Button
                 variant="primary"
@@ -610,7 +612,7 @@ export const CodingInterview = ({ jdAnalysisId, onNavigate, userId }) => {
                 disabled={isRunning || isSubmitting}
                 title={`Submit solution (${modKey}+Shift+Enter)`}
               >
-                <Send size={14} className="mr-1.5" /> Submit
+                <Send size={14} className="mr-1.5" /> {L('coding.submit')}
               </Button>
             </div>
           </div>
@@ -620,7 +622,7 @@ export const CodingInterview = ({ jdAnalysisId, onNavigate, userId }) => {
             value={code}
             onChange={setCode}
             height="420px"
-            language={language}
+            language={codeLang}
           />
 
           {/* Network error */}
@@ -632,11 +634,12 @@ export const CodingInterview = ({ jdAnalysisId, onNavigate, userId }) => {
 
           {/* Test results */}
           <TestResultPanel
-            title="Public Test Results"
+            title={L('coding.publicTestResults')}
             results={publicTestResults || []}
             executionError={executionError}
             isEmpty={!publicTestResults && !executionError}
             isExecuting={isRunning}
+            language={language}
           />
         </div>
       </div>
@@ -659,6 +662,7 @@ export const CodingInterview = ({ jdAnalysisId, onNavigate, userId }) => {
         isEvaluating={isEvaluatingProbe}
         practiceFeedback={practiceFeedback}
         onClearFeedback={handleClearFeedback}
+        language={language}
       />
 
       {/* Submit confirmation modal */}
@@ -670,8 +674,8 @@ export const CodingInterview = ({ jdAnalysisId, onNavigate, userId }) => {
                 <AlertTriangle size={20} className="text-warning" />
               </div>
               <div>
-                <h3 className="text-base font-semibold text-text-primary">Submit Solution?</h3>
-                <p className="text-xs text-text-muted">This will end the interview.</p>
+                <h3 className="text-base font-semibold text-text-primary">{L('coding.submitSolution')}</h3>
+                <p className="text-xs text-text-muted">{L('coding.willEndInterview')}</p>
               </div>
             </div>
 
@@ -693,10 +697,10 @@ export const CodingInterview = ({ jdAnalysisId, onNavigate, userId }) => {
                 onClick={() => { setShowConfirmModal(false); setSubmitError(null); }}
                 disabled={isSubmitting}
               >
-                <X size={14} className="mr-1" /> Cancel
+                <X size={14} className="mr-1" /> {L('coding.cancel')}
               </Button>
               <Button variant="primary" onClick={handleConfirmSubmit} isLoading={isSubmitting}>
-                <Send size={14} className="mr-1" /> Submit
+                <Send size={14} className="mr-1" /> {L('coding.submit')}
               </Button>
             </div>
           </div>

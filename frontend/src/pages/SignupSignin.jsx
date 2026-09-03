@@ -5,8 +5,9 @@ import { Badge } from '../design-system/Badge';
 import { useAuth } from '../context/AuthContext';
 import { GoogleSignInButton } from '../components/auth/GoogleSignInButton';
 import { ArrowLeft, Mail, Lock, User, Eye, EyeOff, Loader2 } from 'lucide-react';
+import { t } from '../i18n/translations';
 
-export const SignupSignin = ({ onNavigate, onAuthComplete, guestId }) => {
+export const SignupSignin = ({ onNavigate, onAuthComplete, guestId, language = 'english' }) => {
   const [mode, setMode] = useState('signin'); // 'signin' | 'signup'
   const [username, setUsername] = useState('');
   const [email, setEmail] = useState('');
@@ -17,6 +18,8 @@ export const SignupSignin = ({ onNavigate, onAuthComplete, guestId }) => {
   const [isLoading, setIsLoading] = useState(false);
 
   const { signin, signup, googleSignIn, completeAuth } = useAuth();
+
+  const L = (key) => t(key, language);
 
   const resetForm = () => {
     setUsername('');
@@ -37,28 +40,28 @@ export const SignupSignin = ({ onNavigate, onAuthComplete, guestId }) => {
 
     if (mode === 'signup') {
       if (!username.trim() || username.trim().length < 3) {
-        setError('Username must be at least 3 characters.');
+        setError(L('auth.errorUsernameShort'));
         return;
       }
       if (!/^[a-zA-Z0-9_]+$/.test(username)) {
-        setError('Username can only contain letters, numbers, and underscores.');
+        setError(L('auth.errorUsernameChars'));
         return;
       }
       if (!email.trim() || !/^\S+@\S+\.\S+$/.test(email)) {
-        setError('Please enter a valid email address.');
+        setError(L('auth.errorEmailInvalid'));
         return;
       }
       if (password.length < 6) {
-        setError('Password must be at least 6 characters.');
+        setError(L('auth.errorPasswordShort'));
         return;
       }
       if (password !== confirmPassword) {
-        setError('Passwords do not match.');
+        setError(L('auth.errorPasswordMatch'));
         return;
       }
     } else {
       if (!username.trim() || !password) {
-        setError('Please enter your username and password.');
+        setError(L('auth.errorCredentials'));
         return;
       }
     }
@@ -121,7 +124,7 @@ export const SignupSignin = ({ onNavigate, onAuthComplete, guestId }) => {
           onClick={() => onNavigate('landing')}
           className="text-text-muted hover:text-text-primary"
         >
-          <ArrowLeft size={16} className="mr-1" /> Back to Home
+          <ArrowLeft size={16} className="mr-1" /> {L('auth.backHome')}
         </Button>
       </div>
 
@@ -138,7 +141,7 @@ export const SignupSignin = ({ onNavigate, onAuthComplete, guestId }) => {
                 : 'text-text-muted hover:text-text-primary'
             }`}
           >
-            Sign In
+            {L('auth.signIn')}
           </button>
           <button
             onClick={() => switchMode('signup')}
@@ -148,17 +151,15 @@ export const SignupSignin = ({ onNavigate, onAuthComplete, guestId }) => {
                 : 'text-text-muted hover:text-text-primary'
             }`}
           >
-            Sign Up
+            {L('auth.signUp')}
           </button>
         </div>
 
         <CardTitle className="text-xl mb-1">
-          {mode === 'signin' ? 'Welcome Back' : 'Create Your Account'}
+          {mode === 'signin' ? L('auth.welcomeBack') : L('auth.createAccount')}
         </CardTitle>
         <p className="text-sm text-text-muted mb-6">
-          {mode === 'signin'
-            ? 'Sign in to access your dashboard and track your progress.'
-            : 'Sign up to save your progress and unlock personalized insights.'}
+          {mode === 'signin' ? L('auth.signInDesc') : L('auth.signUpDesc')}
         </p>
 
         {/* Google Sign-In Button — prominently displayed at the top */}
@@ -178,7 +179,7 @@ export const SignupSignin = ({ onNavigate, onAuthComplete, guestId }) => {
             <div className="w-full border-t border-border"></div>
           </div>
           <div className="relative flex justify-center text-xs uppercase">
-            <span className="surface-text bg-surface-hover px-2 text-text-muted">Or continue with</span>
+            <span className="surface-text bg-surface-hover px-2 text-text-muted">{L('auth.orContinue')}</span>
           </div>
         </div>
 
@@ -186,7 +187,7 @@ export const SignupSignin = ({ onNavigate, onAuthComplete, guestId }) => {
           {/* Username */}
           <div>
             <label className="text-xs font-semibold text-text-muted block mb-1">
-              {mode === 'signin' ? 'Username or Email' : 'Username'}
+              {mode === 'signin' ? L('auth.usernameOrEmail') : L('auth.username')}
             </label>
             <div className="relative">
               <User size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-text-muted" />
@@ -194,7 +195,7 @@ export const SignupSignin = ({ onNavigate, onAuthComplete, guestId }) => {
                 type="text"
                 value={username}
                 onChange={(e) => setUsername(e.target.value)}
-                placeholder={mode === 'signin' ? 'Enter username or email' : 'Choose a username'}
+                placeholder={mode === 'signin' ? L('auth.usernamePlaceholder') : L('auth.usernameChoosePlaceholder')}
                 className="w-full bg-surface rounded-lg pl-10 pr-4 py-2.5 text-sm text-surface-text placeholder-surface-text-muted focus:outline-none focus:ring-1 focus:ring-border-strong font-mono"
                 autoComplete={mode === 'signin' ? 'username' : 'username'}
               />
@@ -204,7 +205,7 @@ export const SignupSignin = ({ onNavigate, onAuthComplete, guestId }) => {
           {/* Email (signup only) */}
           {mode === 'signup' && (
             <div>
-              <label className="text-xs font-semibold text-text-muted block mb-1">Email</label>
+              <label className="text-xs font-semibold text-text-muted block mb-1">{L('auth.email')}</label>
               <div className="relative">
                 <Mail size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-text-muted" />
                 <input
@@ -221,14 +222,14 @@ export const SignupSignin = ({ onNavigate, onAuthComplete, guestId }) => {
 
           {/* Password */}
           <div>
-            <label className="text-xs font-semibold text-text-muted block mb-1">Password</label>
+            <label className="text-xs font-semibold text-text-muted block mb-1">{L('auth.password')}</label>
             <div className="relative">
               <Lock size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-text-muted" />
               <input
                 type={showPassword ? 'text' : 'password'}
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                placeholder={mode === 'signup' ? 'Min 6 characters' : 'Enter password'}
+                placeholder={mode === 'signup' ? L('auth.passwordSignUpPlaceholder') : L('auth.passwordSignInPlaceholder')}
                 className="w-full bg-surface rounded-lg pl-10 pr-10 py-2.5 text-sm text-surface-text placeholder-surface-text-muted focus:outline-none focus:ring-1 focus:ring-border-strong"
                 autoComplete={mode === 'signin' ? 'current-password' : 'new-password'}
               />
@@ -246,14 +247,14 @@ export const SignupSignin = ({ onNavigate, onAuthComplete, guestId }) => {
           {/* Confirm Password (signup only) */}
           {mode === 'signup' && (
             <div>
-              <label className="text-xs font-semibold text-text-muted block mb-1">Confirm Password</label>
+              <label className="text-xs font-semibold text-text-muted block mb-1">{L('auth.confirmPassword')}</label>
               <div className="relative">
                 <Lock size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-text-muted" />
                 <input
                   type={showPassword ? 'text' : 'password'}
                   value={confirmPassword}
                   onChange={(e) => setConfirmPassword(e.target.value)}
-                  placeholder="Re-enter password"
+                  placeholder={L('auth.confirmPasswordPlaceholder')}
                   className="w-full bg-surface rounded-lg pl-10 pr-4 py-2.5 text-sm text-surface-text placeholder-surface-text-muted focus:outline-none focus:ring-1 focus:ring-border-strong"
                   autoComplete="new-password"
                 />
@@ -278,9 +279,9 @@ export const SignupSignin = ({ onNavigate, onAuthComplete, guestId }) => {
             disabled={isLoading}
           >
             {isLoading ? (
-              <><Loader2 size={16} className="animate-spin mr-2" /> {mode === 'signin' ? 'Signing in...' : 'Creating account...'}</>
+              <><Loader2 size={16} className="animate-spin mr-2" /> {mode === 'signin' ? L('auth.signingIn') : L('auth.creatingAccount')}</>
             ) : (
-              mode === 'signin' ? 'Sign In' : 'Create Account'
+              mode === 'signin' ? L('auth.submitSignIn') : L('auth.submitSignUp')
             )}
           </Button>
         </form>
@@ -289,16 +290,16 @@ export const SignupSignin = ({ onNavigate, onAuthComplete, guestId }) => {
         <p className="text-xs text-text-muted text-center mt-4">
           {mode === 'signin' ? (
             <>
-              Don&apos;t have an account?{' '}
+              {L('auth.noAccount')}{' '}
               <button onClick={() => switchMode('signup')} className="text-text-primary font-medium hover:underline">
-                Sign up
+                {L('auth.goSignUp')}
               </button>
             </>
           ) : (
             <>
-              Already have an account?{' '}
+              {L('auth.hasAccount')}{' '}
               <button onClick={() => switchMode('signin')} className="text-text-primary font-medium hover:underline">
-                Sign in
+                {L('auth.goSignIn')}
               </button>
             </>
           )}
