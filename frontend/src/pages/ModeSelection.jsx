@@ -32,7 +32,7 @@ export const ModeSelection = ({ jdAnalysis, onSelectMode, onNavigate, language, 
   const modes = [
     {
       id: 'behavioral',
-      icon: '🎤',
+      image: '/mode-behavioral.png',
       title: L('modeSelection.behavioral.title'),
       subtitle: L('modeSelection.behavioral.subtitle'),
       badge: L('modeSelection.behavioral.badge'),
@@ -42,7 +42,7 @@ export const ModeSelection = ({ jdAnalysis, onSelectMode, onNavigate, language, 
     },
     {
       id: 'technical',
-      icon: '💻',
+      image: '/mode-technical.png',
       title: L('modeSelection.technical.title'),
       subtitle: L('modeSelection.technical.subtitle'),
       badge: L('modeSelection.technical.badge'),
@@ -52,7 +52,7 @@ export const ModeSelection = ({ jdAnalysis, onSelectMode, onNavigate, language, 
     },
     {
       id: 'coding',
-      icon: '🧩',
+      image: '/mode-coding.png',
       title: L('modeSelection.coding.title'),
       subtitle: L('modeSelection.coding.subtitle'),
       badge: L('modeSelection.coding.badge'),
@@ -160,13 +160,8 @@ export const ModeSelection = ({ jdAnalysis, onSelectMode, onNavigate, language, 
                       : 'hover:border-border-theme'
                   }`}
                 >
-                  <CardHeader>
-                    <div className="flex justify-between items-start mb-3">
-                      <span className="text-3xl">{m.icon}</span>
-                      <Badge variant={m.badgeVariant}>{m.badge}</Badge>
-                    </div>
-                    <CardTitle className="text-lg">{m.title}</CardTitle>
-                    <CardDescription className="text-xs">{m.subtitle}</CardDescription>
+                  <CardHeader className="pb-2">
+                    <img src={m.image} alt={m.title} className="w-full h-auto object-contain max-h-44" />
                   </CardHeader>
 
                   <CardContent className="flex-1 space-y-4">

@@ -6,7 +6,6 @@
 
 import React from 'react';
 import GooeyNav from './GooeyNav';
-import { LogOut } from 'lucide-react';
 import { useTranslation } from '../../hooks/useTranslation';
 
 const PageHeader = ({
@@ -101,17 +100,6 @@ const PageHeader = ({
           )}
 
           {extraRightContent}
-
-          {isAuthenticated && onLogout && (
-            <button
-              onClick={onLogout}
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm text-surface hover:text-surface-text hover:bg-surface-hover transition-colors focus:outline-none focus:ring-2 focus:ring-border-strong"
-              aria-label="Sign out of your account"
-            >
-              <LogOut size={16} />
-              <span className="hidden sm:inline">{t('nav.logout')}</span>
-            </button>
-          )}
         </div>
       </div>
     </header>

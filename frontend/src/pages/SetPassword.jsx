@@ -2,9 +2,10 @@ import React, { useState } from 'react';
 import { Button } from '../design-system/Button';
 import { Card, CardTitle, CardContent } from '../design-system/Card';
 import { useAuth } from '../context/AuthContext';
-import { ArrowLeft, Lock, Eye, EyeOff, Loader2, CheckCircle2 } from 'lucide-react';
+import { ArrowLeft, Lock, Eye, EyeOff, Loader2, CheckCircle2, Mail } from 'lucide-react';
+import { t } from '../i18n/translations';
 
-export const SetPassword = ({ onNavigate, onPasswordSet }) => {
+export const SetPassword = ({ onNavigate, onPasswordSet, googleEmail = '', language = 'english' }) => {
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
@@ -13,18 +14,19 @@ export const SetPassword = ({ onNavigate, onPasswordSet }) => {
   const [isSuccess, setIsSuccess] = useState(false);
 
   const { setPassword: setPasswordAuth } = useAuth();
+  const L = (key) => t(key, language);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
 
     if (password.length < 6) {
-      setError('Password must be at least 6 characters.');
+      setError(L('setPassword.errorShort'));
       return;
     }
 
     if (password !== confirmPassword) {
-      setError('Passwords do not match.');
+      setError(L('setPassword.errorMismatch'));
       return;
     }
 
@@ -37,7 +39,7 @@ export const SetPassword = ({ onNavigate, onPasswordSet }) => {
         onPasswordSet?.();
       }, 1500);
     } catch (err) {
-      setError(err.message || 'Failed to set password. Please try again.');
+      setError(err.message || L('setPassword.errorGeneric'));
     } finally {
       setIsLoading(false);
     }
@@ -53,7 +55,7 @@ export const SetPassword = ({ onNavigate, onPasswordSet }) => {
           onClick={() => onNavigate('landing')}
           className="text-text-muted hover:text-text-primary"
         >
-          <ArrowLeft size={16} className="mr-1" /> Back to Home
+          <ArrowLeft size={16} className="mr-1" /> {L('setPassword.backHome')}
         </Button>
       </div>
 
@@ -66,9 +68,9 @@ export const SetPassword = ({ onNavigate, onPasswordSet }) => {
               <div className="w-16 h-16 rounded-full bg-success/20 flex items-center justify-center mx-auto">
                 <CheckCircle2 className="text-success" size={32} />
               </div>
-              <CardTitle className="text-xl">Password Set Successfully!</CardTitle>
+              <CardTitle className="text-xl">{L('setPassword.successTitle')}</CardTitle>
               <p className="text-sm text-text-muted">
-                Your account is now fully set up. You can sign in with your email and password anytime.
+                {L('setPassword.successDesc')}
               </p>
             </CardContent>
           ) : (
@@ -78,9 +80,18 @@ export const SetPassword = ({ onNavigate, onPasswordSet }) => {
                 <div className="w-14 h-14 rounded-full bg-text-primary/10 flex items-center justify-center mx-auto mb-4">
                   <Lock className="text-text-primary" size={24} />
                 </div>
-                <CardTitle className="text-xl mb-1">Set Your Password</CardTitle>
-                <p className="text-sm text-text-muted">
-                  Create a password to secure your account. You'll use this to sign in alongside Google.
+                <CardTitle className="text-xl mb-1">{L('setPassword.title')}</CardTitle>
+
+                {/* Show the Google account email */}
+                {googleEmail && (
+                  <div className="flex items-center justify-center gap-1.5 mt-2 text-sm text-text-muted">
+                    <Mail size={14} />
+                    <span>{L('setPassword.settingUp')} <strong className="text-text-primary">{googleEmail}</strong></span>
+                  </div>
+                )}
+
+                <p className="text-sm text-text-muted mt-2">
+                  {L('setPassword.desc')}
                 </p>
               </div>
 
@@ -88,7 +99,7 @@ export const SetPassword = ({ onNavigate, onPasswordSet }) => {
                 {/* Password */}
                 <div>
                   <label className="text-xs font-semibold text-text-muted block mb-1">
-                    Password
+                    {L('setPassword.passwordLabel')}
                   </label>
                   <div className="relative">
                     <Lock size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-text-muted" />
@@ -96,7 +107,7 @@ export const SetPassword = ({ onNavigate, onPasswordSet }) => {
                       type={showPassword ? 'text' : 'password'}
                       value={password}
                       onChange={(e) => setPassword(e.target.value)}
-                      placeholder="Min 6 characters"
+                      placeholder={L('setPassword.passwordPlaceholder')}
                       className="w-full bg-surface rounded-lg pl-10 pr-10 py-2.5 text-sm text-surface-text placeholder-surface-text-muted focus:outline-none focus:ring-1 focus:ring-border-strong"
                       autoComplete="new-password"
                     />
@@ -114,7 +125,7 @@ export const SetPassword = ({ onNavigate, onPasswordSet }) => {
                 {/* Confirm Password */}
                 <div>
                   <label className="text-xs font-semibold text-text-muted block mb-1">
-                    Confirm Password
+                    {L('setPassword.confirmLabel')}
                   </label>
                   <div className="relative">
                     <Lock size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-text-muted" />
@@ -122,7 +133,7 @@ export const SetPassword = ({ onNavigate, onPasswordSet }) => {
                       type={showPassword ? 'text' : 'password'}
                       value={confirmPassword}
                       onChange={(e) => setConfirmPassword(e.target.value)}
-                      placeholder="Re-enter password"
+                      placeholder={L('setPassword.confirmPlaceholder')}
                       className="w-full bg-surface rounded-lg pl-10 pr-4 py-2.5 text-sm text-surface-text placeholder-surface-text-muted focus:outline-none focus:ring-1 focus:ring-border-strong"
                       autoComplete="new-password"
                     />
@@ -146,16 +157,26 @@ export const SetPassword = ({ onNavigate, onPasswordSet }) => {
                   disabled={isLoading}
                 >
                   {isLoading ? (
-                    <><Loader2 size={16} className="animate-spin mr-2" /> Setting password...</>
+                    <><Loader2 size={16} className="animate-spin mr-2" /> {L('setPassword.submitting')}</>
                   ) : (
-                    'Set Password & Continue'
+                    L('setPassword.submit')
                   )}
                 </Button>
               </form>
 
+              {/* Retry link — go back to Google sign-in */}
+              <div className="text-center mt-4">
+                <button
+                  onClick={() => onNavigate('auth')}
+                  className="text-xs text-text-muted hover:text-text-primary transition-colors"
+                >
+                  {L('setPassword.tryGoogleAgain')}
+                </button>
+              </div>
+
               {/* Info text */}
-              <p className="text-xs text-text-muted text-center mt-4">
-                This password will be used alongside your Google account for authentication.
+              <p className="text-xs text-text-muted text-center mt-2">
+                {L('setPassword.infoText')}
               </p>
             </>
           )}

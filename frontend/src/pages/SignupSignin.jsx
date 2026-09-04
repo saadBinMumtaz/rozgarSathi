@@ -7,7 +7,7 @@ import { GoogleSignInButton } from '../components/auth/GoogleSignInButton';
 import { ArrowLeft, Mail, Lock, User, Eye, EyeOff, Loader2 } from 'lucide-react';
 import { t } from '../i18n/translations';
 
-export const SignupSignin = ({ onNavigate, onAuthComplete, guestId, language = 'english' }) => {
+export const SignupSignin = ({ onNavigate, onAuthComplete, guestId, language = 'english', onGoogleNeedsPassword }) => {
   const [mode, setMode] = useState('signin'); // 'signin' | 'signup'
   const [username, setUsername] = useState('');
   const [email, setEmail] = useState('');
@@ -93,6 +93,10 @@ export const SignupSignin = ({ onNavigate, onAuthComplete, guestId, language = '
       
       // Check if user needs to set a password (new Google OAuth users)
       if (result.needsPassword) {
+        // Store the email so SetPassword page can display it
+        if (onGoogleNeedsPassword) {
+          onGoogleNeedsPassword(result.user?.email || '');
+        }
         // Redirect to Set Password page WITHOUT completing auth yet
         onNavigate?.('set-password');
         return;

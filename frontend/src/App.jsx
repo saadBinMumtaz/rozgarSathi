@@ -14,9 +14,14 @@ import SharedReport from './pages/SharedReport';
 import FindJobs from './pages/FindJobs';
 import JobDetail from './pages/JobDetail';
 import ResumeTailor from './pages/ResumeTailor';
+import HomePage from './pages/HomePage';
+import FindYourJobPage from './pages/FindYourJobPage';
+import TailorResumePage from './pages/TailorResumePage';
+import PrepareInterviewPage from './pages/PrepareInterviewPage';
 import { ErrorBoundary } from './components/shared/ErrorBoundary';
 import Toast from './design-system/Toast';
 import { ThemeToggle } from './design-system/ThemeToggle';
+import { LogOut } from 'lucide-react';
 import { useLanguage } from './hooks/useLanguage';
 import { t as translate } from './i18n/translations';
 import { useTheme } from './hooks/useTheme';
@@ -25,6 +30,9 @@ import { apiClient } from './api/client';
 
 const APP_STATE_KEY = 'rozgar-sathi-app-state-v1';
 const USER_ID_KEY = 'rozgar-sathi-user-id';
+
+// Public-facing pages (no auth required, have their own navbar)
+const PUBLIC_PAGES = new Set(['home', 'public-find-job', 'public-tailor-resume', 'public-prepare-interview']);
 
 // Pages that should trigger full cleanup (TTS, speech, timers) when navigating away
 const INTERVIEW_PAGES = new Set(['behavioral-interview', 'technical-interview', 'coding-interview']);
@@ -54,7 +62,7 @@ const stopAllInterviewMedia = () => {
 };
 
 const AppContent = () => {
-  const { user, isAuthenticated, loading: authLoading } = useAuth();
+  const { user, isAuthenticated, loading: authLoading, logout } = useAuth();
 
   // Persistent userId — generated once, stored in localStorage, reused across all sessions
   const [userId] = useState(() => {
@@ -77,10 +85,12 @@ const AppContent = () => {
       const stored = localStorage.getItem(APP_STATE_KEY);
       if (stored) {
         const { page } = JSON.parse(stored);
+        // Map old 'landing' to new 'home' (public homepage)
+        if (page === 'landing') return 'home';
         if (page) return page;
       }
     } catch {}
-    return 'landing';
+    return 'home';
   });
 
   const [jdAnalysis, setJdAnalysis] = useState(() => {
@@ -99,6 +109,7 @@ const AppContent = () => {
   const [showGuestModal, setShowGuestModal] = useState(false);
   const [selectedJob, setSelectedJob] = useState(null);
   const [jobPracticingLoading, setJobPracticingLoading] = useState(false);
+  const [googleAuthEmail, setGoogleAuthEmail] = useState(null);
   const { language, setLanguage, isUrdu } = useLanguage();
   const { theme, toggleTheme, isDark } = useTheme();
 
@@ -128,12 +139,39 @@ const AppContent = () => {
         setCurrentPage(page);
       } else {
         skipPushRef.current = true;
-        setCurrentPage('landing');
+        setCurrentPage('home');
       }
     };
     window.addEventListener('popstate', handlePopState);
     return () => window.removeEventListener('popstate', handlePopState);
   }, []);
+
+  // --- Google OAuth callback handler (from backend redirect) ---
+  useEffect(() => {
+    const hash = window.location.hash;
+    if (!hash) return;
+
+    // Handle /#/auth/callback?token=xxx
+    const callbackMatch = hash.match(/^#\/auth\/callback\?token=(.+)$/);
+    if (callbackMatch) {
+      const token = decodeURIComponent(callbackMatch[1]);
+      localStorage.setItem('rozgar-sathi-auth-token', token);
+      // Clear the hash so it doesn't re-trigger
+      window.location.hash = '';
+      // AuthContext will pick up the token from localStorage on next render
+      // and verify it via /api/auth/me
+      return;
+    }
+
+    // Handle /#/auth?error=xxx
+    const errorMatch = hash.match(/^#\/auth\?error=(.+)$/);
+    if (errorMatch) {
+      const errorMsg = decodeURIComponent(errorMatch[1]);
+      setToastMessage({ type: 'error', message: errorMsg });
+      window.location.hash = '';
+      setCurrentPage('auth');
+    }
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   // --- Cleanup when navigating away from interview pages ---
   useEffect(() => {
@@ -176,10 +214,10 @@ const AppContent = () => {
       const stored = localStorage.getItem(APP_STATE_KEY);
       if (stored) {
         const { page } = JSON.parse(stored);
-        return page ? new Set([page]) : new Set(['landing']);
+        return page ? new Set([page]) : new Set(['home']);
       }
     } catch {}
-    return new Set(['landing']);
+    return new Set(['home']);
   });
 
   useEffect(() => {
@@ -321,10 +359,24 @@ const AppContent = () => {
 
   return (
     <div className="min-h-screen bg-bg-primary text-text-primary selection:bg-text-primary selection:text-bg-primary">
-      {/* Global theme toggle */}
-      <div className="fixed top-4 right-4 z-50">
-        <ThemeToggle isDark={isDark} onToggle={toggleTheme} size="md" />
-      </div>
+      {/* Global theme toggle — hidden on public pages (they have their own) */}
+      {!PUBLIC_PAGES.has(currentPage) && (
+        <div className="fixed top-4 right-4 z-50">
+          <ThemeToggle isDark={isDark} onToggle={toggleTheme} size="md" />
+        </div>
+      )}
+
+      {/* Global logout button — bottom right (hidden on public pages) */}
+      {isAuthenticated && !PUBLIC_PAGES.has(currentPage) && (
+        <button
+          onClick={() => { logout(); navigateTo('home'); }}
+          className="fixed bottom-4 right-4 z-50 flex items-center gap-1.5 px-3 py-2 rounded-full bg-text-primary/10 hover:bg-text-primary/20 text-text-primary text-sm font-medium backdrop-blur-sm transition-all shadow-lg border border-border/30"
+          aria-label="Sign out of your account"
+        >
+          <LogOut size={15} />
+          <span className="hidden sm:inline">{translate('nav.logout', language)}</span>
+        </button>
+      )}
 
       {/* Auth page */}
       <div className={currentPage === 'auth' ? '' : 'hidden'}>
@@ -334,6 +386,7 @@ const AppContent = () => {
             onAuthComplete={handleAuthComplete}
             guestId={userId}
             language={language}
+            onGoogleNeedsPassword={setGoogleAuthEmail}
           />
         )}
       </div>
@@ -344,9 +397,30 @@ const AppContent = () => {
           <SetPassword
             onNavigate={navigateTo}
             onPasswordSet={handlePasswordSet}
+            googleEmail={googleAuthEmail}
+            language={language}
           />
         )}
       </div>
+
+      {/* ─── Public-Facing Pages ─── */}
+      <div className={currentPage === 'home' ? '' : 'hidden'}>
+        <HomePage isDark={isDark} toggleTheme={toggleTheme} onNavigate={navigateTo} language={language} setLanguage={setLanguage} />
+      </div>
+
+      <div className={currentPage === 'public-find-job' ? '' : 'hidden'}>
+        <FindYourJobPage isDark={isDark} toggleTheme={toggleTheme} onNavigate={navigateTo} language={language} setLanguage={setLanguage} />
+      </div>
+
+      <div className={currentPage === 'public-tailor-resume' ? '' : 'hidden'}>
+        <TailorResumePage isDark={isDark} toggleTheme={toggleTheme} onNavigate={navigateTo} language={language} setLanguage={setLanguage} />
+      </div>
+
+      <div className={currentPage === 'public-prepare-interview' ? '' : 'hidden'}>
+        <PrepareInterviewPage isDark={isDark} toggleTheme={toggleTheme} onNavigate={navigateTo} language={language} setLanguage={setLanguage} />
+      </div>
+
+      {/* ─── Existing App Pages ─── */}
 
       {/* Landing page */}
       <div className={currentPage === 'landing' ? '' : 'hidden'}>

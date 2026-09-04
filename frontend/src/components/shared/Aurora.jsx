@@ -186,6 +186,14 @@ export default function Aurora({
     }
     window.addEventListener('resize', resize);
 
+    // ResizeObserver detects when container goes from display:none → visible
+    // (offsetWidth/Height change from 0 to actual size)
+    let ro;
+    if (typeof ResizeObserver !== 'undefined') {
+      ro = new ResizeObserver(() => resize());
+      ro.observe(ctn);
+    }
+
     const geometry = new Triangle(gl);
     if (geometry.attributes.uv) {
       delete geometry.attributes.uv;
@@ -236,6 +244,7 @@ export default function Aurora({
     return () => {
       cancelAnimationFrame(animateId);
       window.removeEventListener('resize', resize);
+      if (ro) ro.disconnect();
       if (ctn && gl.canvas.parentNode === ctn) {
         ctn.removeChild(gl.canvas);
       }

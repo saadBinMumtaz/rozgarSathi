@@ -168,7 +168,8 @@ export const googleAuth = async (req, res, next) => {
 
 /**
  * GET /api/auth/google/callback
- * Handles Google OAuth callback, verifies token, creates/updates user, returns JWT.
+ * Handles Google OAuth callback — exchanges authorization code for tokens,
+ * verifies the ID token, creates/updates user, and redirects to frontend with JWT.
  */
 export const googleCallback = async (req, res, next) => {
   try {
@@ -178,16 +179,45 @@ export const googleCallback = async (req, res, next) => {
       return res.status(400).json({ code: 400, message: 'Authorization code is required.' });
     }
 
-    // Exchange code for tokens (in a real app, you'd use the OAuth2Client)
-    // For simplicity, we'll expect the frontend to send the ID token directly
-    // This is a simplified flow - in production, use proper OAuth2 code exchange
-    
-    // For now, we'll redirect to frontend with a temporary token
-    // The frontend will then call /api/auth/google/verify with the ID token
-    const frontendUrl = env.FRONTEND_URL || 'http://localhost:5173';
-    res.redirect(`${frontendUrl}/auth/google/callback?code=${code}`);
+    const { OAuth2Client } = await import('google-auth-library');
+    const client = new OAuth2Client(
+      env.GOOGLE_CLIENT_ID,
+      env.GOOGLE_CLIENT_SECRET,
+      env.GOOGLE_REDIRECT_URI || `${env.VITE_API_BASE_URL}/auth/google/callback`
+    );
+
+    // Exchange authorization code for tokens
+    const { tokens } = await client.getToken(code);
+    client.setCredentials(tokens);
+
+    // Verify the ID token to get user info
+    const ticket = await client.verifyIdToken({
+      idToken: tokens.id_token,
+      audience: env.GOOGLE_CLIENT_ID,
+    });
+    const payload = ticket.getPayload();
+
+    const googlePayload = {
+      googleId: payload.sub,
+      email: payload.email,
+      name: payload.name,
+      avatarUrl: payload.picture,
+      emailVerified: payload.email_verified,
+    };
+
+    // Find or create user
+    const user = await findOrCreateGoogleUser(googlePayload);
+
+    // Generate JWT
+    const token = generateToken(String(user._id));
+
+    // Redirect to frontend with JWT in hash (not logged in server access logs)
+    const frontendUrl = env.FRONTEND_URL || 'http://localhost:3000';
+    res.redirect(`${frontendUrl}/#/auth/callback?token=${encodeURIComponent(token)}`);
   } catch (err) {
-    next(err);
+    console.error('[GoogleCallback] Error:', err.message);
+    const frontendUrl = env.FRONTEND_URL || 'http://localhost:3000';
+    res.redirect(`${frontendUrl}/#/auth?error=${encodeURIComponent('Google sign-in failed. Please try again.')}`);
   }
 };
 
@@ -219,7 +249,8 @@ export const googleVerify = async (req, res, next) => {
     }
 
     // Check if user needs to set a password (Google OAuth users without password)
-    const needsPassword = !user.password;
+    // Bcrypt hashes are always 60 chars; anything shorter means no password was set
+    const needsPassword = !user.password || user.password.length < 60;
 
     // Generate JWT
     const token = generateToken(String(user._id));
