@@ -7,7 +7,7 @@ import { Github, Mail } from 'lucide-react';
 
 export const PublicFooter = ({ isDark = true, onNavigate }) => {
   return (
-    <footer className="relative overflow-hidden border-t border-border bg-bg-primary">
+    <footer className="relative overflow-hidden bg-bg-primary">
       {/* MagicRings subtle background */}
       <div className="absolute inset-0 opacity-60">
         <MagicRings isDark={isDark} />
@@ -17,11 +17,12 @@ export const PublicFooter = ({ isDark = true, onNavigate }) => {
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-8 items-start">
           {/* Brand */}
           <div className="space-y-2">
-            <div className="flex items-center gap-2">
-              <div className="w-7 h-7 rounded-lg bg-text-primary flex items-center justify-center font-black text-xs text-bg-primary">
-                RS
-              </div>
-              <span className="text-base font-bold text-text-primary">RozGar-Sathi</span>
+            <div className="flex items-center gap-2.5">
+              <img
+                src={isDark ? '/logo-white.png' : '/logo-dark.png'}
+                alt="Rozgar Sathi"
+                className="h-10 sm:h-12 w-auto flex-shrink-0"
+              />
             </div>
             <p className="text-sm text-text-muted max-w-xs leading-relaxed">
               Your AI-powered career companion — from job search to interview mastery.
@@ -74,7 +75,7 @@ export const PublicFooter = ({ isDark = true, onNavigate }) => {
         </div>
 
         {/* Copyright */}
-        <div className="mt-8 pt-6 border-t border-border text-center">
+        <div className="mt-8 pt-6 text-center">
           <p className="text-xs text-text-muted">
             &copy; 2026 RozGar-Sathi. All rights reserved.
           </p>

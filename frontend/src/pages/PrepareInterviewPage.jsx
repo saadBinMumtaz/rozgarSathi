@@ -66,7 +66,7 @@ export const PrepareInterviewPage = ({ isDark, toggleTheme, onNavigate, language
       <PublicNavbar isDark={isDark} toggleTheme={toggleTheme} onNavigate={onNavigate} currentPage="public-prepare-interview" language={language} setLanguage={setLanguage} />
 
       {/* ─── Hero — Split Screen ─── */}
-      <section className="relative pt-16 overflow-hidden">
+      <section className="relative pt-28 overflow-hidden">
         <div className="absolute inset-0 w-full h-full pointer-events-none">
           <Aurora blend={0.4} amplitude={0.8} speed={1.0} lightMode={!isDark} />
         </div>
@@ -75,13 +75,6 @@ export const PrepareInterviewPage = ({ isDark, toggleTheme, onNavigate, language
         <div className="relative z-10 max-w-7xl mx-auto px-6 md:px-12 py-12 md:py-20 grid grid-cols-1 lg:grid-cols-2 gap-10 lg:gap-16 items-center">
           {/* Left Column */}
           <div className="space-y-6">
-            <ScrollReveal>
-              <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-text-primary/5 border border-border text-sm text-text-muted">
-                <Mic size={14} />
-                <span>{L('pi.badge')}</span>
-              </div>
-            </ScrollReveal>
-
             <ScrollReveal delay={100}>
               <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-[3.25rem] font-extrabold text-text-primary tracking-tight leading-tight">
                 {L('pi.heroPrefix')}
@@ -93,8 +86,6 @@ export const PrepareInterviewPage = ({ isDark, toggleTheme, onNavigate, language
                     style={{ animation: 'tw-cursor-blink 0.7s steps(2, start) infinite' }}
                   />
                 </span>
-                <br />
-                {L('pi.heroSuffix')}
               </h1>
             </ScrollReveal>
 
@@ -119,7 +110,7 @@ export const PrepareInterviewPage = ({ isDark, toggleTheme, onNavigate, language
           {/* Right Column — Video Frame */}
           <ScrollReveal delay={200} direction="right">
             <div className="flex items-center justify-center">
-              <div className="relative w-full max-w-lg aspect-video rounded-2xl overflow-hidden border border-border shadow-2xl bg-surface">
+              <div className="relative w-full max-w-lg aspect-video rounded-2xl overflow-hidden shadow-2xl bg-surface">
                 {/* VIDEO PLACEHOLDER: Upload custom interview prep video here */}
                 {/* Replace src with your video file, e.g., "/hero-interview.mp4" */}
                 <video
@@ -129,13 +120,8 @@ export const PrepareInterviewPage = ({ isDark, toggleTheme, onNavigate, language
                   playsInline
                   className="w-full h-full object-cover"
                 >
-                  <source src="/animated-video.mp4" type="video/mp4" />
+                  <source src="/interview.mp4" type="video/mp4" />
                 </video>
-                <div className="absolute inset-0 flex items-center justify-center bg-surface/80 pointer-events-none">
-                  <div className="w-16 h-16 rounded-full bg-text-primary/10 flex items-center justify-center">
-                    <Play size={24} className="text-text-primary ml-1" />
-                  </div>
-                </div>
               </div>
             </div>
           </ScrollReveal>
@@ -159,7 +145,7 @@ export const PrepareInterviewPage = ({ isDark, toggleTheme, onNavigate, language
               const Icon = mode.icon;
               return (
                 <ScrollReveal key={mode.title} delay={i * 100}>
-                  <div className="surface-text bg-surface rounded-xl p-6 border border-border/50 h-full hover:border-border-strong transition-colors">
+                  <div className="surface-text bg-surface rounded-xl p-6 h-full transition-colors">
                     <div className="w-12 h-12 rounded-xl bg-text-primary/10 flex items-center justify-center mb-4">
                       <Icon size={22} className="text-surface-text-muted" />
                     </div>
@@ -188,7 +174,7 @@ export const PrepareInterviewPage = ({ isDark, toggleTheme, onNavigate, language
           </ScrollReveal>
 
           <ScrollReveal>
-            <div className="surface-text bg-surface rounded-2xl p-6 md:p-8 border border-border/50 max-w-3xl mx-auto">
+            <div className="surface-text bg-surface rounded-2xl p-6 md:p-8 max-w-3xl mx-auto">
               <div className="space-y-5">
                 {/* AI Question */}
                 <div className="flex items-start gap-3">
@@ -219,7 +205,7 @@ export const PrepareInterviewPage = ({ isDark, toggleTheme, onNavigate, language
                       <span className="text-xs font-semibold text-surface-text">{L('pi.mockYou')}</span>
                       <span className="text-xs text-surface-text-muted">{L('pi.mockVoiceResp')}</span>
                     </div>
-                    <div className="bg-text-primary/5 rounded-xl p-4 border border-border/30">
+                    <div className="bg-text-primary/5 rounded-xl p-4">
                       <p className="text-sm text-text-primary leading-relaxed">
                         "During my internship, our production server crashed 2 hours before a demo. I first checked the error logs, identified a memory leak in the database connection pool, and fixed it by implementing connection timeout limits. The server was back up in 45 minutes."
                       </p>
@@ -237,7 +223,7 @@ export const PrepareInterviewPage = ({ isDark, toggleTheme, onNavigate, language
                       <span className="text-xs font-semibold text-success">{L('pi.mockEvalLabel')}</span>
                       <span className="text-xs text-surface-text-muted">{L('pi.mockScore')}</span>
                     </div>
-                    <div className="bg-success/5 rounded-xl p-4 border border-success/15">
+                    <div className="bg-success/5 rounded-xl p-4">
                       <div className="space-y-2">
                         <div className="flex items-center gap-2">
                           <CheckCircle2 size={12} className="text-success" />
@@ -294,7 +280,7 @@ export const PrepareInterviewPage = ({ isDark, toggleTheme, onNavigate, language
                 </p>
                 <div className="space-y-4">
                   <div className="flex items-start gap-3">
-                    <div className="w-9 h-9 rounded-lg bg-text-primary/5 border border-border flex items-center justify-center flex-shrink-0">
+                    <div className="w-9 h-9 rounded-lg bg-text-primary/5 flex items-center justify-center flex-shrink-0">
                       <Volume2 size={16} className="text-text-muted" />
                     </div>
                     <div>
@@ -303,7 +289,7 @@ export const PrepareInterviewPage = ({ isDark, toggleTheme, onNavigate, language
                     </div>
                   </div>
                   <div className="flex items-start gap-3">
-                    <div className="w-9 h-9 rounded-lg bg-text-primary/5 border border-border flex items-center justify-center flex-shrink-0">
+                    <div className="w-9 h-9 rounded-lg bg-text-primary/5 flex items-center justify-center flex-shrink-0">
                       <Globe size={16} className="text-text-muted" />
                     </div>
                     <div>
@@ -312,7 +298,7 @@ export const PrepareInterviewPage = ({ isDark, toggleTheme, onNavigate, language
                     </div>
                   </div>
                   <div className="flex items-start gap-3">
-                    <div className="w-9 h-9 rounded-lg bg-text-primary/5 border border-border flex items-center justify-center flex-shrink-0">
+                    <div className="w-9 h-9 rounded-lg bg-text-primary/5 flex items-center justify-center flex-shrink-0">
                       <Zap size={16} className="text-text-muted" />
                     </div>
                     <div>
@@ -325,9 +311,9 @@ export const PrepareInterviewPage = ({ isDark, toggleTheme, onNavigate, language
             </ScrollReveal>
 
             <ScrollReveal direction="right">
-              <div className="surface-text bg-surface rounded-2xl p-6 border border-border/50">
+              <div className="surface-text bg-surface rounded-2xl p-6">
                 <div className="space-y-4">
-                  <div className="flex items-center gap-3 p-4 rounded-xl bg-text-primary/5 border border-border/30">
+                  <div className="flex items-center gap-3 p-4 rounded-xl bg-text-primary/5">
                     <div className="w-10 h-10 rounded-full bg-danger/20 flex items-center justify-center">
                       <Mic size={18} className="text-danger" />
                     </div>
@@ -401,7 +387,7 @@ export const PrepareInterviewPage = ({ isDark, toggleTheme, onNavigate, language
               const Icon = cap.icon;
               return (
                 <ScrollReveal key={cap.title} delay={i * 80}>
-                  <div className="surface-text bg-surface rounded-xl p-6 border border-border/50 h-full hover:border-border-strong transition-colors">
+                  <div className="surface-text bg-surface rounded-xl p-6 h-full transition-colors">
                     <Icon size={22} className="text-surface-text-muted mb-3" />
                     <h3 className="text-base font-bold text-surface-text">{cap.title}</h3>
                     <p className="mt-2 text-sm text-surface-text-muted leading-relaxed">{cap.desc}</p>
@@ -417,7 +403,7 @@ export const PrepareInterviewPage = ({ isDark, toggleTheme, onNavigate, language
       <section className="py-20 md:py-28">
         <div className="max-w-7xl mx-auto px-6">
           <ScrollReveal>
-            <div className="surface-text bg-surface rounded-2xl p-10 md:p-16 text-center border border-border/50 relative overflow-hidden">
+            <div className="surface-text bg-surface rounded-2xl p-10 md:p-16 text-center relative overflow-hidden">
               <div className="absolute inset-0 bg-gradient-to-br from-text-primary/[0.03] to-transparent pointer-events-none" />
               <div className="relative z-10 space-y-6">
                 <h2 className="text-3xl md:text-4xl font-bold tracking-tight">
@@ -435,7 +421,7 @@ export const PrepareInterviewPage = ({ isDark, toggleTheme, onNavigate, language
                   </button>
                   <button
                     onClick={() => onNavigate('mode-selection')}
-                    className="inline-flex items-center gap-2 px-6 py-3.5 rounded-lg border border-surface-text/20 text-surface-text text-base font-medium hover:bg-surface-hover transition-colors"
+                    className="inline-flex items-center gap-2 px-6 py-3.5 rounded-lg text-surface-text text-base font-medium hover:bg-surface-hover transition-colors"
                   >
                     <Play size={16} /> {L('pi.ctaExplore')}
                   </button>

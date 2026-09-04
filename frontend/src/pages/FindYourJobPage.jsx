@@ -11,7 +11,7 @@ import { Button } from '../design-system/Button';
 import { t } from '../i18n/translations';
 import {
   Briefcase, Search, FileSearch, Target, ArrowRight, CheckCircle2,
-  MapPin, Building2, Clock, Sparkles, BarChart3, Code2, Mic, Play
+  MapPin, Building2, Clock, Sparkles, BarChart3, Code2, Mic
 } from 'lucide-react';
 
 /* ─── TypeWriter Hook ─── */
@@ -65,7 +65,7 @@ export const FindYourJobPage = ({ isDark, toggleTheme, onNavigate, language, set
       <PublicNavbar isDark={isDark} toggleTheme={toggleTheme} onNavigate={onNavigate} currentPage="public-find-job" language={language} setLanguage={setLanguage} />
 
       {/* ─── Hero — Split Screen ─── */}
-      <section className="relative pt-16 overflow-hidden">
+      <section className="relative pt-28 overflow-hidden">
         <div className="absolute inset-0 w-full h-full pointer-events-none">
           <Aurora blend={0.4} amplitude={0.8} speed={1.0} lightMode={!isDark} />
         </div>
@@ -74,13 +74,6 @@ export const FindYourJobPage = ({ isDark, toggleTheme, onNavigate, language, set
         <div className="relative z-10 max-w-7xl mx-auto px-6 md:px-12 py-12 md:py-20 grid grid-cols-1 lg:grid-cols-2 gap-10 lg:gap-16 items-center">
           {/* Left Column */}
           <div className="space-y-6">
-            <ScrollReveal>
-              <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-text-primary/5 border border-border text-sm text-text-muted">
-                <Briefcase size={14} />
-                <span>{L('fj.badge')}</span>
-              </div>
-            </ScrollReveal>
-
             <ScrollReveal delay={100}>
               <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-[3.25rem] font-extrabold text-text-primary tracking-tight leading-tight">
                 {L('fj.heroPrefix')}
@@ -116,7 +109,7 @@ export const FindYourJobPage = ({ isDark, toggleTheme, onNavigate, language, set
           {/* Right Column — Video Frame */}
           <ScrollReveal delay={200} direction="right">
             <div className="flex items-center justify-center">
-              <div className="relative w-full max-w-lg aspect-video rounded-2xl overflow-hidden border border-border shadow-2xl bg-surface">
+              <div className="relative w-full max-w-lg aspect-video rounded-2xl overflow-hidden shadow-2xl bg-surface">
                 {/* VIDEO PLACEHOLDER: Upload custom job discovery video here */}
                 {/* Replace src with your video file, e.g., "/hero-jobs.mp4" */}
                 <video
@@ -126,13 +119,8 @@ export const FindYourJobPage = ({ isDark, toggleTheme, onNavigate, language, set
                   playsInline
                   className="w-full h-full object-cover"
                 >
-                  <source src="/animated-video.mp4" type="video/mp4" />
+                  <source src="/job-search.mp4" type="video/mp4" />
                 </video>
-                <div className="absolute inset-0 flex items-center justify-center bg-surface/80 pointer-events-none">
-                  <div className="w-16 h-16 rounded-full bg-text-primary/10 flex items-center justify-center">
-                    <Play size={24} className="text-text-primary ml-1" />
-                  </div>
-                </div>
               </div>
             </div>
           </ScrollReveal>
@@ -156,7 +144,7 @@ export const FindYourJobPage = ({ isDark, toggleTheme, onNavigate, language, set
               const Icon = step.icon;
               return (
                 <ScrollReveal key={step.title} delay={i * 100}>
-                  <div className="surface-text bg-surface rounded-xl p-6 border border-border/50 h-full hover:border-border-strong transition-colors relative">
+                  <div className="surface-text bg-surface rounded-xl p-6 h-full transition-colors relative">
                     <div className="absolute top-4 right-4 text-3xl font-black text-surface-text/10">
                       {i + 1}
                     </div>
@@ -190,7 +178,7 @@ export const FindYourJobPage = ({ isDark, toggleTheme, onNavigate, language, set
                     const Icon = item.icon;
                     return (
                       <div key={item.label} className="flex items-start gap-3">
-                        <div className="w-9 h-9 rounded-lg bg-text-primary/5 border border-border flex items-center justify-center flex-shrink-0">
+                        <div className="w-9 h-9 rounded-lg bg-text-primary/5 flex items-center justify-center flex-shrink-0">
                           <Icon size={16} className="text-text-muted" />
                         </div>
                         <div>
@@ -205,7 +193,7 @@ export const FindYourJobPage = ({ isDark, toggleTheme, onNavigate, language, set
             </ScrollReveal>
 
             <ScrollReveal direction="right">
-              <div className="surface-text bg-surface rounded-2xl p-6 border border-border/50">
+              <div className="surface-text bg-surface rounded-2xl p-6">
                 <div className="flex items-center gap-2 mb-5">
                   <FileSearch size={18} className="text-surface-text-muted" />
                   <span className="text-sm font-semibold text-surface-text">{L('fj.mockJdResult')}</span>
@@ -230,7 +218,7 @@ export const FindYourJobPage = ({ isDark, toggleTheme, onNavigate, language, set
                       ))}
                     </div>
                   </div>
-                  <div className="bg-success/10 rounded-xl p-4 border border-success/20">
+                  <div className="bg-success/10 rounded-xl p-4">
                     <div className="flex items-center gap-2 mb-1">
                       <CheckCircle2 size={14} className="text-success" />
                       <span className="text-xs font-semibold text-success">{L('fj.mockAnalysisDone')}</span>
@@ -250,7 +238,7 @@ export const FindYourJobPage = ({ isDark, toggleTheme, onNavigate, language, set
       <section className="py-20 md:py-28">
         <div className="max-w-7xl mx-auto px-6">
           <ScrollReveal>
-            <div className="surface-text bg-surface rounded-2xl p-10 md:p-16 text-center border border-border/50 relative overflow-hidden">
+            <div className="surface-text bg-surface rounded-2xl p-10 md:p-16 text-center relative overflow-hidden">
               <div className="absolute inset-0 bg-gradient-to-br from-text-primary/[0.03] to-transparent pointer-events-none" />
               <div className="relative z-10 space-y-6">
                 <h2 className="text-3xl md:text-4xl font-bold tracking-tight">
@@ -268,7 +256,7 @@ export const FindYourJobPage = ({ isDark, toggleTheme, onNavigate, language, set
                   </button>
                   <button
                     onClick={() => onNavigate('jd-input')}
-                    className="inline-flex items-center gap-2 px-6 py-3.5 rounded-lg border border-surface-text/20 text-surface-text text-base font-medium hover:bg-surface-hover transition-colors"
+                    className="inline-flex items-center gap-2 px-6 py-3.5 rounded-lg text-surface-text text-base font-medium hover:bg-surface-hover transition-colors"
                   >
                     <FileSearch size={16} /> {L('fj.ctaPaste')}
                   </button>

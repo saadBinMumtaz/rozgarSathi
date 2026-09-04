@@ -11,7 +11,7 @@ import { Button } from '../design-system/Button';
 import { t } from '../i18n/translations';
 import {
   FileText, ArrowRight, Upload, Sparkles, CheckCircle2,
-  ArrowLeftRight, Target, BarChart3, Shield, RefreshCw, Play
+  ArrowLeftRight, Target, BarChart3, Shield, RefreshCw
 } from 'lucide-react';
 
 /* ─── TypeWriter Hook ─── */
@@ -65,7 +65,7 @@ export const TailorResumePage = ({ isDark, toggleTheme, onNavigate, language, se
       <PublicNavbar isDark={isDark} toggleTheme={toggleTheme} onNavigate={onNavigate} currentPage="public-tailor-resume" language={language} setLanguage={setLanguage} />
 
       {/* ─── Hero — Split Screen ─── */}
-      <section className="relative pt-16 overflow-hidden">
+      <section className="relative pt-28 overflow-hidden">
         <div className="absolute inset-0 w-full h-full pointer-events-none">
           <Aurora blend={0.4} amplitude={0.8} speed={1.0} lightMode={!isDark} />
         </div>
@@ -74,13 +74,6 @@ export const TailorResumePage = ({ isDark, toggleTheme, onNavigate, language, se
         <div className="relative z-10 max-w-7xl mx-auto px-6 md:px-12 py-12 md:py-20 grid grid-cols-1 lg:grid-cols-2 gap-10 lg:gap-16 items-center">
           {/* Left Column */}
           <div className="space-y-6">
-            <ScrollReveal>
-              <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-text-primary/5 border border-border text-sm text-text-muted">
-                <FileText size={14} />
-                <span>{L('tr.badge')}</span>
-              </div>
-            </ScrollReveal>
-
             <ScrollReveal delay={100}>
               <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-[3.25rem] font-extrabold text-text-primary tracking-tight leading-tight">
                 {L('tr.heroPrefix')}
@@ -116,7 +109,7 @@ export const TailorResumePage = ({ isDark, toggleTheme, onNavigate, language, se
           {/* Right Column — Video Frame */}
           <ScrollReveal delay={200} direction="right">
             <div className="flex items-center justify-center">
-              <div className="relative w-full max-w-lg aspect-video rounded-2xl overflow-hidden border border-border shadow-2xl bg-surface">
+              <div className="relative w-full max-w-lg aspect-video rounded-2xl overflow-hidden shadow-2xl bg-surface">
                 {/* VIDEO PLACEHOLDER: Upload custom resume tailoring video here */}
                 {/* Replace src with your video file, e.g., "/hero-resume.mp4" */}
                 <video
@@ -126,13 +119,8 @@ export const TailorResumePage = ({ isDark, toggleTheme, onNavigate, language, se
                   playsInline
                   className="w-full h-full object-cover"
                 >
-                  <source src="/animated-video.mp4" type="video/mp4" />
+                  <source src="/tailor-resume.mp4" type="video/mp4" />
                 </video>
-                <div className="absolute inset-0 flex items-center justify-center bg-surface/80 pointer-events-none">
-                  <div className="w-16 h-16 rounded-full bg-text-primary/10 flex items-center justify-center">
-                    <Play size={24} className="text-text-primary ml-1" />
-                  </div>
-                </div>
               </div>
             </div>
           </ScrollReveal>
@@ -156,7 +144,7 @@ export const TailorResumePage = ({ isDark, toggleTheme, onNavigate, language, se
               const Icon = step.icon;
               return (
                 <ScrollReveal key={step.title} delay={i * 100}>
-                  <div className="surface-text bg-surface rounded-xl p-6 border border-border/50 h-full hover:border-border-strong transition-colors relative">
+                  <div className="surface-text bg-surface rounded-xl p-6 h-full transition-colors relative">
                     <div className="absolute top-4 right-4 text-3xl font-black text-surface-text/10">
                       {i + 1}
                     </div>
@@ -188,7 +176,7 @@ export const TailorResumePage = ({ isDark, toggleTheme, onNavigate, language, se
           <ScrollReveal>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-start">
               {/* Before */}
-              <div className="surface-text bg-surface rounded-2xl p-6 border border-border/50">
+              <div className="surface-text bg-surface rounded-2xl p-6">
                 <div className="flex items-center gap-2 mb-5">
                   <div className="w-8 h-8 rounded-lg bg-text-muted/20 flex items-center justify-center">
                     <FileText size={16} className="text-surface-text-muted" />
@@ -223,7 +211,7 @@ export const TailorResumePage = ({ isDark, toggleTheme, onNavigate, language, se
               </div>
 
               {/* After */}
-              <div className="surface-text bg-surface rounded-2xl p-6 border border-success/30">
+              <div className="surface-text bg-surface rounded-2xl p-6">
                 <div className="flex items-center gap-2 mb-5">
                   <div className="w-8 h-8 rounded-lg bg-success/20 flex items-center justify-center">
                     <Sparkles size={16} className="text-success" />
@@ -234,13 +222,13 @@ export const TailorResumePage = ({ isDark, toggleTheme, onNavigate, language, se
                   </div>
                 </div>
                 <div className="space-y-3">
-                  <div className="bg-success/5 rounded-lg p-3 border border-success/10">
+                  <div className="bg-success/5 rounded-lg p-3">
                     <p className="text-xs font-semibold text-surface-text-muted mb-1">{L('tr.labelSummary')}</p>
                     <p className="text-xs text-surface-text leading-relaxed">
                       "Full stack developer with 3 years building React + Node.js applications. Experienced in REST API design, MongoDB, and agile team delivery."
                     </p>
                   </div>
-                  <div className="bg-success/5 rounded-lg p-3 border border-success/10">
+                  <div className="bg-success/5 rounded-lg p-3">
                     <p className="text-xs font-semibold text-surface-text-muted mb-1">{L('tr.skillsReordered')}</p>
                     <div className="flex flex-wrap gap-1">
                       {['React', 'Node.js', 'MongoDB', 'TypeScript', 'REST APIs', 'Git'].map((s) => (
@@ -248,7 +236,7 @@ export const TailorResumePage = ({ isDark, toggleTheme, onNavigate, language, se
                       ))}
                     </div>
                   </div>
-                  <div className="bg-success/5 rounded-lg p-3 border border-success/10">
+                  <div className="bg-success/5 rounded-lg p-3">
                     <p className="text-xs font-semibold text-surface-text-muted mb-1">{L('tr.experienceEnhanced')}</p>
                     <p className="text-xs text-surface-text leading-relaxed">
                       "Built 5+ React applications serving 10K+ users. Designed RESTful APIs with Node.js and Express. Reduced page load time by 40%."
@@ -277,7 +265,7 @@ export const TailorResumePage = ({ isDark, toggleTheme, onNavigate, language, se
               const Icon = item.icon;
               return (
                 <ScrollReveal key={item.title} delay={i * 80}>
-                  <div className="surface-text bg-surface rounded-xl p-6 border border-border/50 h-full hover:border-border-strong transition-colors">
+                  <div className="surface-text bg-surface rounded-xl p-6 h-full transition-colors">
                     <Icon size={22} className="text-surface-text-muted mb-3" />
                     <h3 className="text-base font-bold text-surface-text">{item.title}</h3>
                     <p className="mt-2 text-sm text-surface-text-muted leading-relaxed">{item.desc}</p>
@@ -293,7 +281,7 @@ export const TailorResumePage = ({ isDark, toggleTheme, onNavigate, language, se
       <section className="py-20 md:py-28">
         <div className="max-w-7xl mx-auto px-6">
           <ScrollReveal>
-            <div className="surface-text bg-surface rounded-2xl p-10 md:p-16 text-center border border-border/50 relative overflow-hidden">
+            <div className="surface-text bg-surface rounded-2xl p-10 md:p-16 text-center relative overflow-hidden">
               <div className="absolute inset-0 bg-gradient-to-br from-text-primary/[0.03] to-transparent pointer-events-none" />
               <div className="relative z-10 space-y-6">
                 <h2 className="text-3xl md:text-4xl font-bold tracking-tight">

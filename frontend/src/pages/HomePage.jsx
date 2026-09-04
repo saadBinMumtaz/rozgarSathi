@@ -12,7 +12,7 @@ import { t } from '../i18n/translations';
 import {
   Briefcase, FileSearch, FileText, Mic, Code2, Brain, MessageSquare,
   ArrowRight, Sparkles, Target, Users, GraduationCap, BarChart3,
-  Globe, Volume2, Shield, Zap, CheckCircle2, XCircle, Play
+  Globe, Volume2, Shield, Zap, CheckCircle2, XCircle
 } from 'lucide-react';
 
 /* ─── TypeWriter Hook ─── */
@@ -92,7 +92,7 @@ export const HomePage = ({ isDark, toggleTheme, onNavigate, language, setLanguag
       <PublicNavbar isDark={isDark} toggleTheme={toggleTheme} onNavigate={onNavigate} currentPage="home" language={language} setLanguage={setLanguage} />
 
       {/* ─── Hero Section — Split Screen ─── */}
-      <section className="relative overflow-hidden pt-16">
+      <section className="relative overflow-hidden pt-28">
         {/* Aurora background */}
         <div className="absolute inset-0 w-full h-full pointer-events-none">
           <Aurora blend={0.4} amplitude={0.8} speed={1.0} lightMode={!isDark} />
@@ -103,13 +103,6 @@ export const HomePage = ({ isDark, toggleTheme, onNavigate, language, setLanguag
         <div className="relative z-10 max-w-7xl mx-auto px-6 md:px-12 py-12 md:py-20 grid grid-cols-1 lg:grid-cols-2 gap-10 lg:gap-16 items-center">
           {/* Left Column — Text & CTAs */}
           <div className="space-y-6">
-            <ScrollReveal>
-              <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-text-primary/5 border border-border text-sm text-text-muted">
-                <Sparkles size={14} />
-                <span>{L('home.badge')}</span>
-              </div>
-            </ScrollReveal>
-
             <ScrollReveal delay={100}>
               <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-[3.25rem] font-extrabold text-text-primary tracking-tight leading-tight">
                 {L('home.heroPrefix')}
@@ -147,7 +140,7 @@ export const HomePage = ({ isDark, toggleTheme, onNavigate, language, setLanguag
           {/* Right Column — Video Frame */}
           <ScrollReveal delay={200} direction="right">
             <div className="flex items-center justify-center">
-              <div className="relative w-full max-w-lg aspect-video rounded-2xl overflow-hidden border border-border shadow-2xl bg-surface">
+              <div className="relative w-full max-w-lg aspect-video rounded-2xl overflow-hidden shadow-2xl bg-surface">
                 {/* VIDEO PLACEHOLDER: Upload custom hero video here */}
                 {/* Replace src with your video file, e.g., "/hero-home.mp4" */}
                 <video
@@ -159,12 +152,6 @@ export const HomePage = ({ isDark, toggleTheme, onNavigate, language, setLanguag
                 >
                   <source src="/animated-video.mp4" type="video/mp4" />
                 </video>
-                {/* Fallback overlay if video doesn't load */}
-                <div className="absolute inset-0 flex items-center justify-center bg-surface/80 pointer-events-none">
-                  <div className="w-16 h-16 rounded-full bg-text-primary/10 flex items-center justify-center">
-                    <Play size={24} className="text-text-primary ml-1" />
-                  </div>
-                </div>
               </div>
             </div>
           </ScrollReveal>
@@ -190,7 +177,7 @@ export const HomePage = ({ isDark, toggleTheme, onNavigate, language, setLanguag
               const Icon = step.icon;
               return (
                 <ScrollReveal key={step.label} delay={i * 80} direction="up">
-                  <div className="surface-text bg-surface rounded-xl px-4 py-5 text-center min-w-[130px] md:min-w-[150px] border border-border/50 hover:border-border-strong transition-colors">
+                  <div className="surface-text bg-surface rounded-xl px-4 py-5 text-center min-w-[130px] md:min-w-[150px] transition-colors">
                     <Icon size={24} className="mx-auto mb-2 text-surface-text-muted" />
                     <p className="text-sm font-semibold text-surface-text">{step.label}</p>
                     <p className="text-xs text-surface-text-muted mt-1 hidden md:block">{step.desc}</p>
@@ -219,7 +206,7 @@ export const HomePage = ({ isDark, toggleTheme, onNavigate, language, setLanguag
               const Icon = item.icon;
               return (
                 <ScrollReveal key={item.title} delay={i * 100}>
-                  <div className="surface-text bg-surface rounded-xl p-6 border border-border/50 h-full hover:border-border-strong transition-colors">
+                  <div className="surface-text bg-surface rounded-xl p-6 h-full transition-colors">
                     <div className="w-12 h-12 rounded-xl bg-text-primary/10 flex items-center justify-center mb-4">
                       <Icon size={22} className="text-surface-text-muted" />
                     </div>
@@ -252,7 +239,7 @@ export const HomePage = ({ isDark, toggleTheme, onNavigate, language, setLanguag
               const Icon = feat.icon;
               return (
                 <ScrollReveal key={feat.title} delay={i * 80}>
-                  <div className="surface-text bg-surface rounded-xl p-6 border border-border/50 h-full hover:border-border-strong transition-colors">
+                  <div className="surface-text bg-surface rounded-xl p-6 h-full transition-colors">
                     <Icon size={22} className="text-surface-text-muted mb-3" />
                     <h3 className="text-base font-bold text-surface-text">{feat.title}</h3>
                     <p className="mt-2 text-sm text-surface-text-muted leading-relaxed">{feat.desc}</p>
@@ -279,8 +266,8 @@ export const HomePage = ({ isDark, toggleTheme, onNavigate, language, setLanguag
           </ScrollReveal>
 
           <ScrollReveal>
-            <div className="surface-text bg-surface rounded-2xl border border-border/50 overflow-hidden">
-              <div className="grid grid-cols-3 gap-0 text-sm font-semibold border-b border-border/30">
+            <div className="surface-text bg-surface rounded-2xl overflow-hidden">
+              <div className="grid grid-cols-3 gap-0 text-sm font-semibold">
                 <div className="p-4 text-surface-text-muted">{L('home.compAspect')}</div>
                 <div className="p-4 text-surface-text-muted text-center">{L('home.compTraditional')}</div>
                 <div className="p-4 text-surface-text text-center">{L('home.compRozgar')}</div>
@@ -289,7 +276,7 @@ export const HomePage = ({ isDark, toggleTheme, onNavigate, language, setLanguag
                 <div
                   key={row.label}
                   className={`grid grid-cols-3 gap-0 text-sm ${
-                    i < COMPARISON.length - 1 ? 'border-b border-border/20' : ''
+                    i < COMPARISON.length - 1 ? '' : ''
                   }`}
                 >
                   <div className="p-4 font-medium text-surface-text">{row.label}</div>
@@ -339,7 +326,7 @@ export const HomePage = ({ isDark, toggleTheme, onNavigate, language, setLanguag
             </ScrollReveal>
 
             <ScrollReveal direction="right">
-              <div className="surface-text bg-surface rounded-2xl p-6 border border-border/50">
+              <div className="surface-text bg-surface rounded-2xl p-6">
                 {/* Mock interview conversation UI */}
                 <div className="space-y-4">
                   <div className="flex items-center gap-2 mb-4">
@@ -356,14 +343,14 @@ export const HomePage = ({ isDark, toggleTheme, onNavigate, language, setLanguag
                     </p>
                   </div>
 
-                  <div className="bg-text-primary/5 rounded-xl p-4 border border-border/30">
+                  <div className="bg-text-primary/5 rounded-xl p-4">
                     <p className="text-sm text-text-primary leading-relaxed">
                       "In my final year project, a teammate wasn't contributing. I scheduled a one-on-one,
                       understood their concerns, and we redistributed tasks based on strengths..."
                     </p>
                   </div>
 
-                  <div className="bg-success/10 rounded-xl p-4 border border-success/20">
+                  <div className="bg-success/10 rounded-xl p-4">
                     <div className="flex items-center gap-2 mb-2">
                       <CheckCircle2 size={14} className="text-success" />
                       <span className="text-xs font-semibold text-success">{L('home.mockStrong')}</span>
@@ -383,7 +370,7 @@ export const HomePage = ({ isDark, toggleTheme, onNavigate, language, setLanguag
       <section className="py-20 md:py-28">
         <div className="max-w-7xl mx-auto px-6">
           <ScrollReveal>
-            <div className="surface-text bg-surface rounded-2xl p-10 md:p-16 text-center border border-border/50 relative overflow-hidden">
+            <div className="surface-text bg-surface rounded-2xl p-10 md:p-16 text-center relative overflow-hidden">
               <div className="absolute inset-0 bg-gradient-to-br from-text-primary/[0.03] to-transparent pointer-events-none" />
               <div className="relative z-10 space-y-6">
                 <h2 className="text-3xl md:text-4xl font-bold tracking-tight">
@@ -401,7 +388,7 @@ export const HomePage = ({ isDark, toggleTheme, onNavigate, language, setLanguag
                   </button>
                   <button
                     onClick={() => onNavigate('public-find-job')}
-                    className="inline-flex items-center gap-2 px-6 py-3.5 rounded-lg border border-surface-text/20 text-surface-text text-base font-medium hover:bg-surface-hover transition-colors"
+                    className="inline-flex items-center gap-2 px-6 py-3.5 rounded-lg text-surface-text text-base font-medium hover:bg-surface-hover transition-colors"
                   >
                     <Briefcase size={16} /> {L('home.ctaBrowse')}
                   </button>

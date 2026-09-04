@@ -22,24 +22,13 @@ export const PublicNavbar = ({ isDark, toggleTheme, onNavigate, currentPage, lan
   };
 
   return (
-    <nav className="fixed top-0 left-0 right-0 z-50 backdrop-blur-xl bg-bg-primary/70 border-b border-border/30 transition-all duration-200">
+    <nav className="fixed top-0 left-0 right-0 z-50 backdrop-blur-xl bg-bg-primary/70 transition-all duration-200">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16">
-          {/* Logo — theme-aware image */}
-          <button
-            onClick={() => handleNav('home')}
-            className="flex items-center gap-2.5 group"
-          >
-            <img
-              src={isDark ? '/logo-white.png' : '/logo-dark.png'}
-              alt="Rozgar Sathi"
-              className="h-10 sm:h-12 w-auto flex-shrink-0 cursor-pointer transition-opacity group-hover:opacity-80"
-            />
-          </button>
 
           {/* Desktop nav links */}
           <div className="hidden md:flex items-center gap-1">
-            {NAV_LINKS.map((link) => {
+            {NAV_LINKS.map((link, i) => {
               const isActive = currentPage === link.page;
               const Icon = link.icon;
               return (
@@ -47,6 +36,8 @@ export const PublicNavbar = ({ isDark, toggleTheme, onNavigate, currentPage, lan
                   key={link.page}
                   onClick={() => handleNav(link.page)}
                   className={`flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm font-medium transition-all ${
+                    i === 0 ? 'ml-28 sm:ml-32' : ''
+                  } ${
                     isActive
                       ? 'bg-text-primary/10 text-text-primary'
                       : 'text-text-muted hover:text-text-primary hover:bg-bg-hover'
@@ -100,13 +91,6 @@ export const PublicNavbar = ({ isDark, toggleTheme, onNavigate, currentPage, lan
               Start Preparing
             </button>
 
-            <button
-              onClick={() => handleNav('auth')}
-              className="hidden sm:inline-flex items-center px-3 py-2 rounded-lg text-sm font-medium text-text-muted hover:text-text-primary transition-colors"
-            >
-              Sign In
-            </button>
-
             {/* Mobile menu toggle */}
             <button
               onClick={() => setMobileOpen(!mobileOpen)}
@@ -121,7 +105,7 @@ export const PublicNavbar = ({ isDark, toggleTheme, onNavigate, currentPage, lan
 
       {/* Mobile dropdown */}
       {mobileOpen && (
-        <div className="md:hidden border-t border-border/30 bg-bg-primary/95 backdrop-blur-xl">
+        <div className="md:hidden bg-bg-primary/95 backdrop-blur-xl">
           <div className="px-4 py-3 space-y-1">
             {NAV_LINKS.map((link) => {
               const isActive = currentPage === link.page;
@@ -143,12 +127,6 @@ export const PublicNavbar = ({ isDark, toggleTheme, onNavigate, currentPage, lan
             })}
             <div className="pt-2 flex gap-2">
               <button
-                onClick={() => handleNav('auth')}
-                className="flex-1 px-3 py-2.5 rounded-lg text-sm font-medium text-text-muted hover:text-text-primary border border-border transition-colors"
-              >
-                Sign In
-              </button>
-              <button
                 onClick={() => handleNav('home')}
                 className="flex-1 px-3 py-2.5 rounded-lg text-sm font-semibold bg-text-primary text-bg-primary hover:opacity-90 transition-opacity"
               >
@@ -158,6 +136,19 @@ export const PublicNavbar = ({ isDark, toggleTheme, onNavigate, currentPage, lan
           </div>
         </div>
       )}
+
+      {/* Floating logo — left side, below navbar */}
+      <button
+        onClick={() => handleNav('home')}
+        className="absolute -bottom-10 left-2 sm:left-4 mt-[30px] group"
+        aria-label="Rozgar Sathi home"
+      >
+        <img
+          src={isDark ? '/logo-white.png' : '/logo-dark.png'}
+          alt="Rozgar Sathi"
+          className="h-20 sm:h-24 w-auto cursor-pointer transition-all duration-200 group-hover:scale-105 group-hover:opacity-90 drop-shadow-[0_4px_12px_rgba(0,0,0,0.3)]"
+        />
+      </button>
     </nav>
   );
 };
