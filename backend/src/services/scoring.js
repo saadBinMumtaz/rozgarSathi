@@ -219,6 +219,7 @@ STRICT RULES:
 5. Improvement must tell them exactly what to add with a specific example of better phrasing
 6. Only reference technologies/concepts that appear in the JD, question, or their answer
 7. If the answer is shallow, say so directly — do not sugarcoat
+8. Do NOT start every response with "Strong [noun]..." or "Solid [noun]..." — vary your opening structure. Sometimes lead with what was missing, sometimes open with a direct quote from the candidate, sometimes contrast with JD requirements, sometimes begin with STAR component analysis. No two evaluations should share the same opening pattern.
 
 ${language === 'urdu' ? 'IMPORTANT: Return all feedback fields (strength, missing, improvement, evidence items) in Urdu (اردو). Keep technical terms like React, API, Node.js etc. in English.' : ''}
 Return ONLY valid JSON:
@@ -227,7 +228,7 @@ Return ONLY valid JSON:
     ${rubricKeys.map((k) => `"${k}": 0-10 score`).join(',\n    ')}
   },
   "evidence": ["2-4 items — at least one must be a direct quote or close paraphrase from the transcript"],
-  "strength": "The single most impressive specific thing the candidate said — reference their exact words or claim",
+  "strength": "The single most impressive specific thing — reference their exact words, a measurable claim, or the most unique STAR arc point",
   "missing": "The most important thing missing and WHY it weakens this answer for this role",
   "improvement": "One concrete, actionable change with a specific example of what a stronger version would include"
 }`;
@@ -410,7 +411,12 @@ SCORE EACH DIMENSION 0-10:
 
 STRICT RULES:
 1. NEVER use generic phrases: "Good answer", "Great job", "You demonstrated", "Excellent response", "Needs improvement", "good understanding"
-2. Distinguish between: factual correctness (is what they said true?), conceptual depth (do they understand why?), practical understanding (can they apply it?), trade-off awareness (do they see both sides?), reasoning quality (can they justify their choices?)
+2. The rubric has exactly 4 dimensions — understand what each measures:
+   - correctness: Is what they said factually accurate?
+   - depth: Do they understand WHY things work? Theoretical knowledge, underlying mechanics, and edge-case awareness
+   - practical: Can they APPLY it in real systems? Debugging experience, production scenarios, real-world usage
+   - communication: Is their explanation clear and well-structured? Can a junior developer follow their reasoning?
+   When analyzing, also consider trade-off awareness and reasoning quality, but map them to the correct rubric dimension.
 3. Evidence MUST reference specific technical claims from their answer — quote or closely paraphrase their actual words
 4. If correctness is high but depth is low, explicitly call out: "The explanation was accurate but stayed at surface level — for example, they mentioned X but didn't explain how/why Y"
 5. Only reference technologies that appear in the JD, question, or their answer — never invent frameworks they didn't mention
@@ -668,7 +674,7 @@ export const evaluateProbeAnswer = async ({ probeText, answer, questionTitle = '
 Original question: "${questionTitle}"
 Follow-up probe: "${probeText}"
 
-SCORE (0-10 each):
+SCORE (0-10 each). A score of 10 is achievable for exceptional follow-up answers — do not reserve it artificially:
 - clarity: Can you follow their reasoning? Is it structured or rambling?
 - reasoning: Is the technical logic sound? Did they justify their choices?
 - depth: Did they go beyond surface-level? Did they consider edge cases, alternatives, or complexity?
@@ -680,6 +686,7 @@ STRICT RULES:
 4. Distinguish between: correct reasoning, unclear reasoning, and incorrect reasoning
 5. Strength must reference a specific technical point from their explanation
 6. Improvement must tell them exactly what to clarify, consider, or study
+7. Do NOT start every response with "Strong [noun]..." or "Solid [noun]..." — vary your opening structure
 
 ${language === 'urdu' ? 'IMPORTANT: Return all feedback fields in Urdu (اردو). Keep technical terms like React, API, Node.js etc. in English.' : ''}
 Return ONLY valid JSON:
@@ -718,7 +725,7 @@ Evaluate this probe answer. Reference what the candidate ACTUALLY said about the
       : [];
 
     return {
-      score: Math.max(0, Math.min(100, score)),
+      score: Math.max(30, Math.min(100, score)),
       dimensions: llmResult.dimensions || {},
       evidence,
       strength: llmResult.strength || '',
@@ -792,12 +799,28 @@ ${code}
 Analyze this code and return JSON feedback:`;
 
   try {
-    const result = await callAI({
-      systemPrompt,
-      userPrompt,
-      requiredFields: [],
-    });
+    const requiredCodingFields = ['approach', 'codeQuality', 'edgeCases', 'suggestion'];
+    let result;
+    const MAX_ATTEMPTS = 2;
+    for (let attempt = 1; attempt <= MAX_ATTEMPTS; attempt++) {
+      try {
+        result = await callAI({
+          systemPrompt,
+          userPrompt,
+          requiredFields: requiredCodingFields,
+        });
+        break;
+      } catch (attemptErr) {
+        if (attempt < MAX_ATTEMPTS) {
+          logger.warn(`Coding feedback LLM attempt ${attempt} failed: ${attemptErr.message}. Retrying in 500ms...`);
+          await new Promise(r => setTimeout(r, 500));
+        } else {
+          throw attemptErr;
+        }
+      }
+    }
 
+    // Validate and fill any missing fields with empty strings
     return {
       approach: result.approach || '',
       codeQuality: result.codeQuality || '',
@@ -805,7 +828,7 @@ Analyze this code and return JSON feedback:`;
       suggestion: result.suggestion || '',
     };
   } catch (err) {
-    logger.warn(`Coding feedback LLM failed: ${err.message}. Returning empty feedback.`);
+    logger.warn(`Coding feedback LLM failed after retries: ${err.message}. Returning empty feedback.`);
     return {};
   }
 };

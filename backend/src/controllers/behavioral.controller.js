@@ -16,6 +16,7 @@ import {
 } from '../services/answerQuality.js';
 import { completeSession } from '../services/sessionUtils.js';
 import { buildStarFollowUp, buildAIStarFollowUp } from '../services/followUpEngine.js';
+import { buildInterviewProfile } from '../services/interviewProfile.js';
 import logger from '../utils/logger.js';
 
 const FOLLOW_UP_SCORE_THRESHOLD = 50;
@@ -98,6 +99,9 @@ const getFirstQuestion = async (session) => {
     }
   }
 
+  // Build interview profile for relevance gating
+  const interviewProfile = buildInterviewProfile(jdAnalysis);
+
   // Retrieve top-ranked question with randomization for session variety
   const questions = retrieveBehavioralQuestions({
     jdAnalysis,
@@ -105,11 +109,12 @@ const getFirstQuestion = async (session) => {
     limit: 1,
     randomize: true,
     sessionSeed: session.metadata?.sessionSeed || 0,
+    interviewProfile,
   });
 
   if (questions.length === 0) {
-    // Fallback to random
-    const q = getRandomQuestion({ excludeIds: [] });
+    // Fallback to random (with relevance gate)
+    const q = getRandomQuestion({ excludeIds: [], interviewProfile });
     if (!q) return null;
     return q;
   }
@@ -132,16 +137,20 @@ const getNextQuestion = async (session) => {
     }
   }
 
+  // Build interview profile for relevance gating
+  const interviewProfile = buildInterviewProfile(jdAnalysis);
+
   const questions = retrieveBehavioralQuestions({
     jdAnalysis,
     excludeIds,
     limit: 1,
     randomize: true,
     sessionSeed: session.metadata?.sessionSeed || 0,
+    interviewProfile,
   });
 
   if (questions.length === 0) {
-    const q = getRandomQuestion({ excludeIds });
+    const q = getRandomQuestion({ excludeIds, interviewProfile });
     if (!q) return null;
     return q;
   }

@@ -249,25 +249,42 @@ ${questionSummaries}
 Synthesize these into a coherent interviewer assessment (return JSON { "summary": "..." }):`;
 
   try {
-    const result = await callAI({
-      systemPrompt,
-      userPrompt,
-      requiredFields: ['summary'],
-    });
+    let result;
+    const MAX_ATTEMPTS = 2;
+    for (let attempt = 1; attempt <= MAX_ATTEMPTS; attempt++) {
+      try {
+        result = await callAI({
+          systemPrompt,
+          userPrompt,
+          requiredFields: ['summary'],
+        });
+        break;
+      } catch (attemptErr) {
+        if (attempt < MAX_ATTEMPTS) {
+          logger.warn(`Interview summary LLM attempt ${attempt} failed: ${attemptErr.message}. Retrying in 500ms...`);
+          await new Promise(r => setTimeout(r, 500));
+        } else {
+          throw attemptErr;
+        }
+      }
+    }
     return (result.summary || '').trim();
   } catch (err) {
-    logger.warn(`Interview summary LLM failed: ${err.message}. Using deterministic fallback.`);
-    // Deterministic fallback: synthesize from individual strengths/gaps
+    logger.warn(`Interview summary LLM failed after retries: ${err.message}. Using deterministic fallback.`);
+    // Deterministic fallback: synthesize from individual strengths/gaps with mode-aware context
     const strengths = questions.map(q => q.strength).filter(Boolean);
     const gaps = questions.map(q => q.missing).filter(Boolean);
     const highScores = questions.filter(q => (q.score ?? 0) >= 60).length;
     const lowScores = questions.filter(q => (q.score ?? 0) < 40).length;
+    const totalQuestions = questions.length;
 
-    let summary = `Across ${questions.length} questions, the candidate scored ${overallScore}/100 overall.`;
-    if (highScores > lowScores) {
-      summary += ` Performance was generally strong, with ${highScores} of ${questions.length} answers scoring above average.`;
-    } else if (lowScores > highScores) {
-      summary += ` Performance was inconsistent, with ${lowScores} of ${questions.length} answers below the expected threshold.`;
+    let summary = `Across ${totalQuestions} ${mode} question${totalQuestions > 1 ? 's' : ''}, scored ${overallScore}/100 overall.`;
+    if (highScores > lowScores && highScores > 0) {
+      summary += ` Performance was generally strong, with ${highScores} of ${totalQuestions} answers scoring above average.`;
+    } else if (lowScores > highScores && lowScores > 0) {
+      summary += ` Performance was inconsistent, with ${lowScores} of ${totalQuestions} answers below the expected threshold.`;
+    } else if (highScores === 0 && lowScores === 0) {
+      summary += ` Performance was moderate across all questions.`;
     }
     if (strengths.length > 0) summary += ` Consistent strength: ${strengths[0]}`;
     if (gaps.length > 0) summary += ` Key area to address: ${gaps[0]}`;

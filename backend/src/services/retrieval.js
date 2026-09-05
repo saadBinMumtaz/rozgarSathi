@@ -1,13 +1,17 @@
 // backend/src/services/retrieval.js
-// Question retrieval using TF-IDF + cosine similarity.
+// Question retrieval using TF-IDF + cosine similarity + Relevance Gate.
 // Deterministic: same JD + question bank = same ranking.
-// No LLM calls � pure text similarity.
+// No LLM calls — pure text similarity + interviewProfile gate.
 // Supports both behavioral and technical question banks.
+//
+// The Relevance Gate (interviewProfile.js) validates each question
+// against the JD BEFORE it reaches the candidate.
 
 import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import logger from '../utils/logger.js';
+import { isQuestionRelevant, filterRelevantQuestions } from './interviewProfile.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -203,7 +207,7 @@ const enhancedScoring = ({ question, queryVector, vector, jdAnalysis, jdTerms })
  * Filters out questions with relevance score < 0.3.
  * Supports randomize=true for session variety (top-K weighted shuffle).
  */
-const retrieveFromIndex = ({ index, bank, queryText, excludeIds = [], filters = {}, limit = 1, jdAnalysis = {}, jdTerms = [], randomize = false, sessionSeed = 0 }) => {
+const retrieveFromIndex = ({ index, bank, queryText, excludeIds = [], filters = {}, limit = 1, jdAnalysis = {}, jdTerms = [], randomize = false, sessionSeed = 0, interviewProfile = null }) => {
   if (bank.length === 0) {
     logger.warn('Question bank is empty');
     return [];
@@ -234,6 +238,32 @@ const retrieveFromIndex = ({ index, bank, queryText, excludeIds = [], filters = 
   if (candidates.length === 0 && allScored.length > 0) {
     logger.debug(`All questions scored below 0.3 threshold. Falling back to top ${limit} from ${allScored.length} candidates.`);
     candidates = allScored;
+  }
+
+  // ── Relevance Gate: filter questions against the JD interview profile ──
+  // This runs AFTER TF-IDF scoring but BEFORE returning to the controller.
+  // Questions that don't match the target role are rejected here.
+  if (interviewProfile && interviewProfile.role) {
+    const beforeCount = candidates.length;
+    candidates = candidates.filter(({ question }) => {
+      const gate = isQuestionRelevant(question, interviewProfile);
+      return gate.relevant;
+    });
+    if (candidates.length === 0 && beforeCount > 0) {
+      // All candidates were filtered by the gate — this means the bank
+      // has no role-relevant questions. Log a warning and use the
+      // top-scored questions as a last resort (better than nothing).
+      logger.warn(
+        `Relevance gate filtered ALL ${beforeCount} candidates for role="${interviewProfile.role}". ` +
+        `Falling back to top-scored questions (bank may lack role-specific content).`
+      );
+      candidates = allScored.slice(0, Math.max(limit * 2, 4));
+    } else if (candidates.length < beforeCount) {
+      logger.debug(
+        `Relevance gate: ${beforeCount - candidates.length}/${beforeCount} questions rejected ` +
+        `for role="${interviewProfile.role}"`
+      );
+    }
   }
 
   // If randomize is enabled and we have multiple candidates, shuffle for variety
@@ -278,6 +308,7 @@ export const retrieveBehavioralQuestions = ({
   limit = 1,
   randomize = false,
   sessionSeed = 0,
+  interviewProfile = null,
 }) => {
   // Collect all JD terms for traceability
   const jdTerms = [
@@ -305,6 +336,7 @@ export const retrieveBehavioralQuestions = ({
     jdTerms,
     randomize,
     sessionSeed,
+    interviewProfile,
   });
 
   logger.debug(
@@ -333,6 +365,7 @@ export const retrieveTechnicalQuestions = ({
   limit = 1,
   randomize = false,
   sessionSeed = 0,
+  interviewProfile = null,
 }) => {
   // Collect all JD terms for traceability
   const jdTerms = [
@@ -360,6 +393,7 @@ export const retrieveTechnicalQuestions = ({
     jdTerms,
     randomize,
     sessionSeed,
+    interviewProfile,
   });
 
   logger.debug(
@@ -371,13 +405,18 @@ export const retrieveTechnicalQuestions = ({
 /**
  * Get a random behavioral question (fallback).
  */
-export const getRandomQuestion = ({ excludeIds = [], topic, difficulty } = {}) => {
-  const candidates = behavioralBank.filter((q) => {
+export const getRandomQuestion = ({ excludeIds = [], topic, difficulty, interviewProfile = null } = {}) => {
+  let candidates = behavioralBank.filter((q) => {
     if (excludeIds.includes(q.id)) return false;
     if (topic && q.topic && q.topic.toLowerCase() !== topic.toLowerCase()) return false;
     if (difficulty && q.difficulty !== difficulty) return false;
     return true;
   });
+  // Apply relevance gate if interviewProfile is available
+  if (interviewProfile && interviewProfile.role) {
+    const gated = filterRelevantQuestions(candidates, interviewProfile);
+    if (gated.length > 0) candidates = gated;
+  }
   if (candidates.length === 0) return null;
   return candidates[Math.floor(Math.random() * candidates.length)];
 };
@@ -385,13 +424,18 @@ export const getRandomQuestion = ({ excludeIds = [], topic, difficulty } = {}) =
 /**
  * Get a random technical question (fallback).
  */
-export const getRandomTechnicalQuestion = ({ excludeIds = [], skill, difficulty } = {}) => {
-  const candidates = technicalBank.filter((q) => {
+export const getRandomTechnicalQuestion = ({ excludeIds = [], skill, difficulty, interviewProfile = null } = {}) => {
+  let candidates = technicalBank.filter((q) => {
     if (excludeIds.includes(q.id)) return false;
     if (skill && q.skill && q.skill.toLowerCase() !== skill.toLowerCase()) return false;
     if (difficulty && q.difficulty !== difficulty) return false;
     return true;
   });
+  // Apply relevance gate if interviewProfile is available
+  if (interviewProfile && interviewProfile.role) {
+    const gated = filterRelevantQuestions(candidates, interviewProfile);
+    if (gated.length > 0) candidates = gated;
+  }
   if (candidates.length === 0) return null;
   return candidates[Math.floor(Math.random() * candidates.length)];
 };

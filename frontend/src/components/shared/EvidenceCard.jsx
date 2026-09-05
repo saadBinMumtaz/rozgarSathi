@@ -34,12 +34,22 @@ export const EvidenceCard = memo(({ evaluation, language = 'english' }) => {
   const getScoreExplanation = () => {
     // Prefer the actual AI-generated strength as the score explanation
     if (strength) return strength;
-    // Fallback: only use templated text when no strength is available
-    if (displayScore >= 80) return isUrdu ? 'بہترین جواب - تمام اہم نکات شامل تھے' : 'Strong answer with specific, compelling content';
-    if (displayScore >= 60) return isUrdu ? 'اچھا جواب - کچھ مزید تفصیل شامل کی جا سکتی ہے' : 'Solid answer that could go deeper on key points';
-    if (displayScore >= 40) return isUrdu ? 'منصفانہ جواب - اہم نکات غائب ہیں' : 'Partial answer — several important elements were missing';
-    if (displayScore > 0) return isUrdu ? 'جواب میں مزید تفصیل اور مثالوں کی ضرورت ہے' : 'Answer needs significantly more detail and specific examples';
-    return isUrdu ? 'کوئی درست جواب نہیں دیا گیا' : 'No valid answer was provided for this question';
+    // Fallback: specific score-range descriptions when strength is unavailable
+    if (displayScore >= 80) return isUrdu
+      ? 'اسکور سے ظاہر ہوتا ہے کہ جواب میں زیادہ تر اہم نکات مخصوص مثالوں کے ساتھ شامل تھے'
+      : 'Score indicates strong performance — likely covered most key points with specific examples and clear structure';
+    if (displayScore >= 60) return isUrdu
+      ? 'اسکور سے ظاہر ہوتا ہے کہ بنیادی سمجھ موجود ہے لیکن گہرائی یا مخصوص تفصیلات کی کمی ہے'
+      : 'Score indicates solid foundational understanding but missing depth or specific supporting details in key areas';
+    if (displayScore >= 40) return isUrdu
+      ? 'اسکور سے ظاہر ہوتا ہے کہ جواب نامکمل تھا — کئی اہم نکات یا مخصوص مثالیں غائب تھیں'
+      : 'Score indicates the answer was incomplete — several important points or specific examples were absent';
+    if (displayScore > 0) return isUrdu
+      ? 'اسکور سے ظاہر ہوتا ہے کہ جواب بہت مختصر یا مبہم تھا — مزید مخصوص تفصیلات اور مثالوں کی ضرورت ہے'
+      : 'Score indicates the answer was too brief or vague — significantly more specific detail and concrete examples are needed';
+    return isUrdu
+      ? 'اس سوال کے لیے کوئی قابلِ تشخیص جواب نہیں دیا گیا'
+      : 'No evaluable answer was provided for this question';
   };
 
   return (

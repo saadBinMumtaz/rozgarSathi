@@ -174,6 +174,7 @@ Rules:
 - The question should feel like a natural conversation, not a quiz.
 - Keep it to 1-2 sentences max.
 - Do NOT repeat the original question.
+- CRITICAL: The follow-up MUST remain relevant to the target role${roleContext}. Do NOT introduce technologies, frameworks, or concepts unrelated to the job description. If the JD is for Data Engineer, do not ask about React or Node.js. If the JD is for Frontend, do not ask about ETL pipelines.
 - Return ONLY a JSON object: { "followUp": "your follow-up question text here" }`;
 
   const userPrompt = `Original question: "${question.text}"
@@ -245,6 +246,7 @@ Rules:
 - Ask ONE clear question — do not stack multiple questions.
 - The question should feel like a genuine coaching conversation.
 - Keep it to 1-2 sentences max.
+- The follow-up should relate to the candidate's target role context when applicable. Do not introduce technical concepts from unrelated domains.
 - Return ONLY a JSON object: { "followUp": "your follow-up question text here" }`;
 
   const userPrompt = `Candidate's answer:

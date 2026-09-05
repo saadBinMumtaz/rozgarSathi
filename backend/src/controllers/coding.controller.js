@@ -9,8 +9,10 @@ import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import Session from '../models/Session.model.js';
+import JDAnalysis from '../models/JDAnalysis.model.js';
 import { evaluateCodingSubmission, evaluateProbeAnswer, generateCodingFeedback } from '../services/scoring.js';
 import { runCode, withSessionQueue } from '../services/codeExecutor.js';
+import { buildInterviewProfile } from '../services/interviewProfile.js';
 import logger from '../utils/logger.js';
 
 const __filename = fileURLToPath(import.meta.url);
@@ -141,11 +143,53 @@ export const getCodingQuestion = async (req, res, next) => {
       question = codingBank.find((q) => q.id === questionId) || null;
     }
     if (!question) {
-      const filtered = codingBank.filter(
+      // Load JD analysis from session for role-aware question selection
+      let interviewProfile = null;
+      if (sessionId) {
+        try {
+          const session = await Session.findById(sessionId);
+          if (session?.jdSnapshot?.jdAnalysisId) {
+            const jd = await JDAnalysis.findById(session.jdSnapshot.jdAnalysisId);
+            if (jd) interviewProfile = buildInterviewProfile(jd);
+          }
+        } catch (jdErr) {
+          logger.warn(`Failed to load JD for coding question selection: ${jdErr.message}`);
+        }
+      }
+
+      let filtered = codingBank.filter(
         (q) => (!topic || q.topic === topic) && (!difficulty || q.difficulty === difficulty)
       );
-      const pool = filtered.length > 0 ? filtered : codingBank;
-      question = pool[Math.floor(Math.random() * pool.length)];
+
+      // If we have a JD profile and no explicit topic filter, prefer questions
+      // whose topics align with the JD's primary/related skills
+      if (interviewProfile && interviewProfile.role && !topic) {
+        const primaryTopics = interviewProfile.primarySkills || [];
+        const relatedTopics = interviewProfile.relatedSkills || [];
+        const allRelevant = [...primaryTopics, ...relatedTopics].map(t => t.toLowerCase());
+
+        // Score each question by JD relevance
+        const scored = filtered.map(q => {
+          const qTopic = (q.topic || '').toLowerCase();
+          const qTitle = (q.title || '').toLowerCase();
+          let relevanceBoost = 0;
+          // Check if question topic/title mentions JD-relevant terms
+          for (const term of allRelevant) {
+            if (term.length > 2 && (qTopic.includes(term) || qTitle.includes(term))) {
+              relevanceBoost += 1;
+            }
+          }
+          return { question: q, boost: relevanceBoost };
+        });
+
+        // Prefer higher-relevance questions, with randomness for variety
+        const boosted = scored.filter(s => s.boost > 0);
+        const pool = boosted.length > 0 ? boosted : scored;
+        question = pool[Math.floor(Math.random() * pool.length)].question;
+      } else {
+        const pool = filtered.length > 0 ? filtered : codingBank;
+        question = pool[Math.floor(Math.random() * pool.length)];
+      }
     }
 
     console.log('[getCodingQuestion] Selected question:', question.id, 'for sessionId:', sessionId);

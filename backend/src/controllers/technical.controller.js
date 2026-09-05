@@ -18,6 +18,7 @@ import {
 } from '../services/answerQuality.js';
 import { completeSession } from '../services/sessionUtils.js';
 import { buildTechnicalFollowUp, buildAIContextualFollowUp } from '../services/followUpEngine.js';
+import { buildInterviewProfile } from '../services/interviewProfile.js';
 import logger from '../utils/logger.js';
 
 const MAX_QUESTIONS = 5; // technical interview length
@@ -35,9 +36,19 @@ const loadJdAnalysis = async (session) => {
 };
 
 /**
+ * Load JD analysis and derive a structured interview profile.
+ * The profile is the single source of truth for question relevance.
+ */
+const loadJdWithProfile = async (session) => {
+  const jdAnalysis = await loadJdAnalysis(session);
+  const interviewProfile = buildInterviewProfile(jdAnalysis);
+  return { jdAnalysis, interviewProfile };
+};
+
+/**
  * Get the first technical question for a session.
  */
-const getFirstQuestion = async (session, jdAnalysis) => {
+const getFirstQuestion = async (session, jdAnalysis, interviewProfile) => {
   const sessionSeed = session.metadata?.sessionSeed || 0;
   const questions = retrieveTechnicalQuestions({
     jdAnalysis,
@@ -45,10 +56,11 @@ const getFirstQuestion = async (session, jdAnalysis) => {
     limit: 1,
     randomize: true,
     sessionSeed,
+    interviewProfile,
   });
 
   if (questions.length === 0) {
-    const q = getRandomTechnicalQuestion({ excludeIds: [] });
+    const q = getRandomTechnicalQuestion({ excludeIds: [], interviewProfile });
     return q || null;
   }
 
@@ -59,7 +71,7 @@ const getFirstQuestion = async (session, jdAnalysis) => {
  * Get the next technical question, considering adaptive difficulty.
  * Returns null if MAX_QUESTIONS has been reached.
  */
-const getNextQuestion = async (session, jdAnalysis, skillHistory) => {
+const getNextQuestion = async (session, jdAnalysis, skillHistory, interviewProfile) => {
   // Strict limit check: never retrieve more than MAX_QUESTIONS
   if (session.questions.length >= MAX_QUESTIONS) {
     logger.debug(`Max questions (${MAX_QUESTIONS}) reached. Not retrieving more.`);
@@ -118,6 +130,7 @@ const getNextQuestion = async (session, jdAnalysis, skillHistory) => {
       limit: 1,
       randomize: true,
       sessionSeed,
+      interviewProfile,
     });
   }
 
@@ -130,6 +143,7 @@ const getNextQuestion = async (session, jdAnalysis, skillHistory) => {
       limit: 1,
       randomize: true,
       sessionSeed,
+      interviewProfile,
     });
   }
 
@@ -141,14 +155,15 @@ const getNextQuestion = async (session, jdAnalysis, skillHistory) => {
       limit: 1,
       randomize: true,
       sessionSeed,
+      interviewProfile,
     });
   }
 
-  // Final fallback: random
+  // Final fallback: random (with relevance gate)
   if (questions.length === 0) {
-    const q = getRandomTechnicalQuestion({ excludeIds, difficulty: nextDiff });
+    const q = getRandomTechnicalQuestion({ excludeIds, difficulty: nextDiff, interviewProfile });
     if (q) return { question: q, nextDifficulty: nextDiff, updatedSkillHistory };
-    const anyQ = getRandomTechnicalQuestion({ excludeIds });
+    const anyQ = getRandomTechnicalQuestion({ excludeIds, interviewProfile });
     if (anyQ) return { question: anyQ, nextDifficulty: nextDiff, updatedSkillHistory };
     return null;
   }
@@ -183,8 +198,8 @@ export const answerTechnical = async (req, res, next) => {
 
     // ─── First call: retrieve and return the first question ──────────
     if (session.questions.length === 0) {
-      const jdAnalysis = await loadJdAnalysis(session);
-      const question = await getFirstQuestion(session, jdAnalysis);
+      const { jdAnalysis, interviewProfile } = await loadJdWithProfile(session);
+      const question = await getFirstQuestion(session, jdAnalysis, interviewProfile);
       if (!question) {
         return res.status(500).json({ code: 500, message: 'No technical questions available' });
       }
@@ -287,11 +302,11 @@ export const answerTechnical = async (req, res, next) => {
     resetInvalidAttempts(session);
 
     // Build JD context for scoring — pass role, skills, keywords for role-specific evaluation
-    const jdAnalysis = await loadJdAnalysis(session);
+    const { jdAnalysis: scoringJd, interviewProfile: scoringProfile } = await loadJdWithProfile(session);
     const jdContext = {
-      role: jdAnalysis.role || jdAnalysis.jdSnapshot?.role || '',
-      skills: jdAnalysis.technicalFocus?.length ? jdAnalysis.technicalFocus : (jdAnalysis.skills || []),
-      keywords: jdAnalysis.keywords || [],
+      role: scoringJd.role || scoringJd.jdSnapshot?.role || '',
+      skills: scoringJd.technicalFocus?.length ? scoringJd.technicalFocus : (scoringJd.skills || []),
+      keywords: scoringJd.keywords || [],
     };
 
     const questionData = {
@@ -358,10 +373,10 @@ const finalizeTechnicalQuestion = async (session, evaluation, res, extra = {}) =
     return completeSession(session, evaluation, res);
   }
 
-  const jdAnalysis = await loadJdAnalysis(session);
+  const { jdAnalysis, interviewProfile } = await loadJdWithProfile(session);
   const skillHistory = session.metadata?.skillHistory || {};
 
-  const result = await getNextQuestion(session, jdAnalysis, skillHistory);
+  const result = await getNextQuestion(session, jdAnalysis, skillHistory, interviewProfile);
   if (!result) {
     return completeSession(session, evaluation, res);
   }
