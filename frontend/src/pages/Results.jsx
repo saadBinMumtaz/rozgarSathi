@@ -232,10 +232,10 @@ export const Results = ({ userId = 'guest', onNavigate, onBackToHub, language = 
 
   return (
     <div className="min-h-screen bg-bg-primary text-text-primary">
-      <div className="max-w-4xl mx-auto px-4 py-8 md:px-6 md:py-12 space-y-6">
+      <div className="max-w-4xl mx-auto px-4 py-8 md:px-6 md:py-12 space-y-6 page-enter">
 
         {/* ── Navigation ── */}
-        <div className="flex items-center justify-between">
+        <div className="flex items-center justify-between animate-fade-in">
           <Button
             variant="ghost"
             size="sm"
@@ -289,7 +289,7 @@ export const Results = ({ userId = 'guest', onNavigate, onBackToHub, language = 
             SECTION 1: HERO — Score Overview
             ════════════════════════════════════════════════════════════ */}
         <Card className="surface-text bg-surface border-border-theme overflow-visible" hover={false}>
-          <CardContent className="pt-6">
+          <CardContent className="pt-6 animate-scale-in">
             <div className="flex flex-col md:flex-row items-center gap-8">
               {/* Score Ring */}
               <div className="flex-shrink-0">
@@ -403,7 +403,7 @@ export const Results = ({ userId = 'guest', onNavigate, onBackToHub, language = 
         {/* ════════════════════════════════════════════════════════════
             SECTION 3: PERFORMANCE SUMMARY
             ════════════════════════════════════════════════════════════ */}
-        <Card className="surface-text bg-surface border-border-theme" hover={false}>
+        <Card className="surface-text bg-surface border-border-theme animate-slide-up stagger-2" hover={false}>
           <CardHeader>
             <CardTitle className="text-sm flex items-center gap-2">
               <BarChart3 size={15} className="text-text-muted" />
@@ -572,7 +572,7 @@ export const Results = ({ userId = 'guest', onNavigate, onBackToHub, language = 
             SECTION 5: KEY STRENGTHS & IMPROVEMENT AREAS
             ════════════════════════════════════════════════════════════ */}
         {(strengths.length > 0 || improvements.length > 0) && (
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 animate-slide-up stagger-4">
             {/* Strengths */}
             <Card className="surface-text bg-surface border-success/20" hover={false}>
               <CardHeader>
@@ -626,7 +626,7 @@ export const Results = ({ userId = 'guest', onNavigate, onBackToHub, language = 
         {/* ════════════════════════════════════════════════════════════
             SECTION 6: NEXT-STEP PRACTICE RECOMMENDATIONS
             ════════════════════════════════════════════════════════════ */}
-        <Card className="surface-text bg-surface border-border-theme" hover={false}>
+        <Card className="surface-text bg-surface border-border-theme animate-slide-up stagger-5" hover={false}>
           <CardHeader>
             <CardTitle className="text-sm flex items-center gap-2">
               <Target size={15} className="text-icon-active" />
@@ -768,7 +768,7 @@ export const Results = ({ userId = 'guest', onNavigate, onBackToHub, language = 
         )}
 
         {/* ── Bottom Actions ── */}
-        <div className="flex flex-col sm:flex-row items-center justify-center gap-3 pt-4 pb-8">
+        <div className="flex flex-col sm:flex-row items-center justify-center gap-3 pt-4 pb-8 animate-fade-in stagger-6">
           <Button variant="primary" onClick={() => onNavigate?.('mode-selection')}>
             Practice Another Mode
           </Button>

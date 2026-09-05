@@ -79,7 +79,7 @@ export const JDInput = ({ onAnalysisComplete, onNavigate, pendingSampleJD, onSam
   }, []);
 
   return (
-    <div className="min-h-screen bg-bg-primary text-text-primary flex flex-col">
+    <div className="min-h-screen bg-bg-primary text-text-primary flex flex-col page-enter">
       {/* Main Container */}
       <main className="flex-1 w-full max-w-4xl mx-auto px-6 md:px-12 pb-12 space-y-8">
         {/* Back button */}

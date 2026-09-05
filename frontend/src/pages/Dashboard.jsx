@@ -157,7 +157,7 @@ export const Dashboard = ({ userId = 'guest', onNavigate, isDark, isAuthenticate
       />
 
       {/* Content */}
-      <div className="p-6 md:p-12 max-w-5xl mx-auto space-y-6">
+      <div className="p-6 md:p-12 max-w-5xl mx-auto space-y-6 page-enter">
         {/* Page Title */}
         <div className="flex items-center justify-between">
           <div>
@@ -185,7 +185,7 @@ export const Dashboard = ({ userId = 'guest', onNavigate, isDark, isAuthenticate
         </div>
 
       {/* Overall Readiness + Per-Mode Breakdown */}
-      <div className="grid md:grid-cols-4 gap-4">
+      <div className="grid md:grid-cols-4 gap-4 animate-slide-up stagger-1">
         {/* Overall readiness ring */}
         <Card className="md:col-span-1 surface-text bg-surface">
           <CardContent className="pt-6 flex flex-col items-center">
@@ -230,7 +230,7 @@ export const Dashboard = ({ userId = 'guest', onNavigate, isDark, isAuthenticate
       </div>
 
       {/* Weakest Competency + Recommendation */}
-      <div className="grid md:grid-cols-2 gap-4">
+      <div className="grid md:grid-cols-2 gap-4 animate-slide-up stagger-2">
         <Card className="border-border-theme surface-text bg-surface">
           <CardHeader>
             <CardTitle className="text-base flex items-center gap-2">
@@ -304,7 +304,7 @@ export const Dashboard = ({ userId = 'guest', onNavigate, isDark, isAuthenticate
 
       {/* Cross-Mode Insight */}
       {crossModeInsight && (
-        <Card className="border-border-theme surface-text bg-surface">
+        <Card className="border-border-theme surface-text bg-surface animate-slide-up stagger-3">
           <CardHeader>
             <CardTitle className="text-base flex items-center gap-2">
               <Brain size={16} className="text-icon-active" aria-hidden="true" />
@@ -319,11 +319,13 @@ export const Dashboard = ({ userId = 'guest', onNavigate, isDark, isAuthenticate
       )}
 
       {/* Progress Trend Chart */}
-      <ProgressTrendChart userId={userId} language={language} />
+      <div className="animate-slide-up stagger-4">
+        <ProgressTrendChart userId={userId} language={language} />
+      </div>
 
       {/* Latest Session Snapshot */}
       {latestSession && (
-        <Card className="border-border-theme surface-text bg-surface">
+        <Card className="border-border-theme surface-text bg-surface animate-slide-up stagger-5">
           <CardHeader>
             <CardTitle className="text-base flex items-center gap-2">
               <Clock size={16} className="text-text-muted" aria-hidden="true" />
@@ -367,7 +369,7 @@ export const Dashboard = ({ userId = 'guest', onNavigate, isDark, isAuthenticate
 
       {/* Weights Transparency */}
       {weights && (
-        <Card className="border-border-theme surface-text bg-surface">
+        <Card className="border-border-theme surface-text bg-surface animate-slide-up stagger-6">
           <CardHeader>
             <CardTitle className="text-base flex items-center gap-2">
               <TrendingUp size={16} className="text-icon-active" aria-hidden="true" />

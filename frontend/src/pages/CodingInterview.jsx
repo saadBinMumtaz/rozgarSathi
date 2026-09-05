@@ -458,7 +458,7 @@ export const CodingInterview = ({ jdAnalysisId, onNavigate, userId, language = '
   const modKey = isMac ? 'Cmd' : 'Ctrl';
 
   return (
-    <div className="min-h-screen bg-bg-primary text-text-primary flex flex-col">
+    <div className="min-h-screen bg-bg-primary text-text-primary flex flex-col page-enter">
       {/* Interview Content */}
       <div className="flex-1 p-4 lg:p-6">
         <div className="max-w-7xl mx-auto space-y-4">

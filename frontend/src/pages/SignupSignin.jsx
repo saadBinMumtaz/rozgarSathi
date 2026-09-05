@@ -119,7 +119,7 @@ export const SignupSignin = ({ onNavigate, onAuthComplete, guestId, language = '
   };
 
   return (
-    <div className="min-h-screen bg-bg-primary text-text-primary flex flex-col pt-8">
+    <div className="min-h-screen bg-bg-primary text-text-primary flex flex-col pt-8 page-enter">
       {/* Back button */}
       <div className="w-full max-w-md mx-auto px-6 mb-4">
         <Button

@@ -17,7 +17,7 @@ export const ProgressBar = ({ value = 0, max = 100, label, showValue = true, cla
           {showValue && <span>{percentage}%</span>}
         </div>
       )}
-      <div className="h-2 w-full bg-border-theme/30 rounded-full overflow-hidden /20">
+      <div className="h-2 w-full bg-border-theme/30 rounded-full overflow-hidden">
         <div
           className={`h-full ${barColor} rounded-full transition-all duration-500 ease-out`}
           style={{ width: `${percentage}%` }}

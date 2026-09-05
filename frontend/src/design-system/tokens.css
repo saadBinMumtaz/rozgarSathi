@@ -3,15 +3,15 @@
 /* Light mode: off-white bg + charcoal cards + dark text */
 /* Dark mode: black bg + charcoal cards + white text */
 
-/* ─── LIGHT MODE (default) ─── */
+/* ── LIGHT MODE (default) ─── */
 :root {
   --color-bg-primary: #D0D0E0;
   --color-surface: #1A1A28;
-  --color-text-primary: #2B2D42;
-  --color-text-muted: #6B7280;
+  --color-text-primary: #1a1c2e;
+  --color-text-muted: #555B6E;
   --color-border: rgba(43, 45, 66, 0.12);
-  --color-icon-muted: #6B7280;
-  --color-icon-active: #2B2D42;
+  --color-icon-muted: #555B6E;
+  --color-icon-active: #1a1c2e;
 
   --color-success: #4CAF50;
   --color-warning: #F4B942;
@@ -20,12 +20,12 @@
   --color-bg-hover: #C0C0D0;
   --color-bg-active: #B0B0C0;
   --color-surface-hover: #2A2A3E;
-  --color-border-strong: #2B2D42;
+  --color-border-strong: #1a1c2e;
   --color-overlay: rgba(43, 45, 66, 0.3);
 
   /* Text on dark surfaces (cards are charcoal in both themes) */
   --color-surface-text: #F1F1F1;
-  --color-surface-text-muted: #B0B0C0;
+  --color-surface-text-muted: #C8C8D8;
 
   color-scheme: light;
 }
@@ -33,11 +33,11 @@
 html.light {
   --color-bg-primary: #D0D0E0;
   --color-surface: #1A1A28;
-  --color-text-primary: #2B2D42;
-  --color-text-muted: #6B7280;
+  --color-text-primary: #1a1c2e;
+  --color-text-muted: #555B6E;
   --color-border: rgba(43, 45, 66, 0.12);
-  --color-icon-muted: #6B7280;
-  --color-icon-active: #2B2D42;
+  --color-icon-muted: #555B6E;
+  --color-icon-active: #1a1c2e;
 
   --color-success: #4CAF50;
   --color-warning: #F4B942;
@@ -46,11 +46,11 @@ html.light {
   --color-bg-hover: #C0C0D0;
   --color-bg-active: #B0B0C0;
   --color-surface-hover: #2A2A3E;
-  --color-border-strong: #2B2D42;
+  --color-border-strong: #1a1c2e;
   --color-overlay: rgba(43, 45, 66, 0.3);
 
   --color-surface-text: #F1F1F1;
-  --color-surface-text-muted: #B0B0C0;
+  --color-surface-text-muted: #C8C8D8;
 
   color-scheme: light;
 }
@@ -61,7 +61,7 @@ html.dark {
   --color-surface: #1E1E2E;
   --color-text-primary: #EDF2F4;
   --color-text-muted: #8D99AE;
-  --color-border: rgba(237, 242, 244, 0.08);
+  --color-border: rgba(237, 242, 244, 0.15);
   --color-icon-muted: #8D99AE;
   --color-icon-active: #EDF2F4;
 
@@ -76,7 +76,7 @@ html.dark {
   --color-overlay: rgba(0, 0, 0, 0.7);
 
   --color-surface-text: #F1F1F1;
-  --color-surface-text-muted: #A0A0B0;
+  --color-surface-text-muted: #B8B8C8;
 
   color-scheme: dark;
 }
@@ -169,4 +169,58 @@ body {
 html.theme-transitioning,
 html.theme-transitioning * {
   transition: background-color 0.25s ease, color 0.25s ease !important;
+}
+
+/* ─── Animation Tokens ─── */
+:root {
+  --ease-out-expo: cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-out-quart: cubic-bezier(0.25, 1, 0.5, 1);
+  --duration-fast: 150ms;
+  --duration-normal: 250ms;
+  --duration-slow: 400ms;
+}
+
+/* ─── Keyframe Animations ── */
+@keyframes rs-fade-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes rs-slide-up {
+  from { opacity: 0; transform: translateY(12px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes rs-slide-up-sm {
+  from { opacity: 0; transform: translateY(6px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes rs-scale-in {
+  from { opacity: 0; transform: scale(0.96); }
+  to { opacity: 1; transform: scale(1); }
+}
+
+@keyframes rs-shimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+
+@keyframes rs-pulse-soft {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.7; }
+}
+
+@keyframes rs-float {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-4px); }
+}
+
+/* ─── Reduced Motion ─── */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
 }

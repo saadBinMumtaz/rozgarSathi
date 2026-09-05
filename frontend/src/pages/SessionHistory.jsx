@@ -237,7 +237,7 @@ export const SessionHistory = ({ userId = 'guest', onNavigate, language = 'engli
   }
 
   return (
-    <div className="min-h-screen bg-bg-primary text-text-primary flex flex-col">
+    <div className="min-h-screen bg-bg-primary text-text-primary flex flex-col page-enter">
       {/* Content */}
       <div className="flex-1 p-6 md:p-12">
         <div className="max-w-4xl mx-auto space-y-6">

@@ -104,7 +104,7 @@ export const FindJobs = ({ onNavigate, onStartPracticing, onTailorResume, isDark
   }, [onTailorResume, isAuthenticated]);
 
   return (
-    <div className="min-h-screen bg-bg-primary text-text-primary flex flex-col">
+    <div className="min-h-screen bg-bg-primary text-text-primary flex flex-col page-enter">
       {/* Navigation Header */}
       <PageHeader
         isDark={isDark}

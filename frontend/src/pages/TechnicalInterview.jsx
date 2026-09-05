@@ -294,22 +294,20 @@ export const TechnicalInterview = ({ jdAnalysisId, onNavigate, language = 'engli
   const progress = (questionCount / MAX_QUESTIONS) * 100;
 
   return (
-    <div className="min-h-screen flex flex-col" style={{ backgroundColor: isDark ? '#0a0a0a' : '#fafafa', color: isDark ? '#ffffff' : '#111111' }}>
+    <div className="min-h-screen flex flex-col bg-bg-primary text-text-primary page-enter">
       {/* Top bar: Back + Refresh + Progress */}
       <div className="flex items-center justify-between px-6 py-4">
         <div className="flex items-center gap-3">
           <button
             onClick={() => onNavigate('mode-selection')}
-            className="text-sm font-medium hover:opacity-70 transition-opacity"
-            style={{ color: isDark ? '#ffffff' : '#111111' }}
+            className="text-sm font-medium text-text-muted hover:text-text-primary transition-colors duration-150 focus:outline-none focus-visible:ring-2 focus-visible:ring-border-strong rounded"
           >
             {L('interview.back')}
           </button>
           <button
             onClick={handleResetSession}
             disabled={isLoading}
-            className="flex items-center gap-1 text-xs font-medium hover:opacity-70 transition-opacity disabled:opacity-30"
-            style={{ color: isDark ? '#9ca3af' : '#6b7280' }}
+            className="flex items-center gap-1 text-xs font-medium text-text-muted hover:text-text-primary transition-colors duration-150 disabled:opacity-30 focus:outline-none focus-visible:ring-2 focus-visible:ring-border-strong rounded"
             title={L('interview.refreshInterview')}
           >
             <RefreshCw size={14} className={isLoading ? 'animate-spin' : ''} />
@@ -360,24 +358,18 @@ export const TechnicalInterview = ({ jdAnalysisId, onNavigate, language = 'engli
       {currentQuestion && !isComplete && (
         <div className="flex-1 flex flex-col items-center justify-center px-6 py-8">
           {/* Robot avatar with themed circle */}
-          <div
-            className="rounded-full flex items-center justify-center relative z-10"
-            style={{
-              width: 220,
-              height: 220,
-              backgroundColor: '#ffffff',
-              border: `3px solid ${isDark ? '#ffffff' : '#333333'}`,
-            }}
+          <div className="rounded-full flex items-center justify-center relative z-10 ring-2 ring-border-theme/30 shadow-lg"
+            style={{ width: 220, height: 220, backgroundColor: 'var(--color-surface)', border: '3px solid var(--color-border-strong)' }}
           >
             <RobotAvatar
               size={180}
-              style={{ color: '#000000' }}
+              style={{ color: 'var(--color-surface-text)' }}
             />
           </div>
   
           {/* Question text with typewriter effect */}
           <div className="mt-8 text-center max-w-2xl min-h-[3.5rem]">
-            <p className="text-xl md:text-2xl font-semibold leading-relaxed" style={{ color: isDark ? '#ffffff' : '#111111' }}>
+            <p className="text-xl md:text-2xl font-semibold leading-relaxed text-text-primary">
               <TypewriterText
                 text={followUp
                   ? ((isUrdu && urduFollowUp) || followUp)
@@ -389,7 +381,7 @@ export const TechnicalInterview = ({ jdAnalysisId, onNavigate, language = 'engli
   
           {/* Urdu translation indicator */}
           {isUrdu && isTranslatingUrdu && (
-            <div className="mt-4 text-xs animate-pulse" style={{ color: isDark ? '#9ca3af' : '#6b7280' }}>{L('interview.translating')}</div>
+            <div className="mt-4 text-xs animate-pulse-soft text-text-muted">{L('interview.translating')}</div>
           )}
   
           {/* Repeat Question button */}
@@ -403,8 +395,7 @@ export const TechnicalInterview = ({ jdAnalysisId, onNavigate, language = 'engli
                   : ((isUrdu && urduQuestionText) || currentQuestion.questionText);
                 speak(speakText, language, followUp || currentQuestion.questionText);
               }}
-              className="flex items-center gap-2"
-              style={{ color: isDark ? '#ffffff' : '#111111' }}
+              className="flex items-center gap-2 text-text-muted hover:text-text-primary"
             >
               <RefreshCw size={18} />
               {L('interview.repeatQuestion')}
@@ -413,9 +404,9 @@ export const TechnicalInterview = ({ jdAnalysisId, onNavigate, language = 'engli
   
           {/* Follow-up indicator */}
           {followUp && !currentQuestion?.evaluation && (
-            <div className="mt-6 px-4 py-2 rounded-lg text-sm" style={{ backgroundColor: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.05)', color: isDark ? '#e5e7eb' : '#374151' }}>
-              <div className="text-xs font-medium mb-1" style={{ color: isDark ? '#9ca3af' : '#6b7280' }}>{L('interview.followUpQuestion')}</div>
-              <div className={isUrdu ? 'urdu-text' : ''}>{(isUrdu && urduFollowUp) || followUp}</div>
+            <div className="mt-6 px-4 py-2 rounded-lg text-sm bg-surface-hover border border-border-theme">
+              <div className="text-xs font-medium mb-1 text-text-muted">{L('interview.followUpQuestion')}</div>
+              <div className={isUrdu ? 'urdu-text text-text-primary' : 'text-text-primary'}>{(isUrdu && urduFollowUp) || followUp}</div>
             </div>
           )}
   
@@ -589,11 +580,12 @@ export const TechnicalInterview = ({ jdAnalysisId, onNavigate, language = 'engli
         {/* Loading state */}
         {isLoading && !currentQuestion && !isComplete && (
           <div className="flex-1 flex items-center justify-center">
-            <Card>
-              <CardContent className="text-center py-8">
-                <div className="text-text-muted">{L('interview.technical.setup')}</div>
-              </CardContent>
-            </Card>
+            <div className="text-center space-y-4">
+              <WaveformAnimation isActive />
+              <div className="space-y-2 animate-pulse-soft">
+                <p className="text-sm font-medium text-text-muted">{L('interview.technical.setup')}</p>
+              </div>
+            </div>
           </div>
         )}
     </div>

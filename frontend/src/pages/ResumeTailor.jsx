@@ -371,16 +371,16 @@ export const ResumeTailor = ({ onNavigate, isDark = false, prefilledJob = null, 
         return (
           <div className="space-y-6">
             <div className="text-center">
-              <h2 className="text-2xl font-bold mb-2" style={{ color: isDark ? '#ffffff' : '#111111' }}>
+              <h2 className="text-2xl font-bold mb-2 text-text-primary">
                 {L('resumeTailor.uploadTitle')}
               </h2>
-              <p className="text-sm" style={{ color: isDark ? '#9ca3af' : '#6b7280' }}>
+              <p className="text-sm text-text-muted">
                 {L('resumeTailor.uploadFormats')}
               </p>
             </div>
 
             <div className="border-2 border-dashed rounded-lg p-8 text-center" style={{ borderColor: isDark ? '#374151' : '#d1d5db' }}>
-              <Upload size={48} className="mx-auto mb-4" style={{ color: isDark ? '#9ca3af' : '#6b7280' }} />
+              <Upload size={48} className="mx-auto mb-4 text-text-muted" />
               <input
                 type="file"
                 accept=".pdf,.docx,.doc,.txt"
@@ -402,7 +402,7 @@ export const ResumeTailor = ({ onNavigate, isDark = false, prefilledJob = null, 
               {resumeFile && (
                 <div className="mt-4 flex items-center justify-center gap-2">
                   <CheckCircle2 size={20} className="text-green-500" />
-                  <span className="text-sm font-medium" style={{ color: isDark ? '#ffffff' : '#111111' }}>
+                  <span className="text-sm font-medium text-text-primary">
                     {resumeFile.name}
                   </span>
                 </div>
@@ -425,10 +425,10 @@ export const ResumeTailor = ({ onNavigate, isDark = false, prefilledJob = null, 
         return (
           <div className="space-y-6">
             <div className="text-center">
-              <h2 className="text-2xl font-bold mb-2" style={{ color: isDark ? '#ffffff' : '#111111' }}>
+              <h2 className="text-2xl font-bold mb-2 text-text-primary">
                 {prefilledJob ? L('resumeTailor.prefilledTitle') : L('resumeTailor.pasteJDTitle')}
               </h2>
-              <p className="text-sm" style={{ color: isDark ? '#9ca3af' : '#6b7280' }}>
+              <p className="text-sm text-text-muted">
                 {prefilledJob
                   ? `${L('resumeTailor.tailoringFor')} ${prefilledJob.title} ${prefilledJob.company}`
                   : L('resumeTailor.pasteBelow')}
@@ -439,11 +439,11 @@ export const ResumeTailor = ({ onNavigate, isDark = false, prefilledJob = null, 
               <div className="p-4 rounded-lg border" style={{ backgroundColor: isDark ? '#1f2937' : '#f9fafb', borderColor: isDark ? '#374151' : '#e5e7eb' }}>
                 <div className="flex items-center gap-2 mb-2">
                   <FileText size={16} className="text-blue-500" />
-                  <span className="font-medium text-sm" style={{ color: isDark ? '#ffffff' : '#111111' }}>
+                  <span className="font-medium text-sm text-text-primary">
                     {prefilledJob.title}
                   </span>
                 </div>
-                <div className="text-xs" style={{ color: isDark ? '#9ca3af' : '#6b7280' }}>
+                <div className="text-xs text-text-muted">
                   {prefilledJob.company} • {prefilledJob.location}
                 </div>
               </div>
@@ -495,7 +495,7 @@ export const ResumeTailor = ({ onNavigate, isDark = false, prefilledJob = null, 
         return (
           <div className="space-y-6">
             <div className="text-center">
-              <h2 className="text-2xl font-bold mb-2" style={{ color: isDark ? '#ffffff' : '#111111' }}>
+              <h2 className="text-2xl font-bold mb-2 text-text-primary">
                 {L('resumeTailor.matchAnalysis')}
               </h2>
               {result?.completenessFailed && (
@@ -535,7 +535,7 @@ export const ResumeTailor = ({ onNavigate, isDark = false, prefilledJob = null, 
                   </CardHeader>
                   <CardContent>
                     <div className="text-center">
-                      <div className="text-4xl font-bold mb-2" style={{ color: isDark ? '#ffffff' : '#111111' }}>
+                      <div className="text-4xl font-bold mb-2 text-text-primary">
                         {result.analysis.matchScore}%
                       </div>
                       <ProgressBar progress={result.analysis.matchScore} />
@@ -554,7 +554,7 @@ export const ResumeTailor = ({ onNavigate, isDark = false, prefilledJob = null, 
                         <Badge key={idx} variant="success">{skill}</Badge>
                       ))}
                       {result.analysis.matchedSkills?.length === 0 && (
-                        <p className="text-sm" style={{ color: isDark ? '#9ca3af' : '#6b7280' }}>{L('resumeTailor.noMatched')}</p>
+                        <p className="text-sm text-text-muted">{L('resumeTailor.noMatched')}</p>
                       )}
                     </div>
                   </CardContent>
@@ -571,7 +571,7 @@ export const ResumeTailor = ({ onNavigate, isDark = false, prefilledJob = null, 
                         <Badge key={idx} variant="warning">{skill}</Badge>
                       ))}
                       {result.analysis.missingSkills?.length === 0 && (
-                        <p className="text-sm" style={{ color: isDark ? '#9ca3af' : '#6b7280' }}>{L('resumeTailor.noMissing')}</p>
+                        <p className="text-sm text-text-muted">{L('resumeTailor.noMissing')}</p>
                       )}
                     </div>
                   </CardContent>
@@ -587,7 +587,7 @@ export const ResumeTailor = ({ onNavigate, isDark = false, prefilledJob = null, 
                       {result.analysis.changesMade?.map((change, idx) => (
                         <li key={idx} className="flex items-start gap-2">
                           <CheckCircle2 size={16} className="text-green-500 mt-0.5 flex-shrink-0" />
-                          <span style={{ color: isDark ? '#d1d5db' : '#374151' }}>{change}</span>
+                          <span className="text-text-primary">{change}</span>
                         </li>
                       ))}
                     </ul>
@@ -613,10 +613,10 @@ export const ResumeTailor = ({ onNavigate, isDark = false, prefilledJob = null, 
           <div className="space-y-4">
             <div className="flex items-center justify-between">
               <div>
-                <h2 className="text-xl font-bold" style={{ color: isDark ? '#ffffff' : '#111111' }}>
+                <h2 className="text-xl font-bold text-text-primary">
                   {L('resumeTailor.previewTitle')}
                 </h2>
-                <p className="text-xs mt-1" style={{ color: isDark ? '#9ca3af' : '#6b7280' }}>
+                <p className="text-xs mt-1 text-text-muted">
                   {L('resumeTailor.previewDesc')}
                 </p>
               </div>
@@ -680,7 +680,7 @@ export const ResumeTailor = ({ onNavigate, isDark = false, prefilledJob = null, 
                     {result.tailoredResume.education.map((edu, idx) => (
                       <div key={idx} className="mb-2">
                         <div className="flex justify-between items-baseline">
-                          <span className="font-bold text-sm" style={{ color: '#1a1a1a' }}>
+                          <span className="font-bold text-sm text-text-primary">
                             {edu.degree}{edu.field ? ` in ${edu.field}` : ''}
                           </span>
                           <span className="text-xs flex-shrink-0 ml-4" style={{ color: '#555' }}>
@@ -710,15 +710,15 @@ export const ResumeTailor = ({ onNavigate, isDark = false, prefilledJob = null, 
                       const bullets = proj.bullets || (proj.description ? [proj.description] : []);
                       return (
                         <div key={idx} className="mb-3">
-                          <div className="font-bold text-sm" style={{ color: '#1a1a1a' }}>
+                          <div className="font-bold text-sm text-text-primary">
                             {proj.name}
                           </div>
                           {proj.subtitle && (
                             <div className="text-xs italic mb-1" style={{ color: '#555' }}>{proj.subtitle}</div>
                           )}
                           {bullets.map((b, bi) => (
-                            <div key={bi} className="flex items-start gap-2 text-xs ml-3" style={{ color: '#333' }}>
-                              <span style={{ color: '#1a1a1a' }}>{'\u2022'}</span>
+                            <div key={bi} className="flex items-start gap-2 text-xs ml-3 text-text-primary">
+                              <span className="text-text-primary">{'\u2022'}</span>
                               <span>{b}</span>
                             </div>
                           ))}
@@ -753,8 +753,8 @@ export const ResumeTailor = ({ onNavigate, isDark = false, prefilledJob = null, 
                         Skills
                       </h2>
                       {active.map((cat) => (
-                        <div key={cat.key} className="text-xs mb-1" style={{ color: '#333' }}>
-                          <span className="font-bold" style={{ color: '#1a1a1a' }}>{cat.label}: </span>
+                        <div key={cat.key} className="text-xs mb-1 text-text-primary">
+                          <span className="font-bold text-text-primary">{cat.label}: </span>
                           <span>{s[cat.key].join(', ')}</span>
                         </div>
                       ))}
@@ -772,8 +772,8 @@ export const ResumeTailor = ({ onNavigate, isDark = false, prefilledJob = null, 
                       const name = typeof cert === 'string' ? cert : (cert.name || '');
                       const issuer = typeof cert === 'object' ? cert.issuer : '';
                       return (
-                        <div key={idx} className="flex items-start gap-2 text-xs ml-3 mb-1" style={{ color: '#333' }}>
-                          <span style={{ color: '#1a1a1a' }}>{'\u2022'}</span>
+                        <div key={idx} className="flex items-start gap-2 text-xs ml-3 mb-1 text-text-primary">
+                          <span className="text-text-primary">{'\u2022'}</span>
                           <span>{name}{issuer ? ` \u2014 ${issuer}` : ''}</span>
                         </div>
                       );
@@ -792,15 +792,15 @@ export const ResumeTailor = ({ onNavigate, isDark = false, prefilledJob = null, 
                       return (
                         <div key={idx} className="mb-3">
                           <div className="flex justify-between items-baseline">
-                            <span className="font-bold text-sm" style={{ color: '#1a1a1a' }}>{exp.title}</span>
+                            <span className="font-bold text-sm text-text-primary">{exp.title}</span>
                             <span className="text-xs flex-shrink-0 ml-4" style={{ color: '#555' }}>
                               {exp.startDate}{exp.endDate ? ` \u2013 ${exp.endDate}` : ''}
                             </span>
                           </div>
                           <div className="text-xs italic mb-1" style={{ color: '#555' }}>{exp.company}</div>
                           {bullets.map((b, bi) => (
-                            <div key={bi} className="flex items-start gap-2 text-xs ml-3" style={{ color: '#333' }}>
-                              <span style={{ color: '#1a1a1a' }}>{'\u2022'}</span>
+                            <div key={bi} className="flex items-start gap-2 text-xs ml-3 text-text-primary">
+                              <span className="text-text-primary">{'\u2022'}</span>
                               <span>{b}</span>
                             </div>
                           ))}
@@ -832,11 +832,11 @@ export const ResumeTailor = ({ onNavigate, isDark = false, prefilledJob = null, 
                   borderColor: isDark ? '#374151' : '#e5e7eb',
                 }}
               >
-                <h3 className="text-sm font-bold mb-3 flex items-center gap-2" style={{ color: isDark ? '#ffffff' : '#111111' }}>
+                <h3 className="text-sm font-bold mb-3 flex items-center gap-2 text-text-primary">
                   <Sparkles size={16} className="text-blue-500" />
                   {L('resumeTailor.changesTitle')}
                 </h3>
-                <p className="text-xs mb-4" style={{ color: isDark ? '#9ca3af' : '#6b7280' }}>
+                <p className="text-xs mb-4 text-text-muted">
                   <span className="inline-block w-3 h-3 mr-1" style={{ backgroundColor: '#22c55e33', border: '1px solid #22c55e' }}></span>
                   {L('resumeTailor.greenAdded')} &nbsp;&nbsp;
                   <span className="inline-block w-3 h-3 mr-1" style={{ backgroundColor: '#ef444433', border: '1px solid #ef4444' }}></span>
@@ -847,7 +847,7 @@ export const ResumeTailor = ({ onNavigate, isDark = false, prefilledJob = null, 
                 {/* Summary change */}
                 {diffChanges.summaryChanged && (
                   <div className="mb-3">
-                    <div className="text-xs font-semibold mb-1" style={{ color: isDark ? '#d1d5db' : '#374151' }}>{L('resumeTailor.summaryRewritten')}</div>
+                    <div className="text-xs font-semibold mb-1 text-text-primary">{L('resumeTailor.summaryRewritten')}</div>
                     <div className="text-xs p-2 rounded" style={{ backgroundColor: '#22c55e15', border: '1px solid #22c55e40', color: '#16a34a' }}>
                       {result.tailoredResume.summary}
                     </div>
@@ -857,10 +857,10 @@ export const ResumeTailor = ({ onNavigate, isDark = false, prefilledJob = null, 
                 {/* Project changes */}
                 {diffChanges.projectChanges?.filter(p => p.changed).length > 0 && (
                   <div className="mb-3">
-                    <div className="text-xs font-semibold mb-1" style={{ color: isDark ? '#d1d5db' : '#374151' }}>{L('resumeTailor.projectChanges')}</div>
+                    <div className="text-xs font-semibold mb-1 text-text-primary">{L('resumeTailor.projectChanges')}</div>
                     {diffChanges.projectChanges.filter(p => p.changed).map((proj, idx) => (
                       <div key={idx} className="mb-2 ml-2">
-                        <div className="text-xs font-medium mb-1" style={{ color: isDark ? '#9ca3af' : '#6b7280' }}>{proj.name}</div>
+                        <div className="text-xs font-medium mb-1 text-text-muted">{proj.name}</div>
                         {proj.origBullets.map((b, bi) => {
                           const newB = proj.newBullets[bi];
                           return (
@@ -884,10 +884,10 @@ export const ResumeTailor = ({ onNavigate, isDark = false, prefilledJob = null, 
                 {/* Skill reorder */}
                 {Object.keys(diffChanges.skillChanges || {}).length > 0 && (
                   <div className="mb-3">
-                    <div className="text-xs font-semibold mb-1" style={{ color: isDark ? '#d1d5db' : '#374151' }}>{L('resumeTailor.skillReordering')}</div>
+                    <div className="text-xs font-semibold mb-1 text-text-primary">{L('resumeTailor.skillReordering')}</div>
                     {Object.entries(diffChanges.skillChanges).map(([cat, changes]) => (
                       <div key={cat} className="text-xs mb-1 ml-2">
-                        <span className="font-medium" style={{ color: isDark ? '#d1d5db' : '#374151' }}>{cat}: </span>
+                        <span className="font-medium text-text-primary">{cat}: </span>
                         {changes.reordered && <span style={{ color: '#3b82f6' }}>{L('resumeTailor.reorderedByJd')}</span>}
                         {changes.added?.length > 0 && (
                           <span style={{ color: '#16a34a' }}> +{changes.added.join(', ')}</span>
@@ -917,21 +917,20 @@ export const ResumeTailor = ({ onNavigate, isDark = false, prefilledJob = null, 
   };
 
   return (
-    <div className="min-h-screen py-8 px-4" style={{ backgroundColor: isDark ? '#0a0a0a' : '#fafafa' }}>
+    <div className="min-h-screen py-8 px-4 bg-bg-primary text-text-primary page-enter">
       <div className="max-w-4xl mx-auto">
         {/* Header */}
         <div className="mb-8">
           <button
             onClick={() => onNavigate('dashboard')}
-            className="text-sm mb-4 hover:underline"
-            style={{ color: isDark ? '#9ca3af' : '#6b7280' }}
+            className="text-sm mb-4 hover:underline text-text-muted"
           >
             {L('resumeTailor.backDashboard')}
           </button>
-          <h1 className="text-3xl font-bold" style={{ color: isDark ? '#ffffff' : '#111111' }}>
+          <h1 className="text-3xl font-bold text-text-primary">
             {L('resumeTailor.title')}
           </h1>
-          <p className="mt-2" style={{ color: isDark ? '#9ca3af' : '#6b7280' }}>
+          <p className="mt-2 text-text-muted">
             {L('resumeTailor.subtitle')}
           </p>
         </div>

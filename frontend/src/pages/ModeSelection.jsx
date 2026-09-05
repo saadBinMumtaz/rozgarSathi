@@ -63,7 +63,7 @@ export const ModeSelection = ({ jdAnalysis, onSelectMode, onNavigate, language, 
   ];
 
   return (
-    <div className="min-h-screen bg-bg-primary text-text-primary flex flex-col">
+    <div className="min-h-screen bg-bg-primary text-text-primary flex flex-col page-enter">
       {/* Simple top bar with back button and language toggle */}
       <div className="w-full max-w-7xl mx-auto px-6 md:px-12 py-4 flex items-center justify-between">
         <Button
@@ -96,7 +96,7 @@ export const ModeSelection = ({ jdAnalysis, onSelectMode, onNavigate, language, 
 
       <main className="flex-1 w-full max-w-5xl mx-auto px-6 md:px-12 pb-12 space-y-8">
         {/* Extracted JD Analysis Summary Card */}
-        <Card className="surface-text bg-surface">
+        <Card className="surface-text bg-surface animate-slide-up stagger-1">
           <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
             <div className="space-y-2">
               <div className="flex items-center gap-3">
@@ -134,7 +134,7 @@ export const ModeSelection = ({ jdAnalysis, onSelectMode, onNavigate, language, 
         </Card>
 
         {/* Section Heading */}
-        <div className="space-y-1">
+        <div className="space-y-1 animate-slide-up stagger-2">
           <h3 className="text-xl font-bold text-text-primary">{L('modeSelection.title')}</h3>
           <p className="text-sm text-text-muted">
             {L('modeSelection.subtitle')}
@@ -143,15 +143,16 @@ export const ModeSelection = ({ jdAnalysis, onSelectMode, onNavigate, language, 
 
         {/* Mode Cards Grid */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          {modes.map((m) => {
+          {modes.map((m, idx) => {
             const isSelected = selectedMode === m.id;
             return (
               <div
                 key={m.id}
                 onClick={() => setSelectedMode(m.id)}
-                className={`cursor-pointer transition-all duration-200 ${
+                className={`cursor-pointer transition-all duration-200 animate-slide-up ${
                   isSelected ? 'scale-[1.02]' : 'hover:scale-[1.01]'
                 }`}
+                style={{ animationDelay: `${180 + idx * 60}ms` }}
               >
                 <Card
                   className={`h-full flex flex-col justify-between ${

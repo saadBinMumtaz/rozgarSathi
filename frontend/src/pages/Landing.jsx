@@ -97,26 +97,26 @@ export const Landing = ({ onNavigate, onTrySampleJD, isAuthenticated, user, isDa
       {/* ─── Split-Screen Hero ─── */}
       <section className="flex-1 w-full max-w-7xl mx-auto px-6 md:px-12 py-8 md:py-12 grid grid-cols-1 lg:grid-cols-2 gap-10 lg:gap-16 items-center relative z-10">
         {/* Left Column — Text & CTAs */}
-        <div className="space-y-6">
-          <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-[3.25rem] font-extrabold text-text-primary tracking-tight leading-tight">
+        <div className="space-y-6 animate-slide-up">
+          <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-[3.25rem] font-extrabold text-text-primary tracking-tight leading-[1.15]">
             {L('landing.heroPrefix')}
             <br />
             <span className="inline-block min-w-[1ch] mt-1">
               {typewriterWord}
               <span
-                className="inline-block w-[3px] h-[0.85em] bg-text-primary ml-0.5 align-middle"
+                className="inline-block w-[3px] h-[0.85em] bg-text-primary ml-0.5 align-middle rounded-full"
                 style={{ animation: 'tw-cursor-blink 0.7s steps(2, start) infinite' }}
               />
             </span>
             {' '}{L('landing.heroSuffix')}
           </h1>
 
-          <p className="text-base md:text-lg text-text-muted max-w-xl leading-relaxed">
+          <p className="text-base md:text-lg text-text-muted max-w-xl leading-relaxed animate-slide-up stagger-2">
             {L('landing.heroDesc')}
           </p>
 
           {/* Action Buttons */}
-          <div className="flex flex-wrap gap-3 pt-2">
+          <div className="flex flex-wrap gap-3 pt-2 animate-slide-up stagger-3">
             <Button
               size="lg"
               variant="primary"
@@ -140,7 +140,7 @@ export const Landing = ({ onNavigate, onTrySampleJD, isAuthenticated, user, isDa
                 if (sample) onTrySampleJD({ text: sample.text, sampleId: sample.id });
               }}
               aria-label="Load a sample job description"
-              className="text-base font-semibold surface-text bg-surface rounded-lg px-4 py-3 text-text-primary hover:border-border-strong focus:outline-none focus:border-border-strong cursor-pointer"
+              className="text-base font-semibold surface-text bg-surface rounded-lg px-4 py-3 text-text-primary hover:opacity-90 focus:outline-none focus-visible:ring-2 focus-visible:ring-border-strong cursor-pointer transition-opacity duration-150"
             >
               <option value="" disabled>
                 {L('landing.sampleJD')}
@@ -161,9 +161,9 @@ export const Landing = ({ onNavigate, onTrySampleJD, isAuthenticated, user, isDa
 
           {/* Guest hint */}
           {!isAuthenticated && (
-            <p className="text-xs text-text-muted">
+            <p className="text-xs text-text-muted animate-slide-up stagger-4">
               {L('landing.guestHint')}{' '}
-              <button onClick={() => onNavigate('auth')} className="text-text-primary font-medium hover:underline">
+              <button onClick={() => onNavigate('auth')} className="text-text-primary font-medium hover:underline focus:outline-none focus-visible:underline">
                 {L('landing.createAccount')}
               </button>{' '}
               {L('landing.guestHintEnd')}
@@ -172,8 +172,8 @@ export const Landing = ({ onNavigate, onTrySampleJD, isAuthenticated, user, isDa
         </div>
 
         {/* Right Column — Video Frame */}
-        <div className="flex items-center justify-center">
-          <div className="relative w-full max-w-lg aspect-video rounded-2xl overflow-hidden border border-border shadow-2xl bg-surface">
+        <div className="flex items-center justify-center animate-scale-in stagger-2">
+          <div className="relative w-full max-w-lg aspect-video rounded-2xl overflow-hidden border border-border-theme card-shadow bg-surface">
             <video
               ref={videoRef}
               autoPlay

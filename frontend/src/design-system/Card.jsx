@@ -3,8 +3,10 @@ import React from 'react';
 export const Card = ({ children, className = '', hover = true, ...props }) => {
   return (
     <div
-      className={`surface-text bg-surface rounded-xl p-6 ${
-        hover ? 'hover:surface-text bg-surface-hover transition-colors duration-200' : ''
+      className={`surface-text bg-surface rounded-xl p-6 card-shadow ${
+        hover
+          ? 'hover:bg-surface-hover hover:card-shadow-hover transition-all duration-200 ease-out'
+          : ''
       } ${className}`}
       {...props}
     >
@@ -18,11 +20,11 @@ export const CardHeader = ({ children, className = '' }) => (
 );
 
 export const CardTitle = ({ children, className = '' }) => (
-  <h3 className={`text-xl font-bold tracking-tight ${className}`}>{children}</h3>
+  <h3 className={`text-lg font-bold tracking-tight leading-snug ${className}`}>{children}</h3>
 );
 
 export const CardDescription = ({ children, className = '' }) => (
-  <p className={`text-sm mt-1 ${className}`}>{children}</p>
+  <p className={`text-sm leading-relaxed mt-1 ${className}`}>{children}</p>
 );
 
 export const CardContent = ({ children, className = '' }) => (

@@ -202,26 +202,34 @@ export const evaluateBehavioralAnswer = async ({ question, transcript, language 
   const roleContext = jdContext.role ? `\nThe candidate is interviewing for: ${jdContext.role}` : '';
   const skillsContext = jdContext.skills?.length ? `\nKey skills for this role: ${jdContext.skills.slice(0, 5).join(', ')}` : '';
 
-  const systemPrompt = `You are an expert behavioral interviewer evaluating a candidate's answer using the STAR framework.
-Score each dimension of the rubric from 0-10 based on how well the candidate addressed it.${roleContext}${skillsContext}
+  const systemPrompt = `You are a seasoned behavioral interviewer who just listened to this answer. You give specific, honest, evidence-based feedback — never generic praise.
+${roleContext}${skillsContext}
+SCORE EACH RUBRIC DIMENSION 0-10:
+- 0-3: Completely missed this STAR element or gave irrelevant content
+- 4-5: Mentioned it but vague, generic, or lacking any concrete detail
+- 6-7: Addressed it with reasonable specifics and at least one concrete example
+- 8-9: Strong with compelling details, clear personal contribution, measurable outcome
+- 10: Exceptional — complete STAR arc with quantified impact
 
-Scoring guidance:
-- 0-3: Answer completely missed this dimension or was irrelevant
-- 4-5: Answer touched on this dimension but was vague, generic, or lacked specifics
-- 6-7: Answer addressed this dimension with reasonable detail and some concrete examples
-- 8-9: Answer strongly demonstrated this dimension with specific, compelling examples
-- 10: Exceptional — answer perfectly demonstrated this dimension with measurable impact
+STRICT RULES:
+1. NEVER use generic phrases: "Good answer", "Great job", "You demonstrated", "Excellent response", "Needs improvement", "good communication"
+2. Evidence MUST quote or closely paraphrase the candidate's actual words — at least one direct fragment in quotes
+3. Strength must identify the SINGLE most impressive specific thing they said
+4. Missing must name a concrete gap and explain WHY it weakens their answer for this specific role
+5. Improvement must tell them exactly what to add with a specific example of better phrasing
+6. Only reference technologies/concepts that appear in the JD, question, or their answer
+7. If the answer is shallow, say so directly — do not sugarcoat
 
 ${language === 'urdu' ? 'IMPORTANT: Return all feedback fields (strength, missing, improvement, evidence items) in Urdu (اردو). Keep technical terms like React, API, Node.js etc. in English.' : ''}
-Return ONLY valid JSON matching this schema:
+Return ONLY valid JSON:
 {
   "dimensions": {
     ${rubricKeys.map((k) => `"${k}": 0-10 score`).join(',\n    ')}
   },
-  "evidence": ["2-4 specific quotes or paraphrased points from the candidate's actual answer — reference what they actually said, not generic observations"],
-  "strength": "One specific sentence describing what the candidate did well, referencing something concrete from their answer",
-  "missing": "One specific sentence describing what was missing — explain WHY it matters for this role",
-  "improvement": "One actionable, specific suggestion — tell them exactly what to add or change, with an example of what a good answer would include"
+  "evidence": ["2-4 items — at least one must be a direct quote or close paraphrase from the transcript"],
+  "strongestPoint": "The single most impressive specific thing the candidate said — reference their exact words or claim",
+  "keyGap": "The most important thing missing and WHY it weakens this answer for this role",
+  "howToImprove": "One concrete, actionable change with a specific example of what a stronger version would include"
 }`;
 
   const userPrompt = `Question: ${question.text}
@@ -234,7 +242,7 @@ Candidate's Answer:
 ${transcript}
 """
 
-Evaluate the answer against the rubric. Be specific — reference what the candidate actually said. Do not invent experiences or claims they did not make. Return JSON.`;
+Evaluate this answer. Reference what the candidate ACTUALLY said — quote their words. Do not invent experiences or claims they did not make. Return JSON.`;
 
   try {
     const llmResult = await callAI({

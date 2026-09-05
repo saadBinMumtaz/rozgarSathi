@@ -19,7 +19,7 @@ export const Toast = ({ message, type = 'info', onClose, className = '' }) => {
 
   return (
     <div
-      className={`fixed bottom-6 right-6 px-4 py-3 rounded-lg border shadow-lg flex items-center gap-3 z-50 text-sm ${
+      className={`fixed bottom-6 right-6 px-4 py-3 rounded-lg border shadow-lg flex items-center gap-3 z-50 text-sm animate-slide-up ${
         styles[type] || styles.info
       } ${className}`}
     >

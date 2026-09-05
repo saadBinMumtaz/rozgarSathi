@@ -54,3 +54,78 @@
     transform: scaleY(1);
   }
 }
+
+/* ─── Animation Utility Classes ─── */
+.animate-fade-in {
+  animation: rs-fade-in var(--duration-slow) var(--ease-out-expo) both;
+}
+
+.animate-slide-up {
+  animation: rs-slide-up var(--duration-slow) var(--ease-out-expo) both;
+}
+
+.animate-slide-up-sm {
+  animation: rs-slide-up-sm var(--duration-normal) var(--ease-out-expo) both;
+}
+
+.animate-scale-in {
+  animation: rs-scale-in var(--duration-normal) var(--ease-out-expo) both;
+}
+
+.animate-shimmer {
+  background: linear-gradient(
+    90deg,
+    var(--color-surface-hover) 0%,
+    var(--color-surface-text) 50%,
+    var(--color-surface-hover) 100%
+  );
+  background-size: 200% 100%;
+  animation: rs-shimmer 1.5s ease-in-out infinite;
+}
+
+.animate-pulse-soft {
+  animation: rs-pulse-soft 2s ease-in-out infinite;
+}
+
+.animate-float {
+  animation: rs-float 3s ease-in-out infinite;
+}
+
+/* Stagger delays for sequential entrance animations */
+.stagger-1 { animation-delay: 60ms; }
+.stagger-2 { animation-delay: 120ms; }
+.stagger-3 { animation-delay: 180ms; }
+.stagger-4 { animation-delay: 240ms; }
+.stagger-5 { animation-delay: 300ms; }
+.stagger-6 { animation-delay: 360ms; }
+
+/* Gradient text utility */
+.gradient-text {
+  background: linear-gradient(135deg, var(--color-text-primary) 0%, var(--color-text-muted) 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* Subtle card shadow for dark surfaces */
+.card-shadow {
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2), 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.card-shadow-hover {
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3), 0 8px 24px rgba(0, 0, 0, 0.15);
+}
+
+/* Smooth page transition wrapper */
+.page-enter {
+  animation: rs-fade-in 300ms var(--ease-out-expo) both;
+}
+
+/* Focus ring utility for interactive elements */
+.focus-ring {
+  transition: box-shadow var(--duration-fast) var(--ease-out-quart);
+}
+.focus-ring:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 2px var(--color-bg-primary), 0 0 0 4px var(--color-border-strong);
+}
