@@ -102,7 +102,7 @@ export const Dashboard = ({ userId = 'guest', onNavigate, isDark, isAuthenticate
             <AlertCircle className="mx-auto text-danger" size={32} aria-hidden="true" />
             <p className="text-danger">{error || L('dashboard.failedLoad')}</p>
             <div className="flex gap-3 justify-center">
-              <Button variant="secondary" onClick={() => onNavigate?.('mode-selection')}>
+              <Button variant="secondary" onClick={() => onNavigate?.('jd-input')}>
                 {L('common.startInterview')}
               </Button>
               <Button variant="ghost" onClick={() => window.location.reload()}>
@@ -151,7 +151,7 @@ export const Dashboard = ({ userId = 'guest', onNavigate, isDark, isAuthenticate
         onNavigate={onNavigate}
         currentPage="dashboard"
         isAuthenticated={isAuthenticated}
-        onLogout={() => { logout(); onNavigate('landing'); }}
+        onLogout={() => { logout(); onNavigate('home'); }}
         language={language}
         setLanguage={setLanguage}
       />

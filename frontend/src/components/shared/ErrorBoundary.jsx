@@ -27,7 +27,7 @@ export class ErrorBoundary extends React.Component {
   handleGoHome = () => {
     this.setState({ hasError: false, error: null, errorInfo: null });
     if (this.props.onNavigate) {
-      this.props.onNavigate('landing');
+      this.props.onNavigate('home');
     }
   };
 

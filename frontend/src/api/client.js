@@ -129,9 +129,7 @@ export const apiClient = {
   async analyzeJD(text, sampleId) {
     const res = await fetch(`${API_BASE_URL}/jd/analyze`, {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
+      headers: authHeaders(),
       body: JSON.stringify({ text, sampleId: sampleId || null }),
     });
 
@@ -146,9 +144,7 @@ export const apiClient = {
   async createSession(mode, jdAnalysisId, userId) {
     const res = await fetch(`${API_BASE_URL}/sessions`, {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
+      headers: authHeaders(),
       body: JSON.stringify({ mode, jdAnalysisId, userId }),
     });
 
@@ -174,9 +170,7 @@ export const apiClient = {
   async answerBehavioral(sessionId, questionId, transcript, language = 'english') {
     const res = await fetch(`${API_BASE_URL}/sessions/${sessionId}/answer`, {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
+      headers: authHeaders(),
       body: JSON.stringify({ questionId, transcript, language }),
     });
 
@@ -191,9 +185,7 @@ export const apiClient = {
   async answerTechnical(sessionId, questionId, transcript, language = 'english') {
     const res = await fetch(`${API_BASE_URL}/sessions/${sessionId}/answer`, {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
+      headers: authHeaders(),
       body: JSON.stringify({ questionId, transcript, language }),
     });
 
@@ -287,7 +279,7 @@ export const apiClient = {
     return deduplicateRequest(key, async () => {
       const res = await fetch(`${API_BASE_URL}/coding/questions`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: authHeaders(),
         body: JSON.stringify({ topic, difficulty, questionId, sessionId }),
       });
 
@@ -303,7 +295,7 @@ export const apiClient = {
   async runCodingTests({ sessionId, code, language = 'javascript' }) {
     const res = await fetch(`${API_BASE_URL}/coding/run`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: authHeaders(),
       body: JSON.stringify({ sessionId, code, language }),
     });
 
@@ -318,7 +310,7 @@ export const apiClient = {
   async submitCodingSolution({ sessionId, code, language = 'javascript' }) {
     const res = await fetch(`${API_BASE_URL}/coding/submit`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: authHeaders(),
       body: JSON.stringify({ sessionId, code, language }),
     });
 

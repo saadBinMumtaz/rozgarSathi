@@ -84,7 +84,7 @@ export const ProbePanel = ({
             className={`flex items-center gap-1 px-2 py-0.5 rounded-full text-xs transition-all ${
               autoAccelerate
                 ? 'bg-warning/20 text-warning ring-1 ring-warning/30'
-                : 'surface-text bg-surface-hover text-text-muted hover:text-text-muted'
+                : 'surface-text bg-surface-hover text-text-muted hover:text-text-primary'
             }`}
             title={autoAccelerate ? 'Probes appear faster (click to slow down)' : 'Speed up probe timing'}
           >
@@ -98,7 +98,7 @@ export const ProbePanel = ({
             className={`flex items-center gap-1 px-2 py-0.5 rounded-full text-xs transition-all ${
               practiceMode
                 ? 'bg-text-primary/20 text-text-primary ring-1 ring-border-theme'
-                : 'surface-text bg-surface-hover text-text-muted hover:text-text-muted'
+                : 'surface-text bg-surface-hover text-text-muted hover:text-text-primary'
             }`}
             title={practiceMode ? 'Exit practice mode' : 'Practice probes manually'}
           >
@@ -144,7 +144,7 @@ export const ProbePanel = ({
                           ? 'bg-text-primary/20 text-text-primary ring-1 ring-border-theme font-medium'
                           : isDone
                             ? 'bg-success/10 text-success ring-1 ring-success/20'
-                            : 'surface-text bg-surface-hover text-text-muted hover:surface-text bg-surface-hover hover:text-text-muted'
+                            : 'surface-text bg-surface-hover text-text-muted hover:text-text-primary'
                       }`}
                     >
                       {isDone ? (
@@ -203,7 +203,7 @@ export const ProbePanel = ({
                     <span className="text-xs font-medium text-text-primary">{L('probe.feedback')}</span>
                     <button
                       onClick={onClearFeedback}
-                      className="text-xs text-text-muted hover:text-text-muted"
+                      className="text-xs text-text-muted hover:text-text-primary"
                     >
                       {L('probe.dismiss')}
                     </button>

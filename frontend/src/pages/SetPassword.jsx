@@ -52,7 +52,7 @@ export const SetPassword = ({ onNavigate, onPasswordSet, googleEmail = '', langu
         <Button
           variant="ghost"
           size="sm"
-          onClick={() => onNavigate('landing')}
+          onClick={() => onNavigate('home')}
           className="text-text-muted hover:text-text-primary"
         >
           <ArrowLeft size={16} className="mr-1" /> {L('setPassword.backHome')}

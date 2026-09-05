@@ -1,7 +1,11 @@
 // backend/src/services/followUpEngine.js
 // Follow-up question generation engine — builds context-aware follow-ups
 // for both behavioral (STAR-based) and technical (rubric-based) interviews.
-// Moved from controllers to keep business logic in services layer.
+// Uses AI (via callAI) to generate follow-ups that reference the candidate's
+// actual answer, falling back to enhanced static probes if AI fails.
+
+import { callAI } from './ai.js';
+import logger from '../utils/logger.js';
 
 // ─── Behavioral (STAR) Follow-ups ─────────────────────────────────────────
 
@@ -124,4 +128,152 @@ export const buildTechnicalFollowUp = (evaluation, question) => {
   return prompts[Math.floor(Math.random() * prompts.length)];
 };
 
-export default { buildStarFollowUp, buildTechnicalFollowUp };
+/**
+ * Build an AI-powered contextual technical follow-up that references the
+ * candidate's actual answer. Falls back to static probes if AI fails.
+ * @param {Object} params
+ * @param {Object} params.evaluation - The evaluation object with dimensions/score
+ * @param {Object} params.question - The question data (text, skill, rubric)
+ * @param {string} params.transcript - The candidate's answer transcript
+ * @param {Object} [params.jdContext] - Optional JD context (role, skills)
+ * @returns {Promise<string>} A contextual follow-up question
+ */
+export const buildAIContextualFollowUp = async ({ evaluation, question, transcript, jdContext = {} }) => {
+  const dims = evaluation.dimensions || {};
+  const keys = Object.keys(dims).filter((k) => typeof dims[k] === 'number');
+  keys.sort((a, b) => dims[a] - dims[b]);
+  const weakest = keys.length > 0 ? keys[0] : 'depth';
+  const score = evaluation.score || 0;
+
+  // Determine follow-up intent based on score and weakest dimension
+  let intent = 'clarify';
+  if (score < 30) intent = 'probe_fundamentals';
+  else if (score < 50) intent = 'deepen_understanding';
+  else if (score >= 75) intent = 'challenge_advanced';
+
+  const roleContext = jdContext.role ? ` for a ${jdContext.role} role` : '';
+  const skillContext = jdContext.skills?.length ? ` focusing on ${jdContext.skills.slice(0, 3).join(', ')}` : '';
+
+  const systemPrompt = `You are a professional technical interviewer crafting a follow-up question. The follow-up must build naturally on what the candidate just said — reference specific points from their answer.
+
+Context:
+- Original question topic: ${question.skill || 'general'}${roleContext}${skillContext}
+- Candidate's score: ${score}/100
+- Weakest area: ${weakest} (score: ${dims[weakest] || 'N/A'}/10)
+- Follow-up intent: ${intent}
+
+Intent guidance:
+- probe_fundamentals: The answer was largely incorrect or missing key concepts. Ask a simpler, foundational question that tests whether they understand the core concept.
+- deepen_understanding: The answer was partially correct but shallow. Ask them to go deeper on a specific aspect they mentioned or missed.
+- clarify: The answer was vague or incomplete. Ask them to clarify or provide a concrete example.
+- challenge_advanced: The answer was strong. Push them with a harder scenario, trade-off analysis, or edge case.
+
+Rules:
+- Reference something specific the candidate said (a concept, term, or claim).
+- Ask ONE clear question — do not stack multiple questions.
+- The question should feel like a natural conversation, not a quiz.
+- Keep it to 1-2 sentences max.
+- Do NOT repeat the original question.
+- Return ONLY the follow-up question text, nothing else.`;
+
+  const userPrompt = `Original question: "${question.text}"
+
+Candidate's answer:
+"""
+${transcript}
+"""
+
+Evaluation summary: Score ${score}/100, weakest dimension is "${weakest}" (${dims[weakest] || 'N/A'}/10).
+Evidence: ${(evaluation.evidence || []).slice(0, 2).join('; ')}
+
+Generate a contextual follow-up question that builds on their answer:`;
+
+  try {
+    const result = await callAI({
+      systemPrompt,
+      userPrompt,
+      requiredFields: [],
+    });
+
+    // callAI returns an object; extract the follow-up text
+    const followUpText = typeof result === 'string' ? result.trim() : (result?.followUp || result?.question || '').trim();
+
+    if (followUpText && followUpText.length > 10) {
+      return followUpText;
+    }
+
+    // If AI returned something unexpected, fall through to static
+    throw new Error('Empty follow-up from AI');
+  } catch (err) {
+    logger.warn(`AI follow-up generation failed: ${err.message}. Using static fallback.`);
+    // Fall back to static probe
+    return buildTechnicalFollowUp(evaluation, question);
+  }
+};
+
+/**
+ * Build an AI-powered contextual behavioral follow-up that references the
+ * candidate's actual answer. Falls back to static STAR probes if AI fails.
+ * @param {Object} params
+ * @param {Object} params.evaluation - The evaluation object with dimensions
+ * @param {string} params.transcript - The candidate's answer transcript
+ * @param {Object} [params.jdContext] - Optional JD context
+ * @returns {Promise<string>} A contextual follow-up question
+ */
+export const buildAIStarFollowUp = async ({ evaluation, transcript, jdContext = {} }) => {
+  const dims = evaluation.dimensions || {};
+  const keys = Object.keys(STAR_FOLLOWUPS).filter((k) => typeof dims[k] === 'number');
+  keys.sort((a, b) => dims[a] - dims[b]);
+  const weakestDim = keys.length > 0 ? keys[0] : 'action';
+  const score = evaluation.score || 0;
+
+  const systemPrompt = `You are a professional behavioral interviewer crafting a follow-up question. The follow-up must reference something specific the candidate said and push them to provide more detail in their weakest STAR area.
+
+Context:
+- Candidate's score: ${score}/100
+- Weakest STAR dimension: ${weakestDim} (score: ${dims[weakestDim] || 'N/A'}/10)
+${jdContext.role ? `- Role: ${jdContext.role}` : ''}
+
+STAR dimension guidance:
+- situation: Ask them to be more specific about the context, constraints, or stakes.
+- task: Ask them to clarify their specific responsibility vs the team's.
+- action: Ask them to walk through specific steps, decisions, or trade-offs they made.
+- result: Ask them for concrete metrics, outcomes, or lessons learned.
+
+Rules:
+- Reference something specific the candidate mentioned.
+- Ask ONE clear question — do not stack multiple questions.
+- The question should feel like a genuine coaching conversation.
+- Keep it to 1-2 sentences max.
+- Return ONLY the follow-up question text, nothing else.`;
+
+  const userPrompt = `Candidate's answer:
+"""
+${transcript}
+"""
+
+Evaluation: Score ${score}/100, weakest STAR dimension is "${weakestDim}" (${dims[weakestDim] || 'N/A'}/10).
+
+Generate a contextual follow-up that references their answer:`;
+
+  try {
+    const result = await callAI({
+      systemPrompt,
+      userPrompt,
+      requiredFields: [],
+    });
+
+    const followUpText = typeof result === 'string' ? result.trim() : (result?.followUp || result?.question || '').trim();
+
+    if (followUpText && followUpText.length > 10) {
+      return followUpText;
+    }
+
+    throw new Error('Empty follow-up from AI');
+  } catch (err) {
+    logger.warn(`AI behavioral follow-up failed: ${err.message}. Using static fallback.`);
+    return buildStarFollowUp(evaluation, transcript);
+  }
+};
+
+export default { buildStarFollowUp, buildTechnicalFollowUp, buildAIContextualFollowUp, buildAIStarFollowUp };

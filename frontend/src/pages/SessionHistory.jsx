@@ -268,7 +268,7 @@ export const SessionHistory = ({ userId = 'guest', onNavigate, language = 'engli
               className={`px-3 py-1.5 rounded-full text-xs font-medium transition-all focus:outline-none focus:ring-2 focus:ring-border-strong ${
                 isActive
                   ? 'bg-text-primary/20 text-text-primary ring-1 ring-border-theme'
-                  : 'surface-text bg-surface-hover text-text-muted hover:surface-text bg-surface-hover hover:text-text-muted'
+                  : 'surface-text bg-surface-hover text-text-muted hover:text-text-primary'
               }`}
               aria-pressed={isActive}
             >

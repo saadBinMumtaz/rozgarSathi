@@ -22,16 +22,18 @@ const PageHeader = ({
 
   // Define navigation items based on authentication state — labels translated via t()
   // "Find Jobs" is only available to authenticated users
+  // NOTE: 'landing' is the internal hub; 'home' is the public page.
+  // We use 'home' here because navigateTo('landing') clears all state.
   const navItems = isAuthenticated
     ? [
-        { label: t('nav.home'), href: '#', page: 'landing' },
+        { label: t('nav.home'), href: '#', page: 'home' },
         { label: t('nav.practice'), href: '#', page: 'jd-input' },
         { label: t('nav.findJobs'), href: '#', page: 'find-jobs' },
         { label: t('nav.dashboard'), href: '#', page: 'dashboard' },
       ]
     : [
-        { label: t('nav.home'), href: '#', page: 'landing' },
-        { label: t('nav.features'), href: '#', page: 'landing' },
+        { label: t('nav.home'), href: '#', page: 'home' },
+        { label: t('nav.features'), href: '#', page: 'home' },
         { label: t('nav.signUp'), href: '#', page: 'auth' },
       ];
 
@@ -55,7 +57,7 @@ const PageHeader = ({
           src={isDark ? '/logo-white.png' : '/logo-dark.png'}
           alt="Rozgar Sathi"
           className="h-20 sm:h-24 w-auto flex-shrink-0 cursor-pointer"
-          onClick={() => onNavigate?.('landing')}
+          onClick={() => onNavigate?.('home')}
         />
 
         {/* Gooey Navigation — centered */}

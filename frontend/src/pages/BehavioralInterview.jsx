@@ -2,7 +2,7 @@
 // Behavioral interview page — orchestrates voice pipeline, session management,
 // answer submission, EvidenceCard, Urdu toggle, and progress tracking.
 
-import React, { useEffect, useState, useRef } from 'react';
+import React, { useEffect, useState, useRef, useCallback } from 'react';
 import { useSession } from '../hooks/useSession';
 import { useTabLock } from '../hooks/useTabLock';
 import { VoiceQuestionPlayer } from '../components/shared/VoiceQuestionPlayer';
@@ -35,7 +35,7 @@ export const BehavioralInterview = ({ jdAnalysisId, onNavigate, language = 'engl
     isLoading,
     isComplete,
     error,
-    createSession,
+    createAndFetchFirst,
     answerQuestion,
     resetSession,
     resume,
@@ -53,34 +53,46 @@ export const BehavioralInterview = ({ jdAnalysisId, onNavigate, language = 'engl
   const [terminationMessage, setTerminationMessage] = useState(null);
   const { isLocked: tabConflict, dismissWarning: dismissTabWarning } = useTabLock(sessionId, 'behavioral');
   const { speak, cancel, isSpeaking, isSupported: ttsSupported } = useTextToSpeech();
+  const initRef = useRef(false); // Prevent duplicate initialization
   const justCreatedRef = useRef(false); // Track if we just created a new session
 
   const L = (key) => t(key, language);
 
-  // Initialize / resume session whenever the session id changes.
-  // BUT skip resume if interview is already complete (prevents overwriting local state).
-  // ALSO skip resume if we just created a new session (prevents loading stale data).
+  // Session initialization and resume logic — mirrors TechnicalInterview pattern.
+  // Uses createAndFetchFirst to atomically create session + fetch first question.
   useEffect(() => {
+    // Prevent duplicate initialization
+    if (initRef.current) return;
+
     if (!sessionId) {
-      justCreatedRef.current = true; // Mark that we're about to create a new session
-      createSession('behavioral', jdAnalysisId, userId).catch((err) => {
-        console.error('Failed to create session:', err);
-        justCreatedRef.current = false; // Reset on failure
-      });
+      // No session exists — create a new one and fetch first question atomically
+      initRef.current = true;
+      justCreatedRef.current = true;
+      createAndFetchFirst('behavioral', jdAnalysisId, userId, language)
+        .catch((err) => {
+          console.error('Failed to create session:', err);
+          initRef.current = false; // Allow retry on failure
+          justCreatedRef.current = false;
+        });
     } else if (!isComplete && !justCreatedRef.current) {
-      // Only resume if:
-      // 1. Interview is NOT already complete
-      // 2. We did NOT just create this session (it's a page refresh recovery)
+      // Session exists and was NOT just created — resume it (page refresh recovery)
+      initRef.current = true;
       resume().catch((err) => {
         console.error('Failed to resume session:', err);
         resetSession();
+        initRef.current = false;
       });
     } else if (justCreatedRef.current) {
-      // We just created a new session, mark it as handled
+      // Session was just created — clear the flag
       justCreatedRef.current = false;
     }
+
+    // Reset init flag when session is cleared (for restart)
+    if (!sessionId && !jdAnalysisId) {
+      initRef.current = false;
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [sessionId]);
+  }, [sessionId, jdAnalysisId, isComplete]);
 
   // Track question count from evaluations
   useEffect(() => {
@@ -99,46 +111,46 @@ export const BehavioralInterview = ({ jdAnalysisId, onNavigate, language = 'engl
     return () => { cancel(); };
   }, [currentQuestion?.questionId, followUp, urduQuestionText, urduFollowUp, isUrdu, language, speak, cancel]);
 
-  // Cancel TTS when page becomes inactive (hidden but still mounted)
+  // Cancel TTS (local + cloud) when page becomes inactive (hidden but still mounted)
   useEffect(() => {
     if (!isActive) {
       cancel();
     }
   }, [isActive, cancel]);
 
-  // Cleanup: stop TTS and speech synthesis when component unmounts or navigating away
+  // Reset init flag when returning to this page after navigating away while complete.
+  // This prevents deadlock if the user navigates Results → Landing → Dashboard → Start Interview.
+  const prevActiveRef = useRef(false);
+  useEffect(() => {
+    if (isActive && !prevActiveRef.current && isComplete) {
+      initRef.current = false;
+    }
+    prevActiveRef.current = isActive;
+  }, [isActive, isComplete]);
+
+  // Cleanup on unmount: stop all media (local TTS, cloud Audio, DOM audio) and notify other components
   useEffect(() => {
     return () => {
-      // Stop any ongoing speech synthesis
-      if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
-        window.speechSynthesis.cancel();
-      }
-      // Stop any audio playback
+      // Stop local + cloud TTS (covers new Audio() objects that querySelectorAll misses)
+      cancel();
+      // Stop any DOM audio elements (e.g. VoiceQuestionPlayer)
       document.querySelectorAll('audio').forEach(audio => {
         audio.pause();
         audio.currentTime = 0;
       });
-      // Dispatch cleanup event for other components
+      // Notify other mounted interview components to stop their media
       window.dispatchEvent(new CustomEvent('rozgar:interview-cleanup'));
     };
-  }, []);
+  }, [cancel]);
 
-  // Listen for cleanup event from other components
+  // Listen for cleanup event from other components (e.g. when navigating between interview modes)
   useEffect(() => {
     const handleCleanup = () => {
-      // Stop any ongoing speech synthesis
-      if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
-        window.speechSynthesis.cancel();
-      }
-      // Stop any audio playback
-      document.querySelectorAll('audio').forEach(audio => {
-        audio.pause();
-        audio.currentTime = 0;
-      });
+      cancel();
     };
     window.addEventListener('rozgar:interview-cleanup', handleCleanup);
     return () => window.removeEventListener('rozgar:interview-cleanup', handleCleanup);
-  }, []);
+  }, [cancel]);
 
   // Auto-translate question to Urdu when language is Urdu and question changes
   useEffect(() => {
@@ -223,6 +235,18 @@ export const BehavioralInterview = ({ jdAnalysisId, onNavigate, language = 'engl
     return () => { cancelled = true; };
   }, [isUrdu, isComplete, evaluations]);
 
+  const handleResetSession = useCallback(() => {
+    resetSession();
+    setTypedAnswer('');
+    setMicTranscript('');
+    setUrduQuestionText(null);
+    setUrduNudge(null);
+    setUrduFollowUp(null);
+    setTerminationMessage(null);
+    // Reset init flag to allow re-initialization
+    initRef.current = false;
+  }, [resetSession]);
+
   const handleSubmitAnswer = async () => {
     const transcript = useTypedFallback ? typedAnswer : micTranscript;
     if (!transcript?.trim()) return;
@@ -301,7 +325,7 @@ export const BehavioralInterview = ({ jdAnalysisId, onNavigate, language = 'engl
                       </div>
                       <div className="text-xs text-text-muted uppercase tracking-wide">{L('interview.overallScore')}</div>
                     </div>
-                    <div className="h-12 w-px bg-bg-hover"></div>
+                    <div className="h-12 w-px bg-border-theme/30"></div>
                     <div className="text-left space-y-1">
                       <div className="text-sm text-text-muted">
                         <span className="text-text-muted">{L('interview.questionsCount')}</span> {evaluations.length}
@@ -331,10 +355,10 @@ export const BehavioralInterview = ({ jdAnalysisId, onNavigate, language = 'engl
                 <Button variant="secondary" onClick={() => onNavigate('results')}>
                   {L('interview.viewResults')}
                 </Button>
-                <Button variant="primary" onClick={() => { resetSession(); onNavigate('mode-selection'); }}>
+                <Button variant="primary" onClick={() => { handleResetSession(); onNavigate('mode-selection'); }}>
                   {L('interview.tryAnotherMode')}
                 </Button>
-                <Button variant="secondary" onClick={resetSession}>
+                <Button variant="secondary" onClick={handleResetSession}>
                   {L('interview.behavioral.restart')}
                 </Button>
               </div>
@@ -363,15 +387,27 @@ export const BehavioralInterview = ({ jdAnalysisId, onNavigate, language = 'engl
 
   return (
     <div className="min-h-screen flex flex-col" style={{ backgroundColor: isDark ? '#0a0a0a' : '#fafafa', color: isDark ? '#ffffff' : '#111111' }}>
-      {/* Top bar: Back + En/UR */}
+      {/* Top bar: Back + Refresh + Progress */}
       <div className="flex items-center justify-between px-6 py-4">
-        <button
-          onClick={() => onNavigate('mode-selection')}
-          className="text-sm font-medium hover:opacity-70 transition-opacity"
-          style={{ color: isDark ? '#ffffff' : '#111111' }}
-        >
-          {L('interview.back')}
-        </button>
+        <div className="flex items-center gap-3">
+          <button
+            onClick={() => onNavigate('mode-selection')}
+            className="text-sm font-medium hover:opacity-70 transition-opacity"
+            style={{ color: isDark ? '#ffffff' : '#111111' }}
+          >
+            {L('interview.back')}
+          </button>
+          <button
+            onClick={handleResetSession}
+            disabled={isLoading}
+            className="flex items-center gap-1 text-xs font-medium hover:opacity-70 transition-opacity disabled:opacity-30"
+            style={{ color: isDark ? '#9ca3af' : '#6b7280' }}
+            title={L('interview.refreshInterview')}
+          >
+            <RefreshCw size={14} className={isLoading ? 'animate-spin' : ''} />
+            <span className="hidden sm:inline">{L('interview.refreshInterview')}</span>
+          </button>
+        </div>
         <div className="flex items-center gap-3">
           <Badge variant="success">Q{displayCount}/{MAX_QUESTIONS}</Badge>
           {currentQuestion?.topic && <Badge variant="warning">{currentQuestion.topic}</Badge>}
@@ -393,11 +429,7 @@ export const BehavioralInterview = ({ jdAnalysisId, onNavigate, language = 'engl
             variant="link"
             className="shrink-0 underline text-danger hover:text-danger"
             onClick={() => {
-              if (!sessionId) {
-                createSession('behavioral', jdAnalysisId, userId).catch(() => {});
-              } else {
-                resetSession();
-              }
+              handleResetSession();
             }}
           >
             {sessionId ? L('interview.restartInterview') : L('interview.retry')}

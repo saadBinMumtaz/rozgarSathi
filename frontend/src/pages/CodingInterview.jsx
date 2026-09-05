@@ -31,7 +31,7 @@ const formatElapsed = (seconds) => {
   return `${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
 };
 
-export const CodingInterview = ({ jdAnalysisId, onNavigate, userId, language = 'english', isUrdu = false }) => {
+export const CodingInterview = ({ jdAnalysisId, onNavigate, userId, language = 'english', isUrdu = false, isActive = true }) => {
   const [sessionId, setSessionId] = useState(null);
   const [question, setQuestion] = useState(null);
   const [code, setCode] = useState('');
@@ -75,12 +75,12 @@ export const CodingInterview = ({ jdAnalysisId, onNavigate, userId, language = '
 
   const L = (key) => t(key, language);
 
-  // --- Soft timer (informational only) ---
+  // --- Soft timer (informational only) — pauses when page is hidden ---
   useEffect(() => {
-    if (isSettingUp || isSubmitted) return undefined;
+    if (isSettingUp || isSubmitted || !isActive) return undefined;
     timerRef.current = setInterval(() => setElapsed((s) => s + 1), 1000);
     return () => clearInterval(timerRef.current);
-  }, [isSettingUp, isSubmitted]);
+  }, [isSettingUp, isSubmitted, isActive]);
 
   // --- Session setup ---
   useEffect(() => {
@@ -108,12 +108,15 @@ export const CodingInterview = ({ jdAnalysisId, onNavigate, userId, language = '
         console.error('[CodingInterview] Setup error:', err);
         if (!cancelled) setSetupError(err.message || 'Failed to start the coding session');
       } finally {
-        setIsSettingUp(false);
+        if (!cancelled) setIsSettingUp(false);
       }
     };
-    setup();
+    // Only run when there is no active session (initial mount or after restart)
+    if (!sessionId) {
+      setup();
+    }
     return () => { cancelled = true; };
-  }, [jdAnalysisId]);
+  }, [jdAnalysisId, sessionId, userId]);
 
   // --- Auto-save code to localStorage (debounced 500ms) ---
   useEffect(() => {
@@ -204,6 +207,27 @@ export const CodingInterview = ({ jdAnalysisId, onNavigate, userId, language = '
     setAutoAccelerate(prev => !prev);
   }, []);
 
+  // Restart: reset all state and re-run the setup effect for a fresh session
+  const handleRestart = useCallback(() => {
+    setIsSubmitted(false);
+    submittedCodeRef.current = '';
+    setSessionId(null);
+    setQuestion(null);
+    setCode('');
+    setElapsed(0);
+    setCodingReport(null);
+    setSubmitError(null);
+    setShowConfirmModal(false);
+    setShowReviewCode(false);
+    setPracticeMode(false);
+    setPracticeProbeIndex(-1);
+    setPracticeAnswer('');
+    setPracticeFeedback({});
+    setAutoAccelerate(false);
+    setActiveProbeIndex(-1);
+    setSetupError(null);
+  }, []);
+
   // --- Keyboard shortcuts ---
   useEffect(() => {
     const handleKeyDown = (e) => {
@@ -224,16 +248,16 @@ export const CodingInterview = ({ jdAnalysisId, onNavigate, userId, language = '
   }, [handleRun, isSubmitted, isSettingUp]);
 
   // --- Probe timing: first at 30s (15s accelerated), then every 60s (15s/30s accelerated) ---
-  // Paused when practice mode is active so user can focus on answering.
+  // Paused when practice mode is active or when the page is hidden (inactive).
   useEffect(() => {
-    if (!question?.interviewerProbes?.length || isSubmitted || practiceMode) return undefined;
+    if (!question?.interviewerProbes?.length || isSubmitted || practiceMode || !isActive) return undefined;
     const delay = autoAccelerate ? 15000 : 30000;
     probeTimerRef.current = setTimeout(() => setActiveProbeIndex(0), delay);
     return () => clearTimeout(probeTimerRef.current);
-  }, [question?.interviewerProbes, isSubmitted, practiceMode, autoAccelerate]);
+  }, [question?.interviewerProbes, isSubmitted, practiceMode, autoAccelerate, isActive]);
 
   useEffect(() => {
-    if (activeProbeIndex < 0 || isSubmitted || practiceMode) return undefined;
+    if (activeProbeIndex < 0 || isSubmitted || practiceMode || !isActive) return undefined;
     const probes = question?.interviewerProbes || [];
     if (activeProbeIndex >= probes.length - 1) return undefined;
     const interval = autoAccelerate ? 15000 : 60000;
@@ -241,7 +265,7 @@ export const CodingInterview = ({ jdAnalysisId, onNavigate, userId, language = '
       setActiveProbeIndex((prev) => Math.min(prev + 1, probes.length - 1));
     }, interval);
     return () => clearTimeout(probeTimerRef.current);
-  }, [activeProbeIndex, question?.interviewerProbes, isSubmitted, practiceMode, autoAccelerate]);
+  }, [activeProbeIndex, question?.interviewerProbes, isSubmitted, practiceMode, autoAccelerate, isActive]);
 
   // --- Cleanup on navigation away ---
   useEffect(() => {
@@ -415,10 +439,13 @@ export const CodingInterview = ({ jdAnalysisId, onNavigate, userId, language = '
           <Button variant="secondary" onClick={() => onNavigate('results')}>
             {L('interview.viewResults')}
           </Button>
+          <Button variant="secondary" onClick={handleRestart}>
+            {L('interview.technical.restart')}
+          </Button>
           <Button variant="secondary" onClick={() => onNavigate('mode-selection')}>
             {L('coding.practiceAnother')}
           </Button>
-          <Button variant="primary" onClick={() => onNavigate('landing')}>
+          <Button variant="primary" onClick={() => onNavigate('home')}>
             {L('coding.backToHome')}
           </Button>
         </div>
@@ -459,7 +486,7 @@ export const CodingInterview = ({ jdAnalysisId, onNavigate, userId, language = '
               className={`flex items-center gap-1 px-2 py-1 rounded text-xs transition-colors ${
                 persona === 'friendly'
                   ? 'bg-success/10 text-success font-medium'
-                  : 'text-text-muted hover:text-text-muted'
+                  : 'text-text-muted hover:text-text-primary'
               }`}
               title={L('coding.tooltipFriendlyMentor')}
             >
@@ -470,7 +497,7 @@ export const CodingInterview = ({ jdAnalysisId, onNavigate, userId, language = '
               className={`flex items-center gap-1 px-2 py-1 rounded text-xs transition-colors ${
                 persona === 'strict'
                   ? 'bg-warning/10 text-warning font-medium'
-                  : 'text-text-muted hover:text-text-muted'
+                  : 'text-text-muted hover:text-text-primary'
               }`}
               title={L('coding.tooltipStrictPanel')}
             >

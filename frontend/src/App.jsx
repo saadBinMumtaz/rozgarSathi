@@ -62,7 +62,7 @@ const stopAllInterviewMedia = () => {
 };
 
 const AppContent = () => {
-  const { user, isAuthenticated, loading: authLoading, logout } = useAuth();
+  const { user, isAuthenticated, loading: authLoading, logout, completeAuth } = useAuth();
 
   // Persistent userId — generated once, stored in localStorage, reused across all sessions
   const [userId] = useState(() => {
@@ -85,8 +85,6 @@ const AppContent = () => {
       const stored = localStorage.getItem(APP_STATE_KEY);
       if (stored) {
         const { page } = JSON.parse(stored);
-        // Map old 'landing' to new 'home' (public homepage)
-        if (page === 'landing') return 'home';
         if (page) return page;
       }
     } catch {}
@@ -158,8 +156,21 @@ const AppContent = () => {
       localStorage.setItem('rozgar-sathi-auth-token', token);
       // Clear the hash so it doesn't re-trigger
       window.location.hash = '';
-      // AuthContext will pick up the token from localStorage on next render
-      // and verify it via /api/auth/me
+      // Fetch user data with the new token and update AuthContext state.
+      // The restore effect (empty deps []) already ran on mount without the token,
+      // so we must explicitly verify and complete auth here.
+      apiClient.getMe()
+        .then((result) => {
+          if (result.user) {
+            completeAuth(token, result.user);
+            setToastMessage({ type: 'success', message: 'Welcome! Signed in with Google.' });
+            setCurrentPage('landing');
+          }
+        })
+        .catch(() => {
+          setToastMessage({ type: 'error', message: 'Google sign-in completed but failed to load user profile.' });
+          setCurrentPage('auth');
+        });
       return;
     }
 
@@ -187,7 +198,7 @@ const AppContent = () => {
     if (authLoading) return;
     if (PROTECTED_PAGES.has(currentPage) && !isAuthenticated) {
       setShowGuestModal(true);
-      setCurrentPage('landing');
+      setCurrentPage('home');
     }
   }, [currentPage, isAuthenticated, authLoading]);
 
@@ -280,12 +291,12 @@ const AppContent = () => {
 
   const handleAuthComplete = useCallback(() => {
     setToastMessage({ type: 'success', message: 'Welcome! You are now signed in.' });
-    navigateTo('landing');
+    setCurrentPage('landing');
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   const handlePasswordSet = useCallback(() => {
     setToastMessage({ type: 'success', message: 'Password set successfully! Your account is now fully secured.' });
-    navigateTo('landing');
+    setCurrentPage('landing');
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   // --- Job Discovery: "Start Practicing" flow ---
@@ -445,6 +456,7 @@ const AppContent = () => {
             pendingSampleJD={pendingSampleJD}
             onSampleJDConsumed={() => setPendingSampleJD(null)}
             language={language}
+            isAuthenticated={isAuthenticated}
           />
         )}
       </div>
@@ -502,6 +514,7 @@ const AppContent = () => {
               userId={isAuthenticated && user ? String(user._id) : userId}
               language={language}
               isUrdu={isUrdu}
+              isActive={currentPage === 'coding-interview'}
             />
           </ErrorBoundary>
         )}
@@ -512,6 +525,7 @@ const AppContent = () => {
           <Results
             userId={isAuthenticated && user ? String(user._id) : userId}
             onNavigate={navigateTo}
+            onBackToHub={() => setCurrentPage('landing')}
             language={language}
           />
         )}
@@ -617,7 +631,7 @@ const AppContent = () => {
               <button
                 onClick={() => {
                   setShowGuestModal(false);
-                  navigateTo('landing');
+                  setCurrentPage('home');
                 }}
                 className="w-full surface-text bg-surface-hover text-text-muted hover:bg-surface-hover/80 rounded-lg px-4 py-2.5 text-sm font-medium transition-all"
               >

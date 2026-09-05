@@ -125,7 +125,7 @@ export const SignupSignin = ({ onNavigate, onAuthComplete, guestId, language = '
         <Button
           variant="ghost"
           size="sm"
-          onClick={() => onNavigate('landing')}
+          onClick={() => onNavigate('home')}
           className="text-text-muted hover:text-text-primary"
         >
           <ArrowLeft size={16} className="mr-1" /> {L('auth.backHome')}

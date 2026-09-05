@@ -15,7 +15,7 @@ export const QuestionTraceBadge = ({ matchedTerms = [], language = 'english' }) 
 
   if (!matchedTerms || matchedTerms.length === 0) {
     return (
-      <div className="flex items-center gap-2 text-xs text-gray-500 dark:text-gray-400">
+      <div className="flex items-center gap-2 text-xs text-text-muted">
         <span className="font-medium">{L('questionTrace.jdMatch')}</span>
         <span className="italic">{L('questionTrace.noMatches')}</span>
       </div>
@@ -24,7 +24,7 @@ export const QuestionTraceBadge = ({ matchedTerms = [], language = 'english' }) 
 
   return (
     <div className="flex items-center gap-2 flex-wrap">
-      <span className="text-xs font-medium text-gray-600 dark:text-gray-400">
+      <span className="text-xs font-medium text-text-muted">
         {L('questionTrace.jdMatch')}
       </span>
       {matchedTerms.map((term, idx) => (

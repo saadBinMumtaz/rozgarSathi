@@ -10,7 +10,7 @@ import { sampleJDs, sampleSeniorityOrder } from '../data/sampleJD';
 import { ArrowLeft } from 'lucide-react';
 import { t } from '../i18n/translations';
 
-export const JDInput = ({ onAnalysisComplete, onNavigate, pendingSampleJD, onSampleJDConsumed, language = 'english' }) => {
+export const JDInput = ({ onAnalysisComplete, onNavigate, pendingSampleJD, onSampleJDConsumed, language = 'english', isAuthenticated = false }) => {
   const [jdText, setJdText] = useState('');
   const [currentSampleId, setCurrentSampleId] = useState(null);
   const [resumeFile, setResumeFile] = useState(null);
@@ -87,7 +87,7 @@ export const JDInput = ({ onAnalysisComplete, onNavigate, pendingSampleJD, onSam
           <Button
             variant="ghost"
             size="sm"
-            onClick={() => onNavigate('landing')}
+            onClick={() => onNavigate(isAuthenticated ? 'landing' : 'home')}
             className="text-text-muted hover:text-text-primary"
           >
             <ArrowLeft size={16} className="mr-1" /> {L('jdInput.backHome')}

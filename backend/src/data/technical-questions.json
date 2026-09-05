@@ -908,5 +908,579 @@
       "How do you detect when a model needs retraining?",
       "What tools would you use for experiment tracking — MLflow, W&B, or DVC?"
     ]
+  },
+  {
+    "text": "Explain TypeScript generics with constraints. How would you design a generic API client function that accepts only objects with a specific shape, and what are the trade-offs between using generics versus union types for type-safe function overloads?",
+    "skill": "TypeScript",
+    "difficulty": "medium",
+    "rubric": {
+      "correctness": "Accurate use of generic constraints with extends keyword",
+      "depth": "Understanding of when generics outperform unions and vice versa",
+      "practical": "Real example of a type-safe generic function"
+    },
+    "followUpPrompts": [
+      "How do conditional types work with generics to create utility types?",
+      "What is the infer keyword and how does it relate to generic type extraction?"
+    ]
+  },
+  {
+    "text": "What are TypeScript utility types? Explain how Partial, Required, Pick, Omit, and Record work internally. How would you create a custom utility type that makes specific nested properties optional?",
+    "skill": "TypeScript",
+    "difficulty": "medium",
+    "rubric": {
+      "correctness": "Accurate description of built-in utility types",
+      "depth": "Understanding of mapped types and keyof/typeof operators",
+      "practical": "Custom utility type implementation"
+    },
+    "followUpPrompts": [
+      "How does the Readonly utility type work under the hood?",
+      "Can you create a DeepPartial type that handles nested objects recursively?"
+    ]
+  },
+  {
+    "text": "Explain TypeScript type narrowing techniques. How do type guards, discriminated unions, and the 'in' operator help the compiler narrow types? When would you use a custom type predicate versus a simple type assertion?",
+    "skill": "TypeScript",
+    "difficulty": "easy",
+    "rubric": {
+      "correctness": "Accurate description of type narrowing mechanisms",
+      "depth": "Understanding of control flow analysis and type predicates",
+      "communication": "Clear examples demonstrating each technique"
+    },
+    "followUpPrompts": [
+      "What is the difference between 'is' type predicates and 'asserts' assertions?",
+      "How does exhaustiveness checking work with switch statements and never type?"
+    ]
+  },
+  {
+    "text": "Describe React component composition patterns. Compare render props, higher-order components, and custom hooks for sharing logic between components. What are the trade-offs of each approach in terms of readability, TypeScript support, and performance?",
+    "skill": "React",
+    "difficulty": "medium",
+    "rubric": {
+      "correctness": "Accurate comparison of composition patterns",
+      "depth": "Understanding of when each pattern is appropriate",
+      "practical": "Real-world examples showing trade-offs"
+    },
+    "followUpPrompts": [
+      "How do compound components differ from render props in terms of API design?",
+      "What performance issues can arise with deeply nested HOCs?"
+    ]
+  },
+  {
+    "text": "How does React's concurrent rendering work? Explain the difference between concurrent mode, transitions, and Suspense. How do useTransition and useDeferredValue help manage rendering priority, and when should you use each?",
+    "skill": "React",
+    "difficulty": "hard",
+    "rubric": {
+      "correctness": "Accurate understanding of concurrent features",
+      "depth": "Understanding of interruptible rendering and priority lanes",
+      "practical": "Real scenarios where concurrent features improve UX"
+    },
+    "followUpPrompts": [
+      "How does Suspense integrate with data fetching libraries like React Query?",
+      "What happens when a transition is interrupted by a higher-priority update?"
+    ]
+  },
+  {
+    "text": "Explain React performance optimization techniques. When would you use React.memo, useMemo, and useCallback? How do you identify unnecessary re-renders using React DevTools Profiler, and what are common mistakes that cause performance regressions?",
+    "skill": "React",
+    "difficulty": "medium",
+    "rubric": {
+      "correctness": "Accurate use of memoization APIs",
+      "depth": "Understanding of referential equality and render bailout conditions",
+      "practical": "Real examples of performance optimization"
+    },
+    "followUpPrompts": [
+      "When does memoization actually hurt performance instead of helping?",
+      "How does React's reconciliation interact with memo to decide whether to re-render?"
+    ]
+  },
+  {
+    "text": "How do you implement accessible forms in React? Discuss ARIA attributes, keyboard navigation, focus management, and screen reader compatibility. What tools and testing strategies do you use to verify accessibility compliance?",
+    "skill": "Accessibility",
+    "difficulty": "medium",
+    "rubric": {
+      "correctness": "Accurate use of ARIA roles and attributes",
+      "depth": "Understanding of WCAG guidelines and keyboard interaction patterns",
+      "practical": "Real implementation of accessible form patterns"
+    },
+    "followUpPrompts": [
+      "How do you handle focus trapping in modals and dropdown menus?",
+      "What is the difference between aria-live, aria-atomic, and role='alert' for dynamic content?"
+    ]
+  },
+  {
+    "text": "Explain the browser rendering pipeline from URL entry to pixel display. How do the critical rendering path, layout, paint, and composite phases affect web performance? What techniques minimize each phase?",
+    "skill": "Browser Behavior",
+    "difficulty": "medium",
+    "rubric": {
+      "correctness": "Accurate description of rendering pipeline stages",
+      "depth": "Understanding of reflow, repaint, and compositing costs",
+      "practical": "Specific optimization techniques for each phase"
+    },
+    "followUpPrompts": [
+      "How do will-change and contain CSS properties affect compositing?",
+      "What is the difference between layout thrashing and forced synchronous layout?"
+    ]
+  },
+  {
+    "text": "Compare state management approaches in React: Context API, Redux Toolkit, Zustand, and Jotai. When would you choose each? Discuss bundle size, boilerplate, TypeScript integration, and performance characteristics for large-scale applications.",
+    "skill": "State Management",
+    "difficulty": "medium",
+    "rubric": {
+      "correctness": "Accurate comparison of state management libraries",
+      "depth": "Understanding of when each approach scales well",
+      "reasoning": "Clear trade-off analysis for different application sizes"
+    },
+    "followUpPrompts": [
+      "How does React Context cause unnecessary re-renders and how do you prevent it?",
+      "When is server state (React Query/SWR) a better choice than client state management?"
+    ]
+  },
+  {
+    "text": "How do you test React components effectively? Compare unit testing with Testing Library versus snapshot testing. What should you test in components — behavior, implementation details, or visual output? How do you mock API calls and test asynchronous interactions?",
+    "skill": "Testing",
+    "difficulty": "medium",
+    "rubric": {
+      "correctness": "Accurate testing library usage and patterns",
+      "depth": "Understanding of testing philosophy (behavior vs implementation)",
+      "practical": "Real examples of testing complex interactions"
+    },
+    "followUpPrompts": [
+      "How do you test custom hooks without rendering a component?",
+      "What is the difference between queryBy, getBy, and findBy in Testing Library?"
+    ]
+  },
+  {
+    "text": "Explain Python's decorator pattern. How do you create decorators that accept arguments, preserve function metadata with functools.wraps, and work with both functions and methods? When would you use a class-based decorator versus a function-based one?",
+    "skill": "Python",
+    "difficulty": "medium",
+    "rubric": {
+      "correctness": "Accurate decorator implementation with proper wrapping",
+      "depth": "Understanding of closures and functools.wraps",
+      "practical": "Real-world decorator examples (caching, retry, auth)"
+    },
+    "followUpPrompts": [
+      "How do you create a decorator that works with both sync and async functions?",
+      "What is the difference between @staticmethod, @classmethod, and regular instance methods under the hood?"
+    ]
+  },
+  {
+    "text": "Explain Python's asyncio model. How do coroutines, event loops, tasks, and futures work together? Compare asyncio with threading and multiprocessing for I/O-bound versus CPU-bound workloads. What are common pitfalls like blocking the event loop?",
+    "skill": "Python",
+    "difficulty": "hard",
+    "rubric": {
+      "correctness": "Accurate description of async primitives",
+      "depth": "Understanding of cooperative multitasking vs preemptive multitasking",
+      "practical": "Real examples of async I/O with proper error handling"
+    },
+    "followUpPrompts": [
+      "How do you handle exceptions in asyncio tasks and prevent silent failures?",
+      "When would you use asyncio.gather versus asyncio.TaskGroup?"
+    ]
+  },
+  {
+    "text": "Describe Python's memory management. How do reference counting and garbage collection work together? What are circular references and how does the gc module handle them? How do you profile memory usage and identify memory leaks in a long-running Python application?",
+    "skill": "Python",
+    "difficulty": "hard",
+    "rubric": {
+      "correctness": "Accurate description of reference counting and GC cycles",
+      "depth": "Understanding of generational garbage collection",
+      "practical": "Memory profiling techniques and leak detection"
+    },
+    "followUpPrompts": [
+      "How do __slots__ reduce memory usage in Python classes?",
+      "What is the difference between sys.getrefcount and gc.get_referrers?"
+    ]
+  },
+  {
+    "text": "Explain JWT authentication flow. How do access tokens and refresh tokens work together? What are the security considerations for storing tokens (httpOnly cookies vs localStorage)? How do you handle token rotation, revocation, and distributed session validation?",
+    "skill": "Authentication",
+    "difficulty": "medium",
+    "rubric": {
+      "correctness": "Accurate JWT structure and validation flow",
+      "depth": "Understanding of token lifecycle and security trade-offs",
+      "practical": "Real implementation with refresh token rotation"
+    },
+    "followUpPrompts": [
+      "How do you invalidate a JWT before its expiration without a server-side session store?",
+      "What are the risks of storing JWTs in localStorage versus httpOnly cookies?"
+    ]
+  },
+  {
+    "text": "Design a caching strategy for a web application with frequently changing data. Compare application-level caching (in-memory), distributed caching (Redis), and CDN caching. How do you handle cache invalidation, cache stampedes, and stale-while-revalidate patterns?",
+    "skill": "Caching",
+    "difficulty": "hard",
+    "rubric": {
+      "correctness": "Accurate caching layer descriptions",
+      "depth": "Understanding of invalidation strategies and consistency models",
+      "reasoning": "Clear trade-off analysis for different data freshness requirements"
+    },
+    "followUpPrompts": [
+      "How do you prevent a cache stampede when a popular key expires?",
+      "What is the difference between write-through, write-back, and write-around caching?"
+    ]
+  },
+  {
+    "text": "How do you design a RESTful API for a complex domain? Discuss resource naming, pagination, filtering, versioning, error response format, and HATEOAS. When would you choose REST over GraphQL or gRPC for inter-service communication?",
+    "skill": "REST APIs",
+    "difficulty": "medium",
+    "rubric": {
+      "correctness": "Accurate REST conventions and HTTP method usage",
+      "depth": "Understanding of API design trade-offs",
+      "practical": "Real API design examples with error handling"
+    },
+    "followUpPrompts": [
+      "How do you handle partial updates (PATCH) with nested resources?",
+      "What is your strategy for API versioning — URL path, headers, or content negotiation?"
+    ]
+  },
+  {
+    "text": "Explain common web security vulnerabilities: SQL injection, XSS, CSRF, and SSRF. For each, describe how the attack works, how to detect it, and what specific mitigation techniques prevent it. How do Content Security Policy headers help?",
+    "skill": "Security",
+    "difficulty": "medium",
+    "rubric": {
+      "correctness": "Accurate description of each vulnerability",
+      "depth": "Understanding of attack vectors and defense layers",
+      "practical": "Specific code examples showing vulnerable vs secure patterns"
+    },
+    "followUpPrompts": [
+      "How do parameterized queries prevent SQL injection at the database driver level?",
+      "What is the difference between stored XSS, reflected XSS, and DOM-based XSS?"
+    ]
+  },
+  {
+    "text": "How do background job queues work in production systems? Compare message brokers (RabbitMQ, Kafka, Redis-based queues) for different use cases. Discuss job scheduling, retry strategies, dead letter queues, and exactly-once versus at-least-once processing semantics.",
+    "skill": "Background Jobs",
+    "difficulty": "hard",
+    "rubric": {
+      "correctness": "Accurate description of queue architectures",
+      "depth": "Understanding of delivery guarantees and failure modes",
+      "reasoning": "Clear trade-off analysis for different messaging systems"
+    },
+    "followUpPrompts": [
+      "How do you handle idempotency when a job is processed more than once?",
+      "What monitoring do you set up to detect stuck or failing jobs?"
+    ]
+  },
+  {
+    "text": "Describe a CI/CD pipeline design for a microservices project. How do you structure stages (lint, test, build, deploy)? Explain branch strategies, environment promotion, rollback mechanisms, and how you handle database migrations alongside code deployments.",
+    "skill": "CI/CD",
+    "difficulty": "medium",
+    "rubric": {
+      "correctness": "Accurate pipeline stage descriptions",
+      "depth": "Understanding of environment promotion and gating",
+      "practical": "Real CI/CD configuration examples"
+    },
+    "followUpPrompts": [
+      "How do you handle database migrations that are not backward-compatible with the previous code version?",
+      "What is your strategy for feature flags in a CI/CD pipeline?"
+    ]
+  },
+  {
+    "text": "Explain Docker multi-stage builds and how they optimize image size. How do you layer Docker images effectively for faster builds and smaller deployments? What security practices do you follow for production container images?",
+    "skill": "Docker",
+    "difficulty": "medium",
+    "rubric": {
+      "correctness": "Accurate multi-stage build syntax and benefits",
+      "depth": "Understanding of layer caching and image optimization",
+      "practical": "Real Dockerfile examples showing best practices"
+    },
+    "followUpPrompts": [
+      "How do you handle secrets in Docker images without baking them into layers?",
+      "What is the difference between COPY and ADD, and when does it matter?"
+    ]
+  },
+  {
+    "text": "How do Kubernetes Deployments, Services, and Ingress work together to serve traffic? Explain rolling updates, health checks, resource limits, and horizontal pod autoscaling. What happens when a pod fails its readiness probe?",
+    "skill": "Kubernetes",
+    "difficulty": "hard",
+    "rubric": {
+      "correctness": "Accurate K8s resource descriptions",
+      "depth": "Understanding of traffic routing and scaling mechanics",
+      "practical": "Real deployment configuration examples"
+    },
+    "followUpPrompts": [
+      "How do you configure a canary deployment using Istio or Argo Rollouts?",
+      "What is the difference between liveness, readiness, and startup probes?"
+    ]
+  },
+  {
+    "text": "Explain infrastructure as code principles using Terraform. How do you manage state files, handle drift, structure modules for reusability, and implement plan/apply workflows in a team? What are the risks of terraform apply without proper review gates?",
+    "skill": "Terraform",
+    "difficulty": "medium",
+    "rubric": {
+      "correctness": "Accurate Terraform concepts and workflow",
+      "depth": "Understanding of state management and module design",
+      "practical": "Real IaC examples with proper separation of concerns"
+    },
+    "followUpPrompts": [
+      "How do you handle Terraform state for multi-environment deployments?",
+      "What happens when someone manually changes a resource outside of Terraform?"
+    ]
+  },
+  {
+    "text": "Describe your approach to monitoring and observability in production. How do metrics, logs, and traces work together (the three pillars)? Compare Prometheus/Grafana, ELK stack, and OpenTelemetry. How do you set up alerting to avoid alert fatigue?",
+    "skill": "Monitoring",
+    "difficulty": "medium",
+    "rubric": {
+      "correctness": "Accurate description of observability pillars",
+      "depth": "Understanding of correlation between metrics, logs, and traces",
+      "practical": "Real monitoring setup examples"
+    },
+    "followUpPrompts": [
+      "How do you define SLIs, SLOs, and error budgets for a service?",
+      "What is the difference between push-based and pull-based monitoring?"
+    ]
+  },
+  {
+    "text": "Walk through your incident response process for a production outage. How do you detect, triage, communicate, mitigate, and do a post-mortem? What tools and runbooks do you maintain? How do you prevent the same incident from recurring?",
+    "skill": "Incident Response",
+    "difficulty": "hard",
+    "rubric": {
+      "correctness": "Structured incident response methodology",
+      "depth": "Understanding of blameless post-mortems and systemic fixes",
+      "practical": "Real incident example with lessons learned"
+    },
+    "followUpPrompts": [
+      "How do you balance speed of mitigation versus root cause analysis during an active incident?",
+      "What metrics do you track to measure incident response effectiveness?"
+    ]
+  },
+  {
+    "text": "Explain database indexing strategies. How do B-tree, hash, and composite indexes work? When does an index help versus hurt performance? How do you analyze query plans and identify missing or redundant indexes in PostgreSQL or MySQL?",
+    "skill": "SQL",
+    "difficulty": "medium",
+    "rubric": {
+      "correctness": "Accurate index type descriptions",
+      "depth": "Understanding of query plan analysis and index selectivity",
+      "practical": "Real examples of query optimization with EXPLAIN ANALYZE"
+    },
+    "followUpPrompts": [
+      "What is the difference between a covering index and a partial index?",
+      "How do you handle index maintenance during high-write workloads?"
+    ]
+  },
+  {
+    "text": "How do you handle API rate limiting in a distributed system? Compare token bucket, sliding window, and fixed window algorithms. How do you communicate rate limits to API consumers and handle graceful degradation when limits are exceeded?",
+    "skill": "System Design",
+    "difficulty": "hard",
+    "rubric": {
+      "correctness": "Accurate rate limiting algorithm descriptions",
+      "depth": "Understanding of distributed rate limiting challenges",
+      "reasoning": "Clear trade-off analysis between algorithms"
+    },
+    "followUpPrompts": [
+      "How do you implement rate limiting that works across multiple API gateway instances?",
+      "What HTTP headers do you use to communicate rate limit status to clients?"
+    ]
+  },
+  {
+    "text": "Explain responsive design principles beyond media queries. How do fluid grids, flexible images, container queries, and clamp() function work together? When would you use a mobile-first versus desktop-first approach, and how do you test across devices?",
+    "skill": "CSS",
+    "difficulty": "easy",
+    "rubric": {
+      "correctness": "Accurate responsive design techniques",
+      "depth": "Understanding of modern CSS features (container queries, clamp)",
+      "practical": "Real responsive layout examples"
+    },
+    "followUpPrompts": [
+      "How do container queries differ from media queries in terms of component design?",
+      "What is the difference between rem, em, and viewport units for responsive typography?"
+    ]
+  },
+  {
+    "text": "How do you debug a production performance issue in a web application? Walk through your methodology: identifying the bottleneck, profiling frontend and backend, analyzing database queries, and checking network latency. What tools do you use at each step?",
+    "skill": "Debugging",
+    "difficulty": "medium",
+    "rubric": {
+      "correctness": "Structured debugging methodology",
+      "depth": "Understanding of profiling tools and performance metrics",
+      "practical": "Real debugging examples with specific tools"
+    },
+    "followUpPrompts": [
+      "How do you distinguish between a frontend rendering issue and a backend API latency issue?",
+      "What Chrome DevTools panels do you use for performance profiling?"
+    ]
+  },
+  {
+    "text": "Explain the differences between SQL and NoSQL databases. When would you choose PostgreSQL versus MongoDB for a new project? Discuss schema design, consistency models, query patterns, and horizontal scaling strategies for each.",
+    "skill": "MongoDB",
+    "difficulty": "easy",
+    "rubric": {
+      "correctness": "Accurate comparison of database paradigms",
+      "depth": "Understanding of when each database type excels",
+      "reasoning": "Clear decision framework for database selection"
+    },
+    "followUpPrompts": [
+      "How do you handle transactions in MongoDB compared to PostgreSQL?",
+      "What is the document embedding versus referencing trade-off in MongoDB?"
+    ]
+  },
+  {
+    "text": "Describe how you would design a real-time notification system that supports millions of users. Discuss WebSocket connections, message queuing, delivery guarantees, and fallback mechanisms for clients that disconnect. How do you handle message ordering and deduplication?",
+    "skill": "System Design",
+    "difficulty": "hard",
+    "rubric": {
+      "correctness": "Sound real-time system architecture",
+      "depth": "Understanding of WebSocket scaling challenges",
+      "reasoning": "Clear approach to delivery guarantees and failure handling"
+    },
+    "followUpPrompts": [
+      "How do you handle WebSocket reconnection without losing messages?",
+      "What is the difference between push and pull notification patterns?"
+    ]
+  },
+  {
+    "text": "Explain how you would implement end-to-end testing for a full-stack application. Compare Cypress, Playwright, and Selenium for browser automation. How do you handle test data setup, authentication flows, and flaky tests in CI?",
+    "skill": "Testing",
+    "difficulty": "medium",
+    "rubric": {
+      "correctness": "Accurate E2E testing tool comparison",
+      "depth": "Understanding of test reliability and CI integration",
+      "practical": "Real E2E test examples with proper patterns"
+    },
+    "followUpPrompts": [
+      "How do you mock backend APIs in E2E tests without making real network calls?",
+      "What is your strategy for parallelizing E2E tests in CI?"
+    ]
+  },
+  {
+    "text": "How do you design a database schema that supports multi-tenancy? Compare schema-per-tenant, shared schema with tenant_id, and sharded approaches. What are the trade-offs for data isolation, query performance, and operational complexity?",
+    "skill": "System Design",
+    "difficulty": "hard",
+    "rubric": {
+      "correctness": "Accurate multi-tenancy patterns",
+      "depth": "Understanding of isolation levels and performance implications",
+      "reasoning": "Clear trade-off analysis for different tenant scales"
+    },
+    "followUpPrompts": [
+      "How do you prevent cross-tenant data leakage at the query level?",
+      "What backup and restore strategies work best for multi-tenant databases?"
+    ]
+  },
+  {
+    "text": "Explain how Python type hints work with complex data structures. How do you use TypedDict, dataclasses, and Pydantic for validation? When do type hints become essential versus optional in a Python codebase?",
+    "skill": "Python",
+    "difficulty": "medium",
+    "rubric": {
+      "correctness": "Accurate type hint usage for complex structures",
+      "depth": "Understanding of runtime validation versus static checking",
+      "practical": "Real examples with Pydantic models or dataclasses"
+    },
+    "followUpPrompts": [
+      "How does Pydantic V2's performance compare to V1 for large data validation?",
+      "What is the difference between TypedDict and dataclass for API response modeling?"
+    ]
+  },
+  {
+    "text": "Describe blue-green versus canary deployment strategies. How do you implement each with Kubernetes or a cloud provider? What monitoring and rollback criteria do you use? How do database schema changes fit into these deployment patterns?",
+    "skill": "Deployment",
+    "difficulty": "medium",
+    "rubric": {
+      "correctness": "Accurate deployment strategy descriptions",
+      "depth": "Understanding of traffic shifting and rollback automation",
+      "practical": "Real deployment configuration examples"
+    },
+    "followUpPrompts": [
+      "How do you handle database migrations during a blue-green deployment?",
+      "What percentage of traffic do you shift in each canary stage?"
+    ]
+  },
+  {
+    "text": "How do you structure a large-scale React application for maintainability? Discuss folder structure, feature-based architecture, shared component libraries, state management boundaries, and code splitting strategies. How do you prevent circular dependencies?",
+    "skill": "React",
+    "difficulty": "hard",
+    "rubric": {
+      "correctness": "Sound architectural patterns for large React apps",
+      "depth": "Understanding of module boundaries and dependency management",
+      "practical": "Real project structure examples"
+    },
+    "followUpPrompts": [
+      "How do you share components between multiple React applications (micro-frontends)?",
+      "What is your strategy for lazy loading routes and heavy components?"
+    ]
+  },
+  {
+    "text": "Explain how you would integrate a third-party API into a production application. Discuss error handling, retry strategies, rate limit management, response caching, and webhook handling. How do you ensure reliability when the external service is down?",
+    "skill": "API Integration",
+    "difficulty": "medium",
+    "rubric": {
+      "correctness": "Accurate integration patterns and error handling",
+      "depth": "Understanding of resilience patterns (circuit breaker, retry with backoff)",
+      "practical": "Real API integration examples"
+    },
+    "followUpPrompts": [
+      "How do you implement a circuit breaker pattern for external API calls?",
+      "What is your strategy for handling webhook delivery failures?"
+    ]
+  },
+  {
+    "text": "Explain Python generators and iterators. How do yield and __iter__/__next__ work? When would you use a generator expression versus a list comprehension for memory efficiency? How do you create infinite sequences and pipeline generators?",
+    "skill": "Python",
+    "difficulty": "easy",
+    "rubric": {
+      "correctness": "Accurate generator and iterator protocol description",
+      "depth": "Understanding of lazy evaluation and memory efficiency",
+      "practical": "Real examples of generator pipelines"
+    },
+    "followUpPrompts": [
+      "How does yield from simplify delegating to sub-generators?",
+      "What is the difference between iter() with a sentinel value and a regular iterator?"
+    ]
+  },
+  {
+    "text": "How do you design and implement a search feature with full-text search capabilities? Compare database LIKE queries, PostgreSQL tsvector, Elasticsearch, and Algolia. Discuss relevance ranking, faceted search, and handling typos or partial matches.",
+    "skill": "System Design",
+    "difficulty": "hard",
+    "rubric": {
+      "correctness": "Accurate search technology comparison",
+      "depth": "Understanding of inverted indexes and relevance scoring",
+      "reasoning": "Clear trade-off analysis for different search volumes"
+    },
+    "followUpPrompts": [
+      "How do you handle search result pagination with consistent ordering?",
+      "What is the difference between BM25 and TF-IDF for relevance ranking?"
+    ]
+  },
+  {
+    "text": "Explain how you would secure a REST API for production use. Discuss authentication mechanisms, authorization patterns (RBAC vs ABAC), input validation, CORS configuration, and audit logging. How do you handle API key management and rotation?",
+    "skill": "Security",
+    "difficulty": "hard",
+    "rubric": {
+      "correctness": "Accurate security patterns for APIs",
+      "depth": "Understanding of defense-in-depth for API security",
+      "practical": "Real security configuration examples"
+    },
+    "followUpPrompts": [
+      "How do you implement row-level security in a multi-tenant API?",
+      "What is the difference between authentication and authorization middleware?"
+    ]
+  },
+  {
+    "text": "Describe how you would set up structured logging and log aggregation for a microservices architecture. Compare JSON logging, ELK stack, Loki, and CloudWatch. How do you correlate logs across services using trace IDs?",
+    "skill": "Logging",
+    "difficulty": "medium",
+    "rubric": {
+      "correctness": "Accurate logging strategy and tool comparison",
+      "depth": "Understanding of distributed tracing and correlation",
+      "practical": "Real logging configuration examples"
+    },
+    "followUpPrompts": [
+      "How do you handle log volume and cost at scale?",
+      "What log levels do you use in production versus development?"
+    ]
+  },
+  {
+    "text": "Explain how React handles error boundaries and Suspense for error recovery. How do you implement graceful error handling at different levels of the component tree? What is the relationship between error boundaries and React 18's streaming SSR?",
+    "skill": "React",
+    "difficulty": "medium",
+    "rubric": {
+      "correctness": "Accurate error boundary and Suspense usage",
+      "depth": "Understanding of error propagation in component trees",
+      "practical": "Real error handling patterns with fallback UI"
+    },
+    "followUpPrompts": [
+      "How do you report errors from error boundaries to a monitoring service?",
+      "Can error boundaries catch errors in event handlers or only in rendering?"
+    ]
   }
 ]

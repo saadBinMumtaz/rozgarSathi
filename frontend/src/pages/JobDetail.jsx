@@ -40,7 +40,7 @@ export const JobDetail = ({ job, onNavigate, onStartPracticing, onTailorResume, 
           onNavigate={onNavigate}
           currentPage="find-jobs"
           isAuthenticated={isAuthenticated}
-          onLogout={() => { logout(); onNavigate('landing'); }}
+          onLogout={() => { logout(); onNavigate('home'); }}
           language={language}
           setLanguage={setLanguage}
         />
@@ -67,7 +67,7 @@ export const JobDetail = ({ job, onNavigate, onStartPracticing, onTailorResume, 
         onNavigate={onNavigate}
         currentPage="find-jobs"
         isAuthenticated={isAuthenticated}
-        onLogout={() => { logout(); onNavigate('landing'); }}
+        onLogout={() => { logout(); onNavigate('home'); }}
         language={language}
         setLanguage={setLanguage}
       />

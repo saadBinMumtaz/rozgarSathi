@@ -151,15 +151,17 @@ body {
   color: var(--color-surface);
 }
 
-/* Form elements always use dark text (they have light backgrounds) */
-.surface-text input,
-.surface-text textarea,
-.surface-text select {
+/* Form elements on LIGHT backgrounds use dark text.
+   Inputs with surface/surface-hover backgrounds already have light text via
+   the surface-text overrides above, so exclude them from this rule. */
+.surface-text input:not(.bg-surface):not(.bg-surface-hover):not([class*="bg-surface"]),
+.surface-text textarea:not(.bg-surface):not(.bg-surface-hover):not([class*="bg-surface"]),
+.surface-text select:not(.bg-surface):not(.bg-surface-hover):not([class*="bg-surface"]) {
   color: var(--color-text-primary) !important;
 }
-.surface-text input::placeholder,
-.surface-text textarea::placeholder,
-.surface-text select::placeholder {
+.surface-text input:not(.bg-surface):not(.bg-surface-hover):not([class*="bg-surface"])::placeholder,
+.surface-text textarea:not(.bg-surface):not(.bg-surface-hover):not([class*="bg-surface"])::placeholder,
+.surface-text select:not(.bg-surface):not(.bg-surface-hover):not([class*="bg-surface"])::placeholder {
   color: var(--color-text-muted) !important;
 }
 

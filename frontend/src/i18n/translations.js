@@ -234,6 +234,7 @@ export const translations = {
   'interview.questionsLabel':      { en: 'questions',                     ur: 'سوالات' },
   'interview.serverUnreachable':   { en: 'Server is unreachable. Check your connection and retry.', ur: 'سرور تک رسائی نہیں ہو سکی۔ اپنا کنکشن چیک کریں اور دوبارہ کوشش کریں۔' },
   'interview.restartInterview':    { en: 'Restart interview',             ur: 'انٹرویو دوبارہ شروع کریں' },
+  'interview.refreshInterview':    { en: 'Refresh Interview',             ur: 'انٹرویو تازہ کریں' },
   'interview.retry':               { en: 'Retry',                         ur: 'دوبارہ کوشش' },
   'interview.tabConflict':         { en: 'Another tab is running this same interview. Answers may conflict — close the other tab or', ur: 'دوسری ٹیب میں یہی انٹرویو چل رہا ہے۔ جوابات متصادم ہو سکتے ہیں — دوسری ٹیب بند کریں یا' },
   'interview.continueHere':        { en: 'continue here anyway',          ur: 'یہاں جاری رکھیں' },

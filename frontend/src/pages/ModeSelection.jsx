@@ -193,7 +193,6 @@ export const ModeSelection = ({ jdAnalysis, onSelectMode, onNavigate, language, 
                       onClick={(e) => {
                         e.stopPropagation();
                         setSelectedMode(m.id);
-                        onSelectMode(m.id);
                       }}
                     >
                       {isSelected ? L('modeSelection.selected') : L('modeSelection.selectMode')}

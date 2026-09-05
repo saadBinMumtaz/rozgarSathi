@@ -89,7 +89,7 @@ export const Landing = ({ onNavigate, onTrySampleJD, isAuthenticated, user, isDa
         onNavigate={onNavigate}
         currentPage="landing"
         isAuthenticated={isAuthenticated}
-        onLogout={() => { logout(); onNavigate('landing'); }}
+        onLogout={() => { logout(); onNavigate('home'); }}
         language={language}
         setLanguage={setLanguage}
       />

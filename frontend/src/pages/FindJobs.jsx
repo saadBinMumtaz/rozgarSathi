@@ -111,7 +111,7 @@ export const FindJobs = ({ onNavigate, onStartPracticing, onTailorResume, isDark
         onNavigate={onNavigate}
         currentPage="find-jobs"
         isAuthenticated={isAuthenticated}
-        onLogout={() => { logout(); onNavigate('landing'); }}
+        onLogout={() => { logout(); onNavigate('home'); }}
         language={language}
         setLanguage={setLanguage}
       />

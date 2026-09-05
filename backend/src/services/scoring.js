@@ -160,7 +160,7 @@ const countWords = (text) => {
  * @param {string} [params.language='english'] - 'english' | 'urdu' — language for feedback
  * @returns {Promise<Object>} Evaluation object matching Section 7 schema
  */
-export const evaluateBehavioralAnswer = async ({ question, transcript, language = 'english' }) => {
+export const evaluateBehavioralAnswer = async ({ question, transcript, language = 'english', jdContext = {} }) => {
   const wordCount = countWords(transcript);
 
   // Deterministic floor: empty or whitespace-only
@@ -199,18 +199,29 @@ export const evaluateBehavioralAnswer = async ({ question, transcript, language 
   const rubric = question.rubric || {};
   const rubricKeys = Object.keys(rubric);
 
+  const roleContext = jdContext.role ? `\nThe candidate is interviewing for: ${jdContext.role}` : '';
+  const skillsContext = jdContext.skills?.length ? `\nKey skills for this role: ${jdContext.skills.slice(0, 5).join(', ')}` : '';
+
   const systemPrompt = `You are an expert behavioral interviewer evaluating a candidate's answer using the STAR framework.
-Score each dimension of the rubric from 0-10 based on how well the candidate addressed it.
-${language === 'urdu' ? 'IMPORTANT: Return all feedback fields (strength, missing, improvement, evidence items) in Urdu (\u0627\u0631\u062f\u0648). Keep technical terms like React, API, Node.js etc. in English.' : ''}
+Score each dimension of the rubric from 0-10 based on how well the candidate addressed it.${roleContext}${skillsContext}
+
+Scoring guidance:
+- 0-3: Answer completely missed this dimension or was irrelevant
+- 4-5: Answer touched on this dimension but was vague, generic, or lacked specifics
+- 6-7: Answer addressed this dimension with reasonable detail and some concrete examples
+- 8-9: Answer strongly demonstrated this dimension with specific, compelling examples
+- 10: Exceptional — answer perfectly demonstrated this dimension with measurable impact
+
+${language === 'urdu' ? 'IMPORTANT: Return all feedback fields (strength, missing, improvement, evidence items) in Urdu (اردو). Keep technical terms like React, API, Node.js etc. in English.' : ''}
 Return ONLY valid JSON matching this schema:
 {
   "dimensions": {
     ${rubricKeys.map((k) => `"${k}": 0-10 score`).join(',\n    ')}
   },
-  "evidence": ["Array of 2-4 specific quotes or examples from the answer"],
-  "strength": "One sentence describing what the candidate did well",
-  "missing": "One sentence describing what was missing or could be improved",
-  "improvement": "One actionable suggestion for improvement"
+  "evidence": ["2-4 specific quotes or paraphrased points from the candidate's actual answer — reference what they actually said, not generic observations"],
+  "strength": "One specific sentence describing what the candidate did well, referencing something concrete from their answer",
+  "missing": "One specific sentence describing what was missing — explain WHY it matters for this role",
+  "improvement": "One actionable, specific suggestion — tell them exactly what to add or change, with an example of what a good answer would include"
 }`;
 
   const userPrompt = `Question: ${question.text}
@@ -223,7 +234,7 @@ Candidate's Answer:
 ${transcript}
 """
 
-Evaluate the answer and return JSON.`;
+Evaluate the answer against the rubric. Be specific — reference what the candidate actually said. Do not invent experiences or claims they did not make. Return JSON.`;
 
   try {
     const llmResult = await callAI({

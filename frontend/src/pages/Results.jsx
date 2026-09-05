@@ -66,7 +66,7 @@ const getReadinessLabel = (score, language = 'english') => {
   return { text: L('common.noData'), color: 'text-text-muted' };
 };
 
-export const Results = ({ userId = 'guest', onNavigate, language = 'english' }) => {
+export const Results = ({ userId = 'guest', onNavigate, onBackToHub, language = 'english' }) => {
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -161,7 +161,7 @@ export const Results = ({ userId = 'guest', onNavigate, language = 'english' }) 
             <AlertTriangle className="mx-auto text-danger" size={32} />
             <p className="text-danger">{error || L('results.failedLoad')}</p>
             <div className="flex gap-3 justify-center">
-              <Button variant="secondary" onClick={() => onNavigate?.('mode-selection')}>
+              <Button variant="secondary" onClick={() => onNavigate?.('jd-input')}>
                 {L('common.startInterview')}
               </Button>
               <Button variant="ghost" onClick={() => window.location.reload()}>
@@ -187,7 +187,7 @@ export const Results = ({ userId = 'guest', onNavigate, language = 'english' }) 
             <Button
               variant="ghost"
               size="sm"
-              onClick={() => onNavigate('mode-selection')}
+              onClick={() => onBackToHub?.()}
               className="text-text-muted hover:text-text-primary"
             >
               <ArrowLeft size={16} className="mr-1" /> {L('results.backToMode')}
@@ -225,7 +225,7 @@ export const Results = ({ userId = 'guest', onNavigate, language = 'english' }) 
                     </>
                   )}
                 </Button>
-                <Button variant="secondary" onClick={() => onNavigate('mode-selection')}>
+                <Button variant="secondary" onClick={() => onBackToHub?.()}>
                   {L('results.practiceMore')}
                 </Button>
           </div>
