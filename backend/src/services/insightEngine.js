@@ -191,4 +191,88 @@ Analyse these evaluations and return JSON — remember, if there is no genuine c
   }
 };
 
-export default { generateCrossModeInsight };
+/**
+ * Generate a synthesized interview-level summary from individual question evaluations.
+ * Produces a paragraph that reads like a real interviewer's overall assessment —
+ * referencing patterns across answers, not just repeating per-question feedback.
+ *
+ * @param {Object} params
+ * @param {Object[]} params.questions - Array of { questionText, topic, score, strength, missing, improvement, evidence }
+ * @param {string} params.mode - 'behavioral' | 'technical' | 'coding'
+ * @param {number} params.overallScore - The session's overall score
+ * @param {Object} [params.jdContext] - Optional { role, skills }
+ * @returns {Promise<string>} A synthesized summary paragraph
+ */
+export const generateInterviewSummary = async ({ questions = [], mode = 'behavioral', overallScore = 0, jdContext = {} }) => {
+  if (questions.length === 0) return '';
+
+  // Build a compact representation of each question's evaluation for the LLM
+  const questionSummaries = questions.map((q, i) => {
+    const parts = [`Q${i + 1} (${q.topic || mode}, score: ${q.score ?? 'N/A'}/100)`];
+    if (q.questionText) parts.push(`Question: "${q.questionText.substring(0, 100)}"`);
+    if (q.strength) parts.push(`Strength: ${q.strength}`);
+    if (q.missing) parts.push(`Gap: ${q.missing}`);
+    if (q.evidence?.length) parts.push(`Evidence: ${q.evidence.slice(0, 2).join('; ')}`);
+    return parts.join(' | ');
+  }).join('\n');
+
+  const roleContext = jdContext.role ? `Role: ${jdContext.role}.` : '';
+  const modeLabel = mode === 'behavioral' ? 'behavioral (STAR-based)' : mode === 'technical' ? 'technical knowledge' : 'live coding';
+
+  const systemPrompt = `You are a senior interviewer writing a candidate assessment summary after a ${modeLabel} interview.
+${roleContext}
+
+Synthesize the individual question evaluations into ONE coherent paragraph (3-5 sentences) that reads like a real interviewer's overall assessment.
+
+RULES:
+1. Do NOT simply repeat each question's feedback — look for PATTERNS across answers
+2. Reference specific things the candidate said (from the evidence/strength fields)
+3. Identify what the candidate consistently does well and what consistently needs work
+4. If performance varied across questions, explain where and why
+5. End with a specific, actionable recommendation for the candidate's next practice session
+6. NEVER use: "Good job", "Overall performance", "The candidate demonstrated", "Needs improvement"
+7. Write in a direct, professional tone — like a real interviewer's notes
+8. Keep it to 3-5 sentences maximum
+
+Return ONLY valid JSON:
+{
+  "summary": "The synthesized interview summary paragraph"
+}`;
+
+  const userPrompt = `Interview mode: ${modeLabel}
+Overall score: ${overallScore}/100
+Number of questions: ${questions.length}
+
+Question-by-question evaluations:
+${questionSummaries}
+
+Synthesize these into a coherent interviewer assessment (return JSON { "summary": "..." }):`;
+
+  try {
+    const result = await callAI({
+      systemPrompt,
+      userPrompt,
+      requiredFields: ['summary'],
+    });
+    return (result.summary || '').trim();
+  } catch (err) {
+    logger.warn(`Interview summary LLM failed: ${err.message}. Using deterministic fallback.`);
+    // Deterministic fallback: synthesize from individual strengths/gaps
+    const strengths = questions.map(q => q.strength).filter(Boolean);
+    const gaps = questions.map(q => q.missing).filter(Boolean);
+    const highScores = questions.filter(q => (q.score ?? 0) >= 60).length;
+    const lowScores = questions.filter(q => (q.score ?? 0) < 40).length;
+
+    let summary = `Across ${questions.length} questions, the candidate scored ${overallScore}/100 overall.`;
+    if (highScores > lowScores) {
+      summary += ` Performance was generally strong, with ${highScores} of ${questions.length} answers scoring above average.`;
+    } else if (lowScores > highScores) {
+      summary += ` Performance was inconsistent, with ${lowScores} of ${questions.length} answers below the expected threshold.`;
+    }
+    if (strengths.length > 0) summary += ` Consistent strength: ${strengths[0]}`;
+    if (gaps.length > 0) summary += ` Key area to address: ${gaps[0]}`;
+    return summary;
+  }
+};
+
+export default { generateCrossModeInsight, generateInterviewSummary };

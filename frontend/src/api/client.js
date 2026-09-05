@@ -472,6 +472,19 @@ export const apiClient = {
     return res.json();
   },
 
+  async getInterviewSummary(sessionId) {
+    const res = await fetch(`${API_BASE_URL}/reports/interview-summary`, {
+      method: 'POST',
+      headers: authHeaders(),
+      body: JSON.stringify({ sessionId }),
+    });
+    if (!res.ok) {
+      // Summary is non-critical — return empty rather than throwing
+      return { summary: '' };
+    }
+    return res.json();
+  },
+
   // --- Job Discovery ---------------------------------------------------
 
   async searchJobs({ q, location, remote, page = 1, limit = 20 }) {

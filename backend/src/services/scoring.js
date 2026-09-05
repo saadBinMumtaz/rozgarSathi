@@ -227,9 +227,9 @@ Return ONLY valid JSON:
     ${rubricKeys.map((k) => `"${k}": 0-10 score`).join(',\n    ')}
   },
   "evidence": ["2-4 items — at least one must be a direct quote or close paraphrase from the transcript"],
-  "strongestPoint": "The single most impressive specific thing the candidate said — reference their exact words or claim",
-  "keyGap": "The most important thing missing and WHY it weakens this answer for this role",
-  "howToImprove": "One concrete, actionable change with a specific example of what a stronger version would include"
+  "strength": "The single most impressive specific thing the candidate said — reference their exact words or claim",
+  "missing": "The most important thing missing and WHY it weakens this answer for this role",
+  "improvement": "One concrete, actionable change with a specific example of what a stronger version would include"
 }`;
 
   const userPrompt = `Question: ${question.text}
@@ -397,39 +397,37 @@ export const evaluateTechnicalAnswer = async ({ question, transcript, language =
   const skillsContext = jdContext.skills?.length ? `\nKey skills for this role: ${jdContext.skills.slice(0, 5).join(', ')}` : '';
   const jdKeywordsContext = jdContext.keywords?.length ? `\nJD keywords: ${jdContext.keywords.slice(0, 8).join(', ')}` : '';
 
-  const systemPrompt = `You are a senior technical interviewer evaluating a candidate's answer. You evaluate like a real interviewer — grounded in what the candidate actually said, not what you assume they know.${roleContext}${skillsContext}${jdKeywordsContext}
+  const systemPrompt = `You are a senior engineer conducting a technical interview. Evaluate this answer like a real interviewer — specific, honest, and grounded in what the candidate actually said.${roleContext}${skillsContext}${jdKeywordsContext}
 
-Question topic: ${question.skill || 'general technical'}
+Topic: ${question.skill || 'general technical'}
 
-Score each rubric dimension from 0-10 based on how well the candidate addressed it.
+SCORE EACH DIMENSION 0-10:
+- 0-3: Fundamentally wrong or completely missing — does not understand the core concept
+- 4-5: Knows terminology but cannot explain mechanics, trade-offs, or give concrete examples
+- 6-7: Correct explanation with some examples, but misses edge cases, trade-offs, or deeper mechanics
+- 8-9: Deep understanding with concrete examples, discusses trade-offs, connects to real scenarios
+- 10: Goes beyond the question — architecture implications, performance characteristics, production considerations
 
-Scoring criteria (apply consistently):
-- 0-3: Fundamentally wrong or completely missing. The candidate does not understand the core concept.
-- 4-5: Surface-level. The candidate knows some terminology but cannot explain mechanics, trade-offs, or give examples.
-- 6-7: Solid understanding. The candidate explains concepts correctly with some examples, but misses edge cases, trade-offs, or deeper mechanics.
-- 8-9: Strong. The candidate demonstrates deep understanding with concrete examples, discusses trade-offs, and connects to real-world scenarios.
-- 10: Exceptional. The candidate goes beyond the question — discusses architecture implications, performance characteristics, edge cases, and production considerations.
-
-Important evaluation rules:
-- Only evaluate what the candidate ACTUALLY said. Do not assume knowledge they did not demonstrate.
-- Do not invent technologies, frameworks, or experience the candidate did not mention.
-- Evidence must quote or paraphrase the candidate's actual words.
-- Strength must reference something specific from their answer.
-- Missing must explain what was absent and WHY it matters for this role.
-- Improvement must be specific and actionable — tell them exactly what to add, with an example.
-- If the answer is correct but shallow, score depth/practical lower even if correctness is high.
-- If the answer mentions trade-offs or real examples, reward it in practical/depth.
+STRICT RULES:
+1. NEVER use generic phrases: "Good answer", "Great job", "You demonstrated", "Excellent response", "Needs improvement", "good understanding"
+2. Distinguish between: factual correctness (is what they said true?), conceptual depth (do they understand why?), practical understanding (can they apply it?), trade-off awareness (do they see both sides?), reasoning quality (can they justify their choices?)
+3. Evidence MUST reference specific technical claims from their answer — quote or closely paraphrase their actual words
+4. If correctness is high but depth is low, explicitly call out: "The explanation was accurate but stayed at surface level — for example, they mentioned X but didn't explain how/why Y"
+5. Only reference technologies that appear in the JD, question, or their answer — never invent frameworks they didn't mention
+6. Strength must identify the most technically impressive specific point they made
+7. Missing must name a specific concept, trade-off, or example they should have included and WHY it matters for this role
+8. Improvement must tell them exactly what to study or add, with a concrete example
 
 ${language === 'urdu' ? 'IMPORTANT: Return all feedback fields (strength, missing, improvement, evidence items) in Urdu (اردو). Keep technical terms like React, API, Node.js etc. in English.' : ''}
-Return ONLY valid JSON matching this schema:
+Return ONLY valid JSON:
 {
   "dimensions": {
     ${rubricKeys.map((k) => `"${k}": 0-10 score`).join(',\n    ')}
   },
-  "evidence": ["2-4 specific technical points, quotes, or paraphrased concepts from the candidate's actual answer"],
-  "strength": "One specific sentence about what the candidate explained well technically — reference something concrete they said",
-  "missing": "One specific sentence about what technical depth was missing — explain why it matters for this role",
-  "improvement": "One actionable technical suggestion — tell them exactly what concept, example, or trade-off to add"
+  "evidence": ["2-4 items — each must reference a specific technical claim or quote from the answer"],
+  "strength": "The most technically impressive specific point they made — reference their exact words or concept",
+  "missing": "The specific technical concept, trade-off, or example they missed and WHY it matters for this role",
+  "improvement": "Exactly what to study or add with a concrete example of a stronger answer"
 }`;
 
   const userPrompt = `Question: ${question.text}
@@ -442,7 +440,7 @@ Candidate's Answer:
 ${transcript}
 """
 
-Evaluate this technical answer. Be specific — reference what the candidate actually said. Do not invent technologies or experience they did not mention. Return JSON.`;
+Evaluate this technical answer. Reference what the candidate ACTUALLY said — quote their technical claims. Do not invent technologies or experience they did not mention. Return JSON.`;
 
   try {
     const llmResult = await callAI({
@@ -666,23 +664,31 @@ export const evaluateProbeAnswer = async ({ probeText, answer, questionTitle = '
     };
   }
 
-  const systemPrompt = `You are an expert coding interviewer evaluating a candidate's answer to a follow-up probe question about their coding solution.
-The coding question was: "${questionTitle}"
-The follow-up probe was: "${probeText}"
+  const systemPrompt = `You are a coding interviewer evaluating a candidate's answer to a follow-up probe about their code.
+Original question: "${questionTitle}"
+Follow-up probe: "${probeText}"
 
-Score the answer on these dimensions (0-10 each):
-- clarity: How clearly is the answer expressed?
-- reasoning: How sound is the technical reasoning?
-- depth: How deeply does the answer address the probe?
+SCORE (0-10 each):
+- clarity: Can you follow their reasoning? Is it structured or rambling?
+- reasoning: Is the technical logic sound? Did they justify their choices?
+- depth: Did they go beyond surface-level? Did they consider edge cases, alternatives, or complexity?
+
+STRICT RULES:
+1. NEVER use: "Good answer", "Great job", "You demonstrated", "Excellent response"
+2. Reference specific things they said about their code — variable names, logic, complexity claims, data structure choices
+3. If they claimed O(n) complexity, check whether they justified it
+4. Distinguish between: correct reasoning, unclear reasoning, and incorrect reasoning
+5. Strength must reference a specific technical point from their explanation
+6. Improvement must tell them exactly what to clarify, consider, or study
 
 ${language === 'urdu' ? 'IMPORTANT: Return all feedback fields in Urdu (اردو). Keep technical terms like React, API, Node.js etc. in English.' : ''}
 Return ONLY valid JSON:
 {
   "dimensions": { "clarity": 0-10, "reasoning": 0-10, "depth": 0-10 },
-  "evidence": ["Array of 2-3 specific quotes or points from the answer"],
-  "strength": "One sentence describing what the candidate explained well",
-  "missing": "One sentence describing what was missing or could be improved",
-  "improvement": "One actionable suggestion for a better answer"
+  "evidence": ["2-3 items referencing specific claims or quotes from their answer"],
+  "strength": "The most technically sound or insightful point they made — reference their specific words",
+  "missing": "What was missing from their reasoning or explanation — be specific about what they should have addressed",
+  "improvement": "One specific thing to clarify, consider, or study with a concrete example"
 }`;
 
   const userPrompt = `Probe question: "${probeText}"
@@ -692,7 +698,7 @@ Candidate's answer:
 ${answer}
 """
 
-Evaluate the answer and return JSON.`;
+Evaluate this probe answer. Reference what the candidate ACTUALLY said about their code. Return JSON.`;
 
   try {
     const llmResult = await callAI({
@@ -736,6 +742,74 @@ Evaluate the answer and return JSON.`;
   }
 };
 
+/**
+ * Generate qualitative coding feedback via LLM — does NOT affect scoring.
+ * The score is already determined by test results in evaluateCodingSubmission.
+ * This adds human-readable feedback that feels like a real engineer reviewed the code.
+ * @param {Object} params
+ * @param {string} params.code - Candidate's source code
+ * @param {Object} params.evaluation - The deterministic evaluation from evaluateCodingSubmission
+ * @param {Object} [params.question] - The coding question (title, topic, difficulty)
+ * @param {string} [params.language='english'] - 'english' | 'urdu'
+ * @returns {Promise<Object>} { approach, codeQuality, edgeCases, suggestion } — all optional strings
+ */
+export const generateCodingFeedback = async ({ code, evaluation, question = {}, language = 'english' }) => {
+  if (!code || !code.trim()) return {};
+
+  const dims = evaluation.dimensions || {};
+  const hiddenPassed = evaluation.evidence?.[0] || '';
+
+  const systemPrompt = `You are a senior engineer reviewing a candidate's coding solution. The score is already determined by test results — your job is to give qualitative feedback that makes the candidate feel a real engineer read their code.
+
+Problem: ${question.title || 'Unknown'}
+Topic: ${question.topic || 'general'}
+Difficulty: ${question.difficulty || 'medium'}
+Test results: ${hiddenPassed}
+Dimension scores: correctness=${dims.correctness ?? 'N/A'}/10, completeness=${dims.completeness ?? 'N/A'}/10, codeQuality=${dims.codeQuality ?? 'N/A'}/10
+
+Analyze the ACTUAL code. Reference specific things: function names, variable names, algorithms, patterns, specific lines.
+
+NEVER say: "Good job", "Nice work", "Well done", "Great solution"
+DO say specific things like: "Your use of a hash map for lookups was the right call for O(n) time" or "The nested loop could be replaced with a Set for better complexity"
+
+If the code is correct: focus on style, efficiency, readability, and whether the approach was optimal.
+If tests failed: identify exactly which cases likely failed and why, trace through the logic error.
+
+${language === 'urdu' ? 'IMPORTANT: Return all feedback in Urdu (اردو). Keep code terms and technical concepts in English.' : ''}
+Return ONLY valid JSON:
+{
+  "approach": "1-2 sentences about their algorithmic approach — was it optimal? what pattern did they use? reference specific code",
+  "codeQuality": "1-2 sentences about code quality — naming, structure, readability — reference specific parts",
+  "edgeCases": "1-2 sentences about edge cases — which ones did they handle? which did they miss? be specific",
+  "suggestion": "One specific, actionable improvement with a concrete example"
+}`;
+
+  const userPrompt = `Candidate's code:
+\`\`\`javascript
+${code}
+\`\`\`
+
+Analyze this code and return JSON feedback:`;
+
+  try {
+    const result = await callAI({
+      systemPrompt,
+      userPrompt,
+      requiredFields: [],
+    });
+
+    return {
+      approach: result.approach || '',
+      codeQuality: result.codeQuality || '',
+      edgeCases: result.edgeCases || '',
+      suggestion: result.suggestion || '',
+    };
+  } catch (err) {
+    logger.warn(`Coding feedback LLM failed: ${err.message}. Returning empty feedback.`);
+    return {};
+  }
+};
+
 export default {
   evaluateBehavioralAnswer,
   evaluateTechnicalAnswer,
@@ -744,4 +818,5 @@ export default {
   createCodingStubEvaluation,
   analyzeTranscriptForFallback,
   evaluateProbeAnswer,
+  generateCodingFeedback,
 };

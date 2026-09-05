@@ -30,12 +30,15 @@ export const EvidenceCard = memo(({ evaluation, language = 'english' }) => {
     displayScore >= 40 ? 'bg-warning/10 border-warning/30' :
     'bg-danger/10 border-danger/30';
 
-  // Generate score explanation based on score range
+  // Use actual evaluation strength as the primary explanation — avoids formulaic templates
   const getScoreExplanation = () => {
-    if (displayScore >= 80) return isUrdu ? 'بہترین جواب - تمام اہم نکات شامل تھے' : 'Excellent answer - covered all key points effectively';
-    if (displayScore >= 60) return isUrdu ? 'اچھا جواب - کچھ مزید تفصیل شامل کی جا سکتی ہے' : 'Good answer - could include more specific details or examples';
-    if (displayScore >= 40) return isUrdu ? 'منصفانہ جواب - اہم نکات غائب ہیں' : 'Fair answer - missing some key points or specific examples';
-    if (displayScore > 0) return isUrdu ? 'جواب میں مزید تفصیل اور مثالوں کی ضرورت ہے' : 'Answer needs more detail, specific examples, and structure';
+    // Prefer the actual AI-generated strength as the score explanation
+    if (strength) return strength;
+    // Fallback: only use templated text when no strength is available
+    if (displayScore >= 80) return isUrdu ? 'بہترین جواب - تمام اہم نکات شامل تھے' : 'Strong answer with specific, compelling content';
+    if (displayScore >= 60) return isUrdu ? 'اچھا جواب - کچھ مزید تفصیل شامل کی جا سکتی ہے' : 'Solid answer that could go deeper on key points';
+    if (displayScore >= 40) return isUrdu ? 'منصفانہ جواب - اہم نکات غائب ہیں' : 'Partial answer — several important elements were missing';
+    if (displayScore > 0) return isUrdu ? 'جواب میں مزید تفصیل اور مثالوں کی ضرورت ہے' : 'Answer needs significantly more detail and specific examples';
     return isUrdu ? 'کوئی درست جواب نہیں دیا گیا' : 'No valid answer was provided for this question';
   };
 

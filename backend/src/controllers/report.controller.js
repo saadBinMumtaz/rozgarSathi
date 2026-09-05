@@ -7,6 +7,8 @@
 
 import crypto from 'crypto';
 import Session from '../models/Session.model.js';
+import JDAnalysis from '../models/JDAnalysis.model.js';
+import { generateInterviewSummary } from '../services/insightEngine.js';
 import logger from '../utils/logger.js';
 
 /**
@@ -110,4 +112,63 @@ export const getSharedReport = async (req, res, next) => {
   }
 };
 
-export default { generateShareToken, getSharedReport };
+/**
+ * POST /api/reports/interview-summary
+ * Body: { sessionId }
+ * Generates a synthesized interview summary from individual question evaluations.
+ */
+export const getInterviewSummary = async (req, res, next) => {
+  try {
+    const authenticatedUser = req.user;
+    if (!authenticatedUser) {
+      return res.status(401).json({ code: 401, message: 'Authentication required' });
+    }
+
+    const { sessionId } = req.body;
+    if (!sessionId) {
+      return res.status(400).json({ code: 400, message: 'sessionId is required' });
+    }
+
+    const session = await Session.findOne({
+      _id: sessionId,
+      userId: String(authenticatedUser._id),
+    });
+
+    if (!session) {
+      return res.status(404).json({ code: 404, message: 'Session not found' });
+    }
+
+    const questions = (session.questions || []).map((q) => ({
+      questionText: q.questionText || '',
+      topic: q.topic || '',
+      score: q.evaluation?.score ?? null,
+      strength: q.evaluation?.strength || '',
+      missing: q.evaluation?.missing || '',
+      improvement: q.evaluation?.improvement || '',
+      evidence: q.evaluation?.evidence || [],
+    }));
+
+    // Load JD context if available
+    let jdContext = {};
+    if (session.jdSnapshot?.jdAnalysisId) {
+      const jd = await JDAnalysis.findById(session.jdSnapshot.jdAnalysisId).catch(() => null);
+      if (jd) {
+        jdContext = { role: jd.role || '', skills: jd.skills || [] };
+      }
+    }
+
+    const summary = await generateInterviewSummary({
+      questions,
+      mode: session.mode || 'behavioral',
+      overallScore: session.overallScore ?? 0,
+      jdContext,
+    });
+
+    return res.json({ summary });
+  } catch (err) {
+    logger.error(`Interview summary error: ${err.message}`);
+    next(err);
+  }
+};
+
+export default { generateShareToken, getSharedReport, getInterviewSummary };

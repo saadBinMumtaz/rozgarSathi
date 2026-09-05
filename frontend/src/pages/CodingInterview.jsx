@@ -43,6 +43,7 @@ export const CodingInterview = ({ jdAnalysisId, onNavigate, userId, language = '
   const [persona, setPersona] = useState('friendly');
   const [activeProbeIndex, setActiveProbeIndex] = useState(-1);
   const [codingReport, setCodingReport] = useState(null);
+  const [codingFeedback, setCodingFeedback] = useState(null);
   const [showConfirmModal, setShowConfirmModal] = useState(false);
   const [showReviewCode, setShowReviewCode] = useState(false);
   const [resetToast, setResetToast] = useState(false);
@@ -146,6 +147,7 @@ export const CodingInterview = ({ jdAnalysisId, onNavigate, userId, language = '
       setIsSubmitted(true);
       submittedCodeRef.current = code;
       if (result.codingReport) setCodingReport(result.codingReport);
+      if (result.codingFeedback && Object.keys(result.codingFeedback).length > 0) setCodingFeedback(result.codingFeedback);
       try { localStorage.removeItem(AUTOSAVE_KEY_PREFIX + sessionId); } catch {}
       setShowConfirmModal(false);
     } catch (err) {
@@ -404,6 +406,37 @@ export const CodingInterview = ({ jdAnalysisId, onNavigate, userId, language = '
                 </div>
               ))}
             </div>
+          </div>
+        )}
+
+        {/* Qualitative coding feedback from LLM */}
+        {codingFeedback && (codingFeedback.approach || codingFeedback.codeQuality || codingFeedback.edgeCases || codingFeedback.suggestion) && (
+          <div className="surface-text bg-surface rounded-lg p-4 space-y-3">
+            <h3 className="text-sm font-semibold text-text-muted">Code Review</h3>
+            {codingFeedback.approach && (
+              <div className="flex items-start gap-2">
+                <span className="text-icon-active mt-0.5 shrink-0">&#9654;</span>
+                <p className="text-sm text-text-primary leading-relaxed">{codingFeedback.approach}</p>
+              </div>
+            )}
+            {codingFeedback.codeQuality && (
+              <div className="flex items-start gap-2">
+                <span className="text-icon-active mt-0.5 shrink-0">&#9998;</span>
+                <p className="text-sm text-text-primary leading-relaxed">{codingFeedback.codeQuality}</p>
+              </div>
+            )}
+            {codingFeedback.edgeCases && (
+              <div className="flex items-start gap-2">
+                <span className="text-warning mt-0.5 shrink-0">&#9888;</span>
+                <p className="text-sm text-text-primary leading-relaxed">{codingFeedback.edgeCases}</p>
+              </div>
+            )}
+            {codingFeedback.suggestion && (
+              <div className="flex items-start gap-2 bg-surface-hover rounded-lg p-3">
+                <span className="text-icon-active mt-0.5 shrink-0">&#128161;</span>
+                <p className="text-sm text-text-muted leading-relaxed">{codingFeedback.suggestion}</p>
+              </div>
+            )}
           </div>
         )}
 

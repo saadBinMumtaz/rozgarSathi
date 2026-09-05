@@ -9,7 +9,7 @@ import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import Session from '../models/Session.model.js';
-import { evaluateCodingSubmission, evaluateProbeAnswer } from '../services/scoring.js';
+import { evaluateCodingSubmission, evaluateProbeAnswer, generateCodingFeedback } from '../services/scoring.js';
 import { runCode, withSessionQueue } from '../services/codeExecutor.js';
 import logger from '../utils/logger.js';
 
@@ -269,11 +269,24 @@ export const submitSolution = async (req, res, next) => {
       reasoning: Math.round((dims.correctness + dims.codeQuality) / 2) || 0,
     };
 
+    // Generate qualitative LLM feedback (does NOT affect score — purely for display)
+    let codingFeedback = {};
+    try {
+      codingFeedback = await generateCodingFeedback({
+        code: code || '',
+        evaluation,
+        question: { title: question.title, topic: question.topic, difficulty: question.difficulty },
+      });
+    } catch (fbErr) {
+      logger.warn(`Coding feedback generation failed: ${fbErr.message}`);
+    }
+
     return res.json({
       hiddenTestResults: outcome.results,
       evaluation,
       executionError: null,
       codingReport,
+      codingFeedback,
     });
   } catch (err) {
     logger.error(`Coding submit error: ${err.message}`);

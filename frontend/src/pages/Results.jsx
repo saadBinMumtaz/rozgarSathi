@@ -100,6 +100,8 @@ export const Results = ({ userId = 'guest', onNavigate, onBackToHub, language = 
   const [shareLink, setShareLink] = useState(null);
   const [shareLoading, setShareLoading] = useState(false);
   const [copied, setCopied] = useState(false);
+  const [interviewSummary, setInterviewSummary] = useState('');
+  const [summaryLoading, setSummaryLoading] = useState(false);
 
   const L = (key) => t(key, language);
 
@@ -127,6 +129,27 @@ export const Results = ({ userId = 'guest', onNavigate, onBackToHub, language = 
     fetchAll();
     return () => { cancelled = true; };
   }, [userId]);
+
+  // Fetch interview summary after session data loads
+  useEffect(() => {
+    if (!latestSession?.sessionId) return;
+    let cancelled = false;
+    const fetchSummary = async () => {
+      setSummaryLoading(true);
+      try {
+        const result = await apiClient.getInterviewSummary(latestSession.sessionId);
+        if (!cancelled && result?.summary) {
+          setInterviewSummary(result.summary);
+        }
+      } catch {
+        // Summary is non-critical — silently ignore
+      } finally {
+        if (!cancelled) setSummaryLoading(false);
+      }
+    };
+    fetchSummary();
+    return () => { cancelled = true; };
+  }, [latestSession?.sessionId]);
 
   const handleShare = async () => {
     if (!latestSession?.sessionId) return;
@@ -396,6 +419,31 @@ export const Results = ({ userId = 'guest', onNavigate, onBackToHub, language = 
                   </div>
                 )}
               </div>
+            </CardContent>
+          </Card>
+        )}
+
+        {/* ════════════════════════════════════════════════════════════
+            SECTION 2.5: INTERVIEW SUMMARY (AI-synthesized)
+            ════════════════════════════════════════════════════════════ */}
+        {(interviewSummary || summaryLoading) && (
+          <Card className="surface-text bg-surface border-border-theme animate-slide-up stagger-1" hover={false}>
+            <CardHeader>
+              <CardTitle className="text-sm flex items-center gap-2">
+                <Sparkles size={15} className="text-icon-active" />
+                Interviewer Assessment
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              {summaryLoading ? (
+                <div className="space-y-2">
+                  <Skeleton className="h-4 w-full" />
+                  <Skeleton className="h-4 w-5/6" />
+                  <Skeleton className="h-4 w-4/6" />
+                </div>
+              ) : (
+                <p className="text-sm text-text-primary leading-relaxed">{interviewSummary}</p>
+              )}
             </CardContent>
           </Card>
         )}
