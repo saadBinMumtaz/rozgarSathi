@@ -15,7 +15,7 @@ import {
   resetInvalidAttempts,
 } from '../services/answerQuality.js';
 import { completeSession } from '../services/sessionUtils.js';
-import { buildStarFollowUp } from '../services/followUpEngine.js';
+import { buildStarFollowUp, buildAIStarFollowUp } from '../services/followUpEngine.js';
 import logger from '../utils/logger.js';
 
 const FOLLOW_UP_SCORE_THRESHOLD = 50;
@@ -275,6 +275,14 @@ export const answerBehavioral = async (req, res, next) => {
 
     // Valid answer — reset counter and score normally.
     resetInvalidAttempts(session);
+
+    // Load JD analysis for context-aware scoring
+    let jdAnalysis = { behavioralFocus: [], skills: [], keywords: [] };
+    if (session.jdSnapshot?.jdAnalysisId) {
+      const jd = await JDAnalysis.findById(session.jdSnapshot.jdAnalysisId);
+      if (jd) jdAnalysis = jd;
+    }
+
     const questionData = {
       text: currentQuestion.questionText,
       topic: currentQuestion.topic,
@@ -285,7 +293,11 @@ export const answerBehavioral = async (req, res, next) => {
         result: 'Share the outcome and what you learned',
       },
     };
-    const evaluation = await evaluateBehavioralAnswer({ question: questionData, transcript, language: activeLanguage });
+    const evaluation = await evaluateBehavioralAnswer({ question: questionData, transcript, language: activeLanguage, jdContext: {
+      role: jdAnalysis.role || jdAnalysis.jdSnapshot?.role || '',
+      skills: jdAnalysis.behavioralFocus?.length ? jdAnalysis.behavioralFocus : (jdAnalysis.skills || []),
+      keywords: jdAnalysis.keywords || [],
+    } });
 
     // Detect answer language for Urdu auto-translation
     const langDetection = detectAnswerLanguage(transcript);
@@ -302,7 +314,18 @@ export const answerBehavioral = async (req, res, next) => {
       evaluation.score < FOLLOW_UP_SCORE_THRESHOLD &&
       currentQuestion.followUps.length === 0
     ) {
-      const followUpText = buildStarFollowUp(evaluation, transcript);
+      // jdAnalysis is already loaded above for scoring — reuse it
+      const jdContext = {
+        role: jdAnalysis.role || jdAnalysis.jdSnapshot?.role || '',
+        skills: jdAnalysis.behavioralFocus?.length ? jdAnalysis.behavioralFocus : (jdAnalysis.skills || []),
+      };
+
+      // Use AI-powered contextual follow-up that references the candidate's answer
+      const followUpText = await buildAIStarFollowUp({
+        evaluation,
+        transcript,
+        jdContext,
+      });
       currentQuestion.followUps.push(`Q: ${followUpText}`);
       await session.save(); // Incremental save
       return res.json({ evaluation: null, nextAction: 'followup', followUp: followUpText });

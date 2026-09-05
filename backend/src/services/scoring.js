@@ -348,7 +348,7 @@ export const INVALID_EVALUATION = Object.freeze({
  * @param {string} [params.language='english'] - 'english' | 'urdu' — language for feedback
  * @returns {Promise<Object>} Evaluation object matching Section 7 schema
  */
-export const evaluateTechnicalAnswer = async ({ question, transcript, language = 'english' }) => {
+export const evaluateTechnicalAnswer = async ({ question, transcript, language = 'english', jdContext = {} }) => {
   const wordCount = countWords(transcript);
 
   // Deterministic floor: empty or whitespace-only
@@ -385,18 +385,43 @@ export const evaluateTechnicalAnswer = async ({ question, transcript, language =
   const rubric = question.rubric || {};
   const rubricKeys = Object.keys(rubric);
 
-  const systemPrompt = `You are an expert technical interviewer evaluating a candidate's answer.
-Score each dimension of the rubric from 0-10 based on how well the candidate addressed it.
-${language === 'urdu' ? 'IMPORTANT: Return all feedback fields (strength, missing, improvement, evidence items) in Urdu (\u0627\u0631\u062f\u0648). Keep technical terms like React, API, Node.js etc. in English.' : ''}
+  const roleContext = jdContext.role ? `\nThe candidate is interviewing for: ${jdContext.role}` : '';
+  const skillsContext = jdContext.skills?.length ? `\nKey skills for this role: ${jdContext.skills.slice(0, 5).join(', ')}` : '';
+  const jdKeywordsContext = jdContext.keywords?.length ? `\nJD keywords: ${jdContext.keywords.slice(0, 8).join(', ')}` : '';
+
+  const systemPrompt = `You are a senior technical interviewer evaluating a candidate's answer. You evaluate like a real interviewer — grounded in what the candidate actually said, not what you assume they know.${roleContext}${skillsContext}${jdKeywordsContext}
+
+Question topic: ${question.skill || 'general technical'}
+
+Score each rubric dimension from 0-10 based on how well the candidate addressed it.
+
+Scoring criteria (apply consistently):
+- 0-3: Fundamentally wrong or completely missing. The candidate does not understand the core concept.
+- 4-5: Surface-level. The candidate knows some terminology but cannot explain mechanics, trade-offs, or give examples.
+- 6-7: Solid understanding. The candidate explains concepts correctly with some examples, but misses edge cases, trade-offs, or deeper mechanics.
+- 8-9: Strong. The candidate demonstrates deep understanding with concrete examples, discusses trade-offs, and connects to real-world scenarios.
+- 10: Exceptional. The candidate goes beyond the question — discusses architecture implications, performance characteristics, edge cases, and production considerations.
+
+Important evaluation rules:
+- Only evaluate what the candidate ACTUALLY said. Do not assume knowledge they did not demonstrate.
+- Do not invent technologies, frameworks, or experience the candidate did not mention.
+- Evidence must quote or paraphrase the candidate's actual words.
+- Strength must reference something specific from their answer.
+- Missing must explain what was absent and WHY it matters for this role.
+- Improvement must be specific and actionable — tell them exactly what to add, with an example.
+- If the answer is correct but shallow, score depth/practical lower even if correctness is high.
+- If the answer mentions trade-offs or real examples, reward it in practical/depth.
+
+${language === 'urdu' ? 'IMPORTANT: Return all feedback fields (strength, missing, improvement, evidence items) in Urdu (اردو). Keep technical terms like React, API, Node.js etc. in English.' : ''}
 Return ONLY valid JSON matching this schema:
 {
   "dimensions": {
     ${rubricKeys.map((k) => `"${k}": 0-10 score`).join(',\n    ')}
   },
-  "evidence": ["Array of 2-4 specific technical points or quotes from the answer"],
-  "strength": "One sentence describing what the candidate explained well technically",
-  "missing": "One sentence describing what technical depth or accuracy was missing",
-  "improvement": "One actionable technical suggestion for improvement"
+  "evidence": ["2-4 specific technical points, quotes, or paraphrased concepts from the candidate's actual answer"],
+  "strength": "One specific sentence about what the candidate explained well technically — reference something concrete they said",
+  "missing": "One specific sentence about what technical depth was missing — explain why it matters for this role",
+  "improvement": "One actionable technical suggestion — tell them exactly what concept, example, or trade-off to add"
 }`;
 
   const userPrompt = `Question: ${question.text}
@@ -409,7 +434,7 @@ Candidate's Answer:
 ${transcript}
 """
 
-Evaluate the technical answer and return JSON.`;
+Evaluate this technical answer. Be specific — reference what the candidate actually said. Do not invent technologies or experience they did not mention. Return JSON.`;
 
   try {
     const llmResult = await callAI({

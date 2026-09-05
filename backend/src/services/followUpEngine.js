@@ -174,7 +174,7 @@ Rules:
 - The question should feel like a natural conversation, not a quiz.
 - Keep it to 1-2 sentences max.
 - Do NOT repeat the original question.
-- Return ONLY the follow-up question text, nothing else.`;
+- Return ONLY a JSON object: { "followUp": "your follow-up question text here" }`;
 
   const userPrompt = `Original question: "${question.text}"
 
@@ -186,17 +186,17 @@ ${transcript}
 Evaluation summary: Score ${score}/100, weakest dimension is "${weakest}" (${dims[weakest] || 'N/A'}/10).
 Evidence: ${(evaluation.evidence || []).slice(0, 2).join('; ')}
 
-Generate a contextual follow-up question that builds on their answer:`;
+Generate a contextual follow-up question that builds on their answer (return JSON { "followUp": "..." }):`;
 
   try {
     const result = await callAI({
       systemPrompt,
       userPrompt,
-      requiredFields: [],
+      requiredFields: ['followUp'],
     });
 
-    // callAI returns an object; extract the follow-up text
-    const followUpText = typeof result === 'string' ? result.trim() : (result?.followUp || result?.question || '').trim();
+    // callAI returns a parsed JSON object
+    const followUpText = (result?.followUp || '').trim();
 
     if (followUpText && followUpText.length > 10) {
       return followUpText;
@@ -245,7 +245,7 @@ Rules:
 - Ask ONE clear question — do not stack multiple questions.
 - The question should feel like a genuine coaching conversation.
 - Keep it to 1-2 sentences max.
-- Return ONLY the follow-up question text, nothing else.`;
+- Return ONLY a JSON object: { "followUp": "your follow-up question text here" }`;
 
   const userPrompt = `Candidate's answer:
 """
@@ -254,16 +254,16 @@ ${transcript}
 
 Evaluation: Score ${score}/100, weakest STAR dimension is "${weakestDim}" (${dims[weakestDim] || 'N/A'}/10).
 
-Generate a contextual follow-up that references their answer:`;
+Generate a contextual follow-up that references their answer (return JSON { "followUp": "..." }):`;
 
   try {
     const result = await callAI({
       systemPrompt,
       userPrompt,
-      requiredFields: [],
+      requiredFields: ['followUp'],
     });
 
-    const followUpText = typeof result === 'string' ? result.trim() : (result?.followUp || result?.question || '').trim();
+    const followUpText = (result?.followUp || '').trim();
 
     if (followUpText && followUpText.length > 10) {
       return followUpText;

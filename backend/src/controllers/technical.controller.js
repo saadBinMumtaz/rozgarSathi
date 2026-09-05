@@ -17,7 +17,7 @@ import {
   resetInvalidAttempts,
 } from '../services/answerQuality.js';
 import { completeSession } from '../services/sessionUtils.js';
-import { buildTechnicalFollowUp } from '../services/followUpEngine.js';
+import { buildTechnicalFollowUp, buildAIContextualFollowUp } from '../services/followUpEngine.js';
 import logger from '../utils/logger.js';
 
 const MAX_QUESTIONS = 5; // technical interview length
@@ -285,6 +285,15 @@ export const answerTechnical = async (req, res, next) => {
 
     // Valid answer — reset counter and score via scoring.js (single evaluation factory).
     resetInvalidAttempts(session);
+
+    // Build JD context for scoring — pass role, skills, keywords for role-specific evaluation
+    const jdAnalysis = await loadJdAnalysis(session);
+    const jdContext = {
+      role: jdAnalysis.role || jdAnalysis.jdSnapshot?.role || '',
+      skills: jdAnalysis.technicalFocus?.length ? jdAnalysis.technicalFocus : (jdAnalysis.skills || []),
+      keywords: jdAnalysis.keywords || [],
+    };
+
     const questionData = {
       text: currentQuestion.questionText,
       skill: currentQuestion.topic,
@@ -296,7 +305,7 @@ export const answerTechnical = async (req, res, next) => {
       },
     };
 
-    const evaluation = await evaluateTechnicalAnswer({ question: questionData, transcript, language: activeLanguage });
+    const evaluation = await evaluateTechnicalAnswer({ question: questionData, transcript, language: activeLanguage, jdContext });
 
     // Detect answer language for Urdu auto-translation
     const langDetection = detectAnswerLanguage(transcript);
@@ -308,12 +317,18 @@ export const answerTechnical = async (req, res, next) => {
     // Mark the nested evaluation as modified so Mongoose persists it correctly
     session.markModified(`questions.${session.questions.length - 1}.evaluation`);
 
-    // Adaptive follow-up (once): low score → targeted coaching follow-up
+    // Adaptive follow-up (once): low score → AI-powered contextual coaching follow-up
     if (
       evaluation.score < FOLLOW_UP_SCORE_THRESHOLD &&
       currentQuestion.followUps.length === 0
     ) {
-      const followUpText = buildTechnicalFollowUp(evaluation, questionData);
+      // Use AI-powered contextual follow-up that references the candidate's answer
+      const followUpText = await buildAIContextualFollowUp({
+        evaluation,
+        question: questionData,
+        transcript,
+        jdContext,
+      });
       currentQuestion.followUps.push(`Q: ${followUpText}`);
       await session.save();
       return res.json({ evaluation: null, nextAction: 'followup', followUp: followUpText });
