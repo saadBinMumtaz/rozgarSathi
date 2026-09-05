@@ -292,6 +292,7 @@ export const getSessionHistory = async (req, res, next) => {
           difficulty: q.difficulty,
           transcript: q.transcript || '',
           score: q.evaluation?.score ?? null,
+          dimensions: q.evaluation?.dimensions || {},
           evidence: q.evaluation?.evidence || [],
           strength: q.evaluation?.strength || '',
           missing: q.evaluation?.missing || '',
