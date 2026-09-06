@@ -150,7 +150,7 @@ const AppContent = () => {
     if (!hash) return;
 
     // Handle /#/auth/callback?token=xxx
-    const callbackMatch = hash.match(/^#\/auth\/callback\?token=(.+)$/);
+    const callbackMatch = hash.match(/^#\/auth\/callback\?token=([^&]+)/);
     if (callbackMatch) {
       const token = decodeURIComponent(callbackMatch[1]);
       localStorage.setItem('rozgar-sathi-auth-token', token);
@@ -175,7 +175,7 @@ const AppContent = () => {
     }
 
     // Handle /#/auth?error=xxx
-    const errorMatch = hash.match(/^#\/auth\?error=(.+)$/);
+    const errorMatch = hash.match(/^#\/auth\?error=([^&]+)/);
     if (errorMatch) {
       const errorMsg = decodeURIComponent(errorMatch[1]);
       setToastMessage({ type: 'error', message: errorMsg });
