@@ -243,7 +243,17 @@ const AppContent = () => {
 
   // Navigation handler with auth guard
   const navigateTo = (page) => {
-    if (page === 'landing') {
+    // Track whether this is an explicit landing navigation (destructive cleanup)
+    // vs. an authenticated "Home" click that we redirect to the hub (no cleanup).
+    const isExplicitLanding = page === 'landing';
+
+    // Authenticated users clicking "Home" go to the authenticated hub ('landing')
+    // without the destructive state clearing.
+    if (page === 'home' && isAuthenticated) {
+      page = 'landing';
+    }
+
+    if (isExplicitLanding) {
       try {
         localStorage.removeItem(APP_STATE_KEY);
         setVisitedPages(new Set(['landing']));

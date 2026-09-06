@@ -279,6 +279,12 @@ export const translations = {
   'interview.behavioral.perfGood':  { en: 'Good effort! Review the feedback below to strengthen your answers.', ur: 'اچھی کوشش! اپنے جوابات کو مضبوط کرنے کے لیے نیچے دی گئی فیڈبیک کا جائزہ لیں۔' },
   'interview.behavioral.perfPoor':  { en: 'Review the detailed feedback below to improve your STAR method responses.', ur: 'اپنے STAR میتھڈ جوابات کو بہتر بنانے کے لیے نیچے دی گئی تفصیلی فیڈبیک کا جائزہ لیں۔' },
 
+  // Completion screen
+  'completion.viewReport':       { en: 'View Full Performance Report', ur: 'مکمل کارکردگی رپورٹ دیکھیں' },
+  'completion.practiceAgain':    { en: 'Practice Again',               ur: 'دوبارہ مشق کریں' },
+  'completion.takeaway':         { en: 'Key Takeaway',                 ur: 'اہم نکتہ' },
+  'completion.nextStep':         { en: 'Next Step',                    ur: 'اگلا قدم' },
+  'completion.goDashboard':      { en: 'Go to Dashboard',              ur: 'ڈیش بورڈ پر جائیں' },
   // Coding-specific
   'coding.preparing':              { en: 'Preparing your coding challenge...', ur: 'آپ کا کوڈنگ چیلنج تیار ہو رہا ہے...' },
   'coding.loadFailed':             { en: 'Failed to load the coding challenge. Please try again.', ur: 'کوڈنگ چیلنج لوڈ ہونے میں ناکامی۔ دوبارہ کوشش کریں۔' },

@@ -16,6 +16,7 @@ import { DifficultyIndicator } from '../components/technical/DifficultyIndicator
 import { QuestionTraceBadge } from '../components/shared/QuestionTraceBadge';
 import { RobotAvatar } from '../components/shared/RobotAvatar';
 import { WaveformAnimation } from '../components/shared/WaveformAnimation';
+import { InterviewCompletion } from '../components/shared/InterviewCompletion';
 import { TypewriterText } from '../components/shared/TypewriterText';
 import { apiClient } from '../api/client';
 import { useTabLock } from '../hooks/useTabLock';
@@ -293,6 +294,25 @@ export const TechnicalInterview = ({ jdAnalysisId, onNavigate, language = 'engli
   const activeTranscript = useTypedFallback ? typedTranscript : micTranscript;
   const progress = (questionCount / MAX_QUESTIONS) * 100;
 
+  // Derive robot avatar state from interview phase
+  const avatarState = isComplete ? 'positive'
+    : isLoading ? 'thinking'
+    : isSpeaking ? 'speaking'
+    : currentQuestion ? 'neutral'
+    : 'neutral';
+  if (isComplete) {
+    return (
+      <InterviewCompletion
+        mode="technical"
+        evaluations={evaluations}
+        terminationMessage={terminationMessage}
+        onNavigate={onNavigate}
+        onReset={handleResetSession}
+        language={language}
+        translatedEvaluations={urduEvaluations.length > 0 ? urduEvaluations : null}
+      />
+    );
+  }
   return (
     <div className="min-h-screen flex flex-col bg-bg-primary text-text-primary page-enter">
       {/* Top bar: Back + Refresh + Progress */}
@@ -363,6 +383,7 @@ export const TechnicalInterview = ({ jdAnalysisId, onNavigate, language = 'engli
           >
             <RobotAvatar
               size={180}
+              state={avatarState}
               style={{ color: 'var(--color-surface-text)' }}
             />
           </div>
@@ -483,99 +504,6 @@ export const TechnicalInterview = ({ jdAnalysisId, onNavigate, language = 'engli
           )}
         </div>
       )}
-
-        {/* Completion screen */}
-        {isComplete && (() => {
-          // Calculate summary statistics
-          const totalScore = evaluations.length > 0
-            ? evaluations.reduce((sum, e) => sum + (typeof e?.score === 'number' ? e.score : 0), 0)
-            : 0;
-          const avgScore = evaluations.length > 0 ? Math.round(totalScore / evaluations.length) : 0;
-          const highScores = evaluations.filter(e => e?.score >= 70).length;
-          const lowScores = evaluations.filter(e => e?.score < 40).length;
-
-          return (
-            <div className="flex-1 flex items-center justify-center px-6 py-8">
-              <div className="max-w-2xl w-full space-y-6">
-                <Card className={terminationMessage ? 'border-danger/30/50' : 'border-success/30'}>
-                  <CardContent className="text-center py-8 space-y-4">
-                    {terminationMessage ? (
-                      <>
-                        <div className="text-2xl font-bold text-danger">{L('interview.terminated')}</div>
-                        <div className="text-danger text-sm max-w-md mx-auto">{terminationMessage}</div>
-                      </>
-                    ) : (
-                      <>
-                        <div className="text-2xl font-bold text-success">{L('interview.technical.complete')}</div>
-                        
-                        {/* Overall Score Display */}
-                        <div className="inline-flex items-center gap-4 surface-text bg-surface-hover rounded-xl px-6 py-4 ">
-                          <div className="text-center">
-                            <div className={`text-4xl font-bold ${avgScore >= 70 ? 'text-success' : avgScore >= 40 ? 'text-warning' : 'text-danger'}`}>
-                              {avgScore}
-                            </div>
-                            <div className="text-xs text-text-muted uppercase tracking-wide">{L('interview.overallScore')}</div>
-                          </div>
-                          <div className="h-12 w-px bg-border-theme/30"></div>
-                          <div className="text-left space-y-1">
-                            <div className="text-sm text-text-muted">
-                              <span className="text-text-muted">{L('interview.questionsCount')}</span> {evaluations.length}
-                            </div>
-                            <div className="text-sm text-text-muted">
-                              <span className="text-success">✓ {highScores}</span> {L('interview.strongAnswers')}
-                            </div>
-                            {lowScores > 0 && (
-                              <div className="text-sm text-text-muted">
-                                <span className="text-danger">⚠ {lowScores}</span> {L('interview.needImprovement')}
-                              </div>
-                            )}
-                          </div>
-                        </div>
-
-                        {/* Performance Summary */}
-                        <div className="text-sm text-text-muted max-w-md mx-auto">
-                          {avgScore >= 70 
-                            ? L('interview.technical.perfGreat')
-                            : avgScore >= 40
-                            ? L('interview.technical.perfGood')
-                            : L('interview.technical.perfPoor')}
-                        </div>
-                      </>
-                    )}
-                    <div className="flex justify-center gap-3 mt-4">
-                      <Button variant="secondary" onClick={() => onNavigate('results')}>
-                        {L('interview.viewResults')}
-                      </Button>
-                      <Button variant="primary" onClick={() => onNavigate('mode-selection')}>
-                        {L('interview.tryAnotherMode')}
-                      </Button>
-                      <Button variant="secondary" onClick={handleResetSession}>
-                        {L('interview.technical.restart')}
-                      </Button>
-                    </div>
-                  </CardContent>
-                </Card>
-
-                {/* Summary of all evaluations */}
-                {evaluations.length > 0 && (
-                  <div className="space-y-6">
-                    <h3 className="text-lg font-semibold text-text-primary flex items-center gap-2">
-                      <span>{L('interview.detailedFeedback')}</span>
-                      <span className="text-sm font-normal text-text-muted">({evaluations.length} {L('interview.questionsLabel')})</span>
-                    </h3>
-                    {evaluations.map((evaluation, idx) => (
-                      <EvidenceCard
-                        key={idx}
-                        evaluation={urduEvaluations[idx] || evaluation}
-                        language={language}
-                      />
-                    ))}
-                  </div>
-                )}
-              </div>
-            </div>
-          );
-        })()}
 
         {/* Loading state */}
         {isLoading && !currentQuestion && !isComplete && (
