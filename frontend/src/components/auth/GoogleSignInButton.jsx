@@ -6,6 +6,7 @@
 import React, { useEffect, useRef, useState, useCallback } from 'react';
 import { Button } from '../../design-system/Button';
 import { useAuth } from '../../context/AuthContext';
+import { API_BASE_URL } from '../../api/client';
 
 const GIS_SCRIPT_URL = 'https://accounts.google.com/gsi/client';
 
@@ -138,7 +139,7 @@ export const GoogleSignInButton = ({
   // Fallback: navigate to backend OAuth endpoint which has the correct redirect_uri registered
   const handleFallbackSignIn = useCallback(() => {
     // Navigate to backend's /api/auth/google which redirects to Google with the correct redirect_uri
-    window.location.href = '/api/auth/google';
+    window.location.href = `${API_BASE_URL}/auth/google`;
   }, []);
 
   const GoogleIcon = () => (
