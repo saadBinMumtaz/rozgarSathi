@@ -39,14 +39,14 @@ try {
  * save() fails (e.g. version-key conflict).
  */
 const linkQuestionToSession = async (sessionId, question) => {
-  console.log('[linkQuestionToSession] sessionId:', sessionId, 'question.id:', question?.id);
+  logger.debug(`[linkQuestionToSession] sessionId: ${sessionId}, question.id: ${question?.id}`);
   if (!sessionId) {
-    console.log('[linkQuestionToSession] SKIP: no sessionId');
+    logger.debug('[linkQuestionToSession] SKIP: no sessionId');
     return;
   }
   const session = await Session.findById(sessionId).catch(() => null);
   if (!session) {
-    console.log('[linkQuestionToSession] SKIP: session not found');
+    logger.debug('[linkQuestionToSession] SKIP: session not found');
     return;
   }
 
@@ -71,9 +71,9 @@ const linkQuestionToSession = async (sessionId, question) => {
 
   try {
     await session.save();
-    console.log('[linkQuestionToSession] SUCCESS: linked', question.id, 'to session', sessionId);
+    logger.debug(`[linkQuestionToSession] SUCCESS: linked ${question.id} to session ${sessionId}`);
   } catch (err) {
-    console.error('[linkQuestionToSession] SAVE FAILED:', err.message, '— trying findOneAndUpdate fallback');
+    logger.warn(`[linkQuestionToSession] SAVE FAILED: ${err.message} — trying findOneAndUpdate fallback`);
     // Fallback: use atomic update to guarantee persistence
     try {
       await Session.findOneAndUpdate(
@@ -93,9 +93,9 @@ const linkQuestionToSession = async (sessionId, question) => {
           },
         }
       );
-      console.log('[linkQuestionToSession] FALLBACK SUCCESS');
+      logger.debug('[linkQuestionToSession] FALLBACK SUCCESS');
     } catch (fallbackErr) {
-      console.error('[linkQuestionToSession] FALLBACK FAILED:', fallbackErr.message);
+      logger.error(`[linkQuestionToSession] FALLBACK FAILED: ${fallbackErr.message}`);
       throw fallbackErr;
     }
   }
@@ -132,7 +132,7 @@ export const getProbes = async (req, res, next) => {
 export const getCodingQuestion = async (req, res, next) => {
   try {
     const { topic, difficulty, questionId, sessionId } = req.body || {};
-    console.log('[getCodingQuestion] Request body:', { topic, difficulty, questionId, sessionId });
+    logger.debug(`[getCodingQuestion] Request: topic=${topic}, difficulty=${difficulty}, questionId=${questionId}, sessionId=${sessionId}`);
 
     if (codingBank.length === 0) {
       return res.status(500).json({ code: 500, message: 'No coding questions available' });
@@ -192,11 +192,11 @@ export const getCodingQuestion = async (req, res, next) => {
       }
     }
 
-    console.log('[getCodingQuestion] Selected question:', question.id, 'for sessionId:', sessionId);
+    logger.debug(`[getCodingQuestion] Selected question: ${question.id} for sessionId: ${sessionId}`);
     try {
       await linkQuestionToSession(sessionId, question);
     } catch (err) {
-      console.error('[getCodingQuestion] Failed to link question to session:', err.message);
+      logger.warn(`[getCodingQuestion] Failed to link question to session: ${err.message}`);
       // Don't fail the request — the question is still returned, but linking failed
     }
     return res.json(question);
@@ -210,7 +210,7 @@ export const getCodingQuestion = async (req, res, next) => {
  */
 const loadSessionQuestion = async (req, res) => {
   const { sessionId } = req.body || {};
-  console.log('[loadSessionQuestion] sessionId:', sessionId);
+  logger.debug(`[loadSessionQuestion] sessionId: ${sessionId}`);
   if (!sessionId) {
     res.status(400).json({ code: 400, message: 'sessionId is required' });
     return null;
@@ -221,15 +221,14 @@ const loadSessionQuestion = async (req, res) => {
     return null;
   }
   const questionId = session.metadata?.codingQuestionId;
-  console.log('[loadSessionQuestion] session.metadata:', JSON.stringify(session.metadata));
-  console.log('[loadSessionQuestion] questionId:', questionId);
+  logger.debug(`[loadSessionQuestion] metadata: ${JSON.stringify(session.metadata)}, questionId: ${questionId}`);
   const question = codingBank.find((q) => q.id === questionId);
   if (!question) {
-    console.error('[loadSessionQuestion] FAILED: questionId', questionId, 'not found in codingBank (size:', codingBank.length, ')');
+    logger.error(`[loadSessionQuestion] FAILED: questionId ${questionId} not found in codingBank (size: ${codingBank.length})`);
     res.status(400).json({ code: 400, message: 'No coding question linked to this session — fetch one via POST /api/coding/questions first.' });
     return null;
   }
-  console.log('[loadSessionQuestion] SUCCESS: loaded question', question.id, '(' + question.title + ')');
+  logger.debug(`[loadSessionQuestion] SUCCESS: loaded question ${question.id} (${question.title})`);
   return { session, question };
 };
 

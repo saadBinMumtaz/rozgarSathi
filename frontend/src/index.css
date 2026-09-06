@@ -121,6 +121,12 @@
   animation: rs-fade-in 300ms var(--ease-out-expo) both;
 }
 
+/* Typewriter cursor blink — used by Landing, HomePage, PrepareInterviewPage */
+@keyframes tw-cursor-blink {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0; }
+}
+
 /* Focus ring utility for interactive elements */
 .focus-ring {
   transition: box-shadow var(--duration-fast) var(--ease-out-quart);

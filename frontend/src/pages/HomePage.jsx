@@ -384,7 +384,7 @@ export const HomePage = ({ isDark, toggleTheme, onNavigate, language, setLanguag
                     onClick={() => onNavigate('auth')}
                     className="inline-flex items-center gap-2 px-8 py-3.5 rounded-lg bg-text-primary text-bg-primary text-base font-semibold hover:opacity-90 transition-opacity"
                   >
-                    Get Started Free <ArrowRight size={16} />
+                    {L('home.getStartedFree')} <ArrowRight size={16} />
                   </button>
                   <button
                     onClick={() => onNavigate('public-find-job')}
@@ -401,13 +401,6 @@ export const HomePage = ({ isDark, toggleTheme, onNavigate, language, setLanguag
 
       <PublicFooter isDark={isDark} onNavigate={onNavigate} />
 
-      {/* Cursor blink keyframes */}
-      <style>{`
-        @keyframes tw-cursor-blink {
-          0%, 100% { opacity: 1; }
-          50% { opacity: 0; }
-        }
-      `}</style>
     </div>
   );
 };

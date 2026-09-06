@@ -23,24 +23,24 @@ const MODE_CONFIG = {
 };
 
 const formatDate = (dateStr) => {
-  if (!dateStr) return 'Unknown date';
+  if (!dateStr) return '';
   const d = new Date(dateStr);
   return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric', hour: '2-digit', minute: '2-digit' });
 };
 
 const getScoreColor = (score) => {
   if (score == null) return 'text-text-muted';
-  if (score >= 70) return 'text-success';
-  if (score >= 40) return 'text-warning';
+  if (score >= 80) return 'text-success';
+  if (score >= 60) return 'text-warning';
   return 'text-danger';
 };
 
-const getScoreLabel = (score) => {
-  if (score == null) return { text: 'N/A', ariaLabel: 'No score available' };
-  if (score >= 80) return { text: 'Excellent', ariaLabel: `Score ${score}, Excellent` };
-  if (score >= 60) return { text: 'Good', ariaLabel: `Score ${score}, Good` };
-  if (score >= 40) return { text: 'Fair', ariaLabel: `Score ${score}, Fair` };
-  return { text: 'Needs Work', ariaLabel: `Score ${score}, Needs work` };
+const getScoreLabel = (score, L) => {
+  if (score == null) return { text: L('common.noData'), ariaLabel: L('common.noData') };
+  if (score >= 80) return { text: L('dashboard.excellent'), ariaLabel: `${L('common.score')} ${score}, ${L('dashboard.excellent')}` };
+  if (score >= 60) return { text: L('dashboard.good'), ariaLabel: `${L('common.score')} ${score}, ${L('dashboard.good')}` };
+  if (score >= 40) return { text: L('dashboard.fair'), ariaLabel: `${L('common.score')} ${score}, ${L('dashboard.fair')}` };
+  return { text: L('dashboard.needsWork'), ariaLabel: `${L('common.score')} ${score}, ${L('dashboard.needsWork')}` };
 };
 
 /**
@@ -50,7 +50,7 @@ const SessionCard = ({ session, language = 'english' }) => {
   const [expanded, setExpanded] = useState(false);
   const config = MODE_CONFIG[session.mode] || MODE_CONFIG.behavioral;
   const ModeIcon = config.icon;
-  const scoreLabel = getScoreLabel(session.overallScore);
+  const scoreLabel = getScoreLabel(session.overallScore, L);
   const L = (key) => t(key, language);
   const modeLabel = language === 'urdu' ? (config.labelUr || config.label) : config.label;
 
@@ -246,7 +246,7 @@ export const SessionHistory = ({ userId = 'guest', onNavigate, language = 'engli
             <div>
               <h1 className="text-2xl font-bold text-text-primary">{L('sessionHistory.title')}</h1>
               <p className="text-sm text-text-muted mt-1">
-                {sessions.length} {L('dashboard.sessionsTracked')}{sessions.length !== 1 ? 's' : ''}
+                {sessions.length} {L('dashboard.sessionsTracked')}
               </p>
             </div>
             <div className="flex gap-2">

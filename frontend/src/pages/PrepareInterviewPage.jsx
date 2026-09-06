@@ -434,16 +434,6 @@ export const PrepareInterviewPage = ({ isDark, toggleTheme, onNavigate, language
 
       <PublicFooter isDark={isDark} onNavigate={onNavigate} />
 
-      <style>{`
-        @keyframes tw-cursor-blink {
-          0%, 100% { opacity: 1; }
-          50% { opacity: 0; }
-        }
-        @keyframes waveform-bar {
-          0% { transform: scaleY(0.4); }
-          100% { transform: scaleY(1); }
-        }
-      `}</style>
     </div>
   );
 };

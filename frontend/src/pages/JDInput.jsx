@@ -171,7 +171,7 @@ export const JDInput = ({ onAnalysisComplete, onNavigate, pendingSampleJD, onSam
                 <label className="text-sm font-semibold text-text-primary">
                   {L('jdInput.resumeLabel')} <span className="text-xs text-text-muted font-normal">{L('jdInput.resumeOptional')}</span>
                 </label>
-                <Badge variant="secondary">Day 3 Gap Analysis</Badge>
+                <Badge variant="secondary">{L('jdInput.resumeAnalysis')}</Badge>
               </div>
               <div className="surface-text flex items-center gap-4 bg-surface rounded-lg p-3">
                 <input

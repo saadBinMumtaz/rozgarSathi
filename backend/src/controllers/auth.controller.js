@@ -1,3 +1,4 @@
+import logger from '../utils/logger.js';
 import jwt from 'jsonwebtoken';
 import env from '../config/env.js';
 import { User } from '../models/User.model.js';
@@ -215,7 +216,7 @@ export const googleCallback = async (req, res, next) => {
     const frontendUrl = env.FRONTEND_URL || 'http://localhost:3000';
     res.redirect(`${frontendUrl}/#/auth/callback?token=${encodeURIComponent(token)}`);
   } catch (err) {
-    console.error('[GoogleCallback] Error:', err.message);
+    logger.error('[GoogleCallback] Error:', err.message);
     const frontendUrl = env.FRONTEND_URL || 'http://localhost:3000';
     res.redirect(`${frontendUrl}/#/auth?error=${encodeURIComponent('Google sign-in failed. Please try again.')}`);
   }

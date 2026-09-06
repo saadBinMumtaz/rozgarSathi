@@ -2,6 +2,7 @@
 // Re-associates guest sessions to an authenticated user.
 // Ensures no sessions are lost or duplicated during the merge.
 
+import logger from '../utils/logger.js';
 import { Session } from '../models/Session.model.js';
 
 /**
@@ -43,14 +44,14 @@ export const mergeGuestSessions = async (guestId, authenticatedUserId) => {
 
     const mergedCount = result.modifiedCount || 0;
 
-    console.log(`[UserMerge] Merged ${mergedCount} sessions from guest ${guestId} to user ${authenticatedUserId}`);
+logger.info(`[UserMerge] Merged ${mergedCount} sessions from guest ${guestId} to user ${authenticatedUserId}`);
 
     return {
       mergedSessionCount: mergedCount,
       skipped: false,
     };
   } catch (err) {
-    console.error('[UserMerge] Failed to merge guest sessions:', err);
+    logger.error('[UserMerge] Failed to merge guest sessions:', err);
     throw new Error('Failed to merge guest sessions');
   }
 };

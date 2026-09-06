@@ -78,7 +78,7 @@ export const SignupSignin = ({ onNavigate, onAuthComplete, guestId, language = '
       }
       onAuthComplete?.();
     } catch (err) {
-      setError(err.message || (mode === 'signup' ? 'Signup failed. Please try again.' : 'Sign in failed. Please try again.'));
+      setError(err.message || (mode === 'signup' ? L('auth.signupFailed') : L('auth.signinFailed')));
     } finally {
       setIsLoading(false);
     }
@@ -110,12 +110,12 @@ export const SignupSignin = ({ onNavigate, onAuthComplete, guestId, language = '
       }
       onAuthComplete?.();
     } catch (err) {
-      setError(err.message || 'Google sign-in failed. Please try again.');
+      setError(err.message || L('auth.googleFailed'));
     }
   };
 
   const handleGoogleError = (err) => {
-    setError(err.message || 'Google sign-in failed. Please try again.');
+    setError(err.message || L('auth.googleFailed'));
   };
 
   return (

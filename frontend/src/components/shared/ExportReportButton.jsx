@@ -133,8 +133,8 @@ export const ExportReportButton = ({ data, className = '' }) => {
         doc.rect(60, y - 4, barWidth, 6, 'F');
 
         // Score bar fill
-        if (score >= 70) doc.setFillColor(34, 197, 94);
-        else if (score >= 40) doc.setFillColor(234, 179, 8);
+        if (score >= 80) doc.setFillColor(34, 197, 94);
+        else if (score >= 60) doc.setFillColor(234, 179, 8);
         else doc.setFillColor(239, 68, 68);
         doc.rect(60, y - 4, filledWidth, 6, 'F');
 

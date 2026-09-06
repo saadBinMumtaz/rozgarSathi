@@ -67,8 +67,8 @@ const getModeLabel = (mode, language) => {
 
 const getScoreColor = (score) => {
   if (score == null) return 'text-text-muted';
-  if (score >= 70) return 'text-success';
-  if (score >= 40) return 'text-warning';
+  if (score >= 80) return 'text-success';
+  if (score >= 60) return 'text-warning';
   return 'text-danger';
 };
 
@@ -333,7 +333,7 @@ export const Results = ({ userId = 'guest', onNavigate, onBackToHub, language = 
                   </div>
                   <div>
                     <h1 className="text-xl font-bold text-text-primary">
-                      {getModeLabel(mode, language)} Interview
+                      {getModeLabel(mode, language)} {L('results.interview')}
                     </h1>
                     <div className="flex items-center gap-2 text-sm text-text-muted mt-0.5">
                       {jdSnapshot && (
@@ -356,7 +356,7 @@ export const Results = ({ userId = 'guest', onNavigate, onBackToHub, language = 
                       <span className="text-lg font-normal text-text-muted">/100</span>
                     </div>
                     <div className={`text-sm font-semibold mt-0.5 ${getScoreColor(overallScore)}`}>
-                      {overallScore >= 80 ? 'Excellent' : overallScore >= 60 ? 'Good' : overallScore >= 40 ? 'Fair' : overallScore > 0 ? 'Needs Work' : 'No Data'}
+                      {overallScore >= 80 ? L('dashboard.excellent') : overallScore >= 60 ? L('dashboard.good') : overallScore >= 40 ? L('dashboard.fair') : overallScore > 0 ? L('dashboard.needsWork') : L('common.noData')}
                     </div>
                   </div>
                   <div className="h-12 w-px bg-border-theme mx-2" />
@@ -367,7 +367,7 @@ export const Results = ({ userId = 'guest', onNavigate, onBackToHub, language = 
                     </div>
                     <div className="flex items-center gap-1.5">
                       <FileText size={13} />
-                      <span>{questions.length} {questions.length !== 1 ? 'Questions' : 'Question'}</span>
+                      <span>{questions.length} {questions.length !== 1 ? L('results.questionsLabel') : L('results.questionLabel')}</span>
                     </div>
                   </div>
                 </div>
@@ -384,14 +384,14 @@ export const Results = ({ userId = 'guest', onNavigate, onBackToHub, language = 
             <CardHeader>
               <CardTitle className="text-sm flex items-center gap-2">
                 <Briefcase size={15} className="text-text-muted" />
-                Role Context
+                {L('results.roleContext')}
               </CardTitle>
             </CardHeader>
             <CardContent>
               <div className="space-y-3">
                 {(jdSnapshot.title || jdSnapshot.role) && (
                   <div>
-                    <span className="text-xs text-text-muted uppercase tracking-wider">Position</span>
+                    <span className="text-xs text-text-muted uppercase tracking-wider">{L('results.position')}</span>
                     <p className="text-base font-semibold text-text-primary mt-0.5">
                       {jdSnapshot.title || jdSnapshot.role}
                       {jdSnapshot.company && ` at ${jdSnapshot.company}`}
@@ -400,7 +400,7 @@ export const Results = ({ userId = 'guest', onNavigate, onBackToHub, language = 
                 )}
                 {jdSnapshot.skills?.length > 0 && (
                   <div>
-                    <span className="text-xs text-text-muted uppercase tracking-wider">Key Skills</span>
+                    <span className="text-xs text-text-muted uppercase tracking-wider">{L('results.keySkills')}</span>
                     <div className="flex flex-wrap gap-1.5 mt-1.5">
                       {jdSnapshot.skills.slice(0, 8).map((skill, i) => (
                         <Badge key={i} variant="secondary">{skill}</Badge>
@@ -410,7 +410,7 @@ export const Results = ({ userId = 'guest', onNavigate, onBackToHub, language = 
                 )}
                 {jdSnapshot.keywords?.length > 0 && (
                   <div>
-                    <span className="text-xs text-text-muted uppercase tracking-wider">Keywords</span>
+                    <span className="text-xs text-text-muted uppercase tracking-wider">{L('results.keywords')}</span>
                     <div className="flex flex-wrap gap-1.5 mt-1.5">
                       {jdSnapshot.keywords.slice(0, 6).map((kw, i) => (
                         <Badge key={i} variant="default">{kw}</Badge>
@@ -431,7 +431,7 @@ export const Results = ({ userId = 'guest', onNavigate, onBackToHub, language = 
             <CardHeader>
               <CardTitle className="text-sm flex items-center gap-2">
                 <Sparkles size={15} className="text-icon-active" />
-                Interviewer Assessment
+                {L('results.interviewerAssessment')}
               </CardTitle>
             </CardHeader>
             <CardContent>
@@ -455,14 +455,14 @@ export const Results = ({ userId = 'guest', onNavigate, onBackToHub, language = 
           <CardHeader>
             <CardTitle className="text-sm flex items-center gap-2">
               <BarChart3 size={15} className="text-text-muted" />
-              Performance Summary
+              {L('results.perfSummary')}
             </CardTitle>
           </CardHeader>
           <CardContent>
             {/* Dimension breakdown */}
             {Object.keys(dimensions).length > 0 ? (
               <div className="space-y-3">
-                <span className="text-xs text-text-muted uppercase tracking-wider">Score Dimensions</span>
+                <span className="text-xs text-text-muted uppercase tracking-wider">{L('results.scoreDimensions')}</span>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                   {Object.entries(dimensions).map(([key, value]) => {
                     const pct = Math.min(100, (value / 10) * 100);
@@ -487,7 +487,7 @@ export const Results = ({ userId = 'guest', onNavigate, onBackToHub, language = 
               </div>
             ) : (
               <div className="text-center py-4">
-                <p className="text-sm text-text-muted">Dimension breakdown not available for this session.</p>
+                <p className="text-sm text-text-muted">{L('results.dimNotAvailable')}</p>
               </div>
             )}
           </CardContent>
@@ -499,8 +499,8 @@ export const Results = ({ userId = 'guest', onNavigate, onBackToHub, language = 
         {questions.length > 0 && (
           <div className="space-y-4">
             <div className="flex items-center gap-2">
-              <h2 className="text-lg font-bold text-text-primary">Question-by-Question Analysis</h2>
-              <Badge variant="secondary">{questions.length} questions</Badge>
+              <h2 className="text-lg font-bold text-text-primary">{L('results.qByQ')}</h2>
+              <Badge variant="secondary">{questions.length} {L('results.questionsLabel')}</Badge>
             </div>
 
             {questions.map((q, idx) => {
@@ -541,7 +541,7 @@ export const Results = ({ userId = 'guest', onNavigate, onBackToHub, language = 
                       <div className="bg-surface-hover rounded-lg p-3">
                         <div className="flex items-center gap-1.5 mb-1.5">
                           <Quote size={12} className="text-text-muted" />
-                          <span className="text-xs font-medium text-text-muted uppercase tracking-wider">Your Answer</span>
+                          <span className="text-xs font-medium text-text-muted uppercase tracking-wider">{L('results.yourAnswer')}</span>
                         </div>
                         <p className="text-sm text-text-muted leading-relaxed italic">{q.transcript}</p>
                       </div>
@@ -555,7 +555,7 @@ export const Results = ({ userId = 'guest', onNavigate, onBackToHub, language = 
                           <div className="bg-surface-hover rounded-lg p-3">
                             <div className="flex items-center gap-1.5 mb-2">
                               <Sparkles size={13} className="text-icon-active" />
-                              <span className="text-xs font-semibold text-text-primary uppercase tracking-wider">Evidence</span>
+                              <span className="text-xs font-semibold text-text-primary uppercase tracking-wider">{L('results.evidence')}</span>
                             </div>
                             <ul className="space-y-1">
                               {q.evidence.map((item, i) => (
@@ -574,7 +574,7 @@ export const Results = ({ userId = 'guest', onNavigate, onBackToHub, language = 
                             <div className="bg-success/10 border border-success/20 rounded-lg p-3">
                               <div className="flex items-center gap-1.5 mb-1.5">
                                 <CheckCircle size={14} className="text-success" />
-                                <span className="text-xs font-semibold text-success uppercase tracking-wider">Strength</span>
+                                <span className="text-xs font-semibold text-success uppercase tracking-wider">{L('results.strength')}</span>
                               </div>
                               <p className="text-sm text-text-primary leading-relaxed">{q.strength}</p>
                             </div>
@@ -583,7 +583,7 @@ export const Results = ({ userId = 'guest', onNavigate, onBackToHub, language = 
                             <div className="bg-warning/10 border border-warning/20 rounded-lg p-3">
                               <div className="flex items-center gap-1.5 mb-1.5">
                                 <AlertTriangle size={14} className="text-warning" />
-                                <span className="text-xs font-semibold text-warning uppercase tracking-wider">Gap</span>
+                                <span className="text-xs font-semibold text-warning uppercase tracking-wider">{L('results.gap')}</span>
                               </div>
                               <p className="text-sm text-text-primary leading-relaxed">{q.missing}</p>
                             </div>
@@ -595,7 +595,7 @@ export const Results = ({ userId = 'guest', onNavigate, onBackToHub, language = 
                           <div className="bg-surface-hover border border-border-theme rounded-lg p-3">
                             <div className="flex items-center gap-1.5 mb-1.5">
                               <Lightbulb size={14} className="text-warning" />
-                              <span className="text-xs font-semibold text-text-primary uppercase tracking-wider">How to Improve</span>
+                              <span className="text-xs font-semibold text-text-primary uppercase tracking-wider">{L('results.howToImprove')}</span>
                             </div>
                             <p className="text-sm text-text-muted leading-relaxed">{q.improvement}</p>
                           </div>
@@ -606,7 +606,7 @@ export const Results = ({ userId = 'guest', onNavigate, onBackToHub, language = 
                     {/* No evaluation available */}
                     {!hasEvaluation && (
                       <div className="text-center py-3">
-                        <p className="text-xs text-text-muted">Detailed evaluation not available for this question.</p>
+                        <p className="text-xs text-text-muted">{L('results.evalNotAvailable')}</p>
                       </div>
                     )}
                   </CardContent>
@@ -626,7 +626,7 @@ export const Results = ({ userId = 'guest', onNavigate, onBackToHub, language = 
               <CardHeader>
                 <CardTitle className="text-sm flex items-center gap-2">
                   <CheckCircle size={15} className="text-success" />
-                  Key Strengths
+                  {L('results.keyStrengths')}
                 </CardTitle>
               </CardHeader>
               <CardContent>
@@ -640,7 +640,7 @@ export const Results = ({ userId = 'guest', onNavigate, onBackToHub, language = 
                     ))}
                   </ul>
                 ) : (
-                  <p className="text-sm text-text-muted">Complete questions to see your strengths.</p>
+                  <p className="text-sm text-text-muted">{L('results.completeToSeeStr')}</p>
                 )}
               </CardContent>
             </Card>
@@ -650,7 +650,7 @@ export const Results = ({ userId = 'guest', onNavigate, onBackToHub, language = 
               <CardHeader>
                 <CardTitle className="text-sm flex items-center gap-2">
                   <Target size={15} className="text-warning" />
-                  Improvement Areas
+                  {L('results.improvementAreas')}
                 </CardTitle>
               </CardHeader>
               <CardContent>
@@ -664,7 +664,7 @@ export const Results = ({ userId = 'guest', onNavigate, onBackToHub, language = 
                     ))}
                   </ul>
                 ) : (
-                  <p className="text-sm text-text-muted">Keep practicing to identify improvement areas.</p>
+                  <p className="text-sm text-text-muted">{L('results.keepPracticing')}</p>
                 )}
               </CardContent>
             </Card>
@@ -678,7 +678,7 @@ export const Results = ({ userId = 'guest', onNavigate, onBackToHub, language = 
           <CardHeader>
             <CardTitle className="text-sm flex items-center gap-2">
               <Target size={15} className="text-icon-active" />
-              Next-Step Practice Recommendations
+              {L('results.nextStepRec')}
             </CardTitle>
           </CardHeader>
           <CardContent>
@@ -695,8 +695,8 @@ export const Results = ({ userId = 'guest', onNavigate, onBackToHub, language = 
                   const untried = untriedModes[0];
                   recommendations.push({
                     icon: MODE_CONFIG[untried[0]]?.icon || Code,
-                    title: `Try ${getModeLabel(untried[0], language)} Interview`,
-                    desc: `You haven't attempted a ${getModeLabel(untried[0], language)} interview yet. Complete all three modes for a full assessment.`,
+                    title: L('results.recTry') + ' ' + getModeLabel(untried[0], language) + ' ' + L('results.interview'),
+                    desc: L('results.recTryDesc'),
                   });
                 }
 
@@ -704,8 +704,8 @@ export const Results = ({ userId = 'guest', onNavigate, onBackToHub, language = 
                   const lowest = modeEntries.reduce((min, [m, s]) => s < min[1] ? [m, s] : min, modeEntries[0]);
                   recommendations.push({
                     icon: MODE_CONFIG[lowest[0]]?.icon || Code,
-                    title: `Practice ${getModeLabel(lowest[0], language)} Questions`,
-                    desc: `Your ${getModeLabel(lowest[0], language)} score (${lowest[1]}/100) has the most room for improvement. Focus on this area.`,
+                    title: L('results.recPractice') + ' ' + getModeLabel(lowest[0], language) + ' ' + L('results.questionsLabel'),
+                    desc: L('results.recPracticeDesc'),
                   });
                 }
               }
@@ -717,8 +717,8 @@ export const Results = ({ userId = 'guest', onNavigate, onBackToHub, language = 
                 if (weakestDim && weakestDim[1] < 7) {
                   recommendations.push({
                     icon: Target,
-                    title: `Strengthen "${weakestDim[0]}"`,
-                    desc: `Your "${weakestDim[0]}" dimension scored ${weakestDim[1]}/10. Practice answers that specifically demonstrate this skill.`,
+                    title: L('results.recStrengthen') + ' "' + weakestDim[0] + '"',
+                    desc: L('results.recStrengthenDesc'),
                   });
                 }
               }
@@ -727,8 +727,8 @@ export const Results = ({ userId = 'guest', onNavigate, onBackToHub, language = 
               if (recommendations.length === 0) {
                 recommendations.push({
                   icon: Award,
-                  title: 'Complete More Interviews',
-                  desc: 'Finish interviews in all three modes (Behavioral, Technical, Coding) to get personalized recommendations.',
+                  title: L('results.completeMore'),
+                  desc: L('results.finishAllModes'),
                 });
               }
 
@@ -762,9 +762,9 @@ export const Results = ({ userId = 'guest', onNavigate, onBackToHub, language = 
             <CardHeader>
               <CardTitle className="text-sm flex items-center gap-2">
                 <TrendingUp size={15} className="text-success" />
-                Score Trend
+                {L('results.scoreTrend')}
                 <span className="text-xs font-normal text-text-muted">
-                  Last {trend.length} sessions
+                  {L('results.lastSessions')} {trend.length} {L('common.sessions')}
                 </span>
               </CardTitle>
             </CardHeader>
@@ -803,9 +803,9 @@ export const Results = ({ userId = 'guest', onNavigate, onBackToHub, language = 
             <CardContent className="pt-8 pb-8 text-center space-y-4">
               <Award size={40} className="mx-auto text-text-muted" />
               <div>
-                <h3 className="text-lg font-semibold text-text-primary">No Interview Data Yet</h3>
+                <h3 className="text-lg font-semibold text-text-primary">{L('results.noDataYet')}</h3>
                 <p className="text-sm text-text-muted mt-1 max-w-sm mx-auto">
-                  Complete an interview session to see your detailed performance report with scores, feedback, and recommendations.
+                  {L('results.completeInterview')}
                 </p>
               </div>
               <Button variant="primary" onClick={() => onNavigate?.('jd-input')}>
@@ -818,10 +818,10 @@ export const Results = ({ userId = 'guest', onNavigate, onBackToHub, language = 
         {/* ── Bottom Actions ── */}
         <div className="flex flex-col sm:flex-row items-center justify-center gap-3 pt-4 pb-8 animate-fade-in stagger-6">
           <Button variant="primary" onClick={() => onNavigate?.('mode-selection')}>
-            Practice Another Mode
+            {L('results.practiceAnother')}
           </Button>
           <Button variant="secondary" onClick={() => onBackToHub?.()}>
-            Back to Home
+            {L('results.backToHome')}
           </Button>
         </div>
       </div>

@@ -200,7 +200,7 @@ export const SharedReport = ({ shareToken }) => {
                     </div>
                     {score != null && (
                       <span className={`text-lg font-bold ${
-                        score >= 70 ? 'text-success' : score >= 40 ? 'text-warning' : 'text-danger'
+                        score >= 80 ? 'text-success' : score >= 60 ? 'text-warning' : 'text-danger'
                       }`}>
                         {score}
                       </span>

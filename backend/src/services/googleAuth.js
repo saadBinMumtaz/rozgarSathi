@@ -2,6 +2,7 @@
 // Google OAuth 2.0 token verification and user creation/lookup.
 // Uses google-auth-library to verify ID tokens from Google's OAuth flow.
 
+import logger from '../utils/logger.js';
 import { OAuth2Client } from 'google-auth-library';
 import env from '../config/env.js';
 import { User } from '../models/User.model.js';
@@ -35,7 +36,7 @@ export const verifyGoogleToken = async (idToken) => {
       emailVerified: payload.email_verified,
     };
   } catch (err) {
-    console.error('[GoogleAuth] Token verification failed:', err.message);
+    logger.error('[GoogleAuth] Token verification failed:', err.message);
     throw new Error('Invalid Google ID token');
   }
 };
