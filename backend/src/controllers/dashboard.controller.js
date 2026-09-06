@@ -90,6 +90,113 @@ const buildTrend = (sessions) => {
 };
 
 /**
+ * Find the strongest competency (inverse of weakest).
+ */
+const findStrongestCompetency = (allEvaluations) => {
+  const dimTotals = {};
+  const dimCounts = {};
+  for (const ev of allEvaluations) {
+    if (!ev.dimensions) continue;
+    for (const [key, val] of Object.entries(ev.dimensions)) {
+      if (typeof val !== 'number') continue;
+      dimTotals[key] = (dimTotals[key] || 0) + val;
+      dimCounts[key] = (dimCounts[key] || 0) + 1;
+    }
+  }
+  let strongest = null;
+  let strongestAvg = -Infinity;
+  for (const [key, total] of Object.entries(dimTotals)) {
+    const avg = total / (dimCounts[key] || 1);
+    if (avg > strongestAvg) { strongestAvg = avg; strongest = key; }
+  }
+  if (!strongest) return null;
+  return {
+    key: strongest,
+    label: strongest.replace(/([A-Z])/g, ' $1').replace(/^./, (s) => s.toUpperCase()).trim(),
+    score: Math.round(strongestAvg),
+  };
+};
+
+/**
+ * Compute per-mode trend by comparing recent sessions to overall mode average.
+ */
+const computePerModeTrend = (sessions, mode) => {
+  const modeSessions = sessions
+    .filter((s) => s.mode === mode && s.status === 'completed' && s.overallScore != null)
+    .sort((a, b) => new Date(a.updatedAt) - new Date(b.updatedAt));
+  if (modeSessions.length < 2) return { direction: 'insufficient', sessionCount: modeSessions.length };
+  // Compare last two sessions — works correctly even with exactly 2 sessions
+  const lastScore = modeSessions[modeSessions.length - 1].overallScore;
+  const prevScore = modeSessions[modeSessions.length - 2].overallScore;
+  const diff = lastScore - prevScore;
+  let direction = 'stable';
+  if (diff > 5) direction = 'up';
+  else if (diff < -5) direction = 'down';
+  return { direction, sessionCount: modeSessions.length };
+};
+
+/**
+ * Generate a deterministic, data-driven insight when not all 3 modes are completed.
+ * Uses actual per-mode scores and session counts — never fabricates patterns.
+ */
+const generatePartialModeInsight = (perModeScores, sessionCounts, language) => {
+  const completed = Object.entries(perModeScores).filter(([, s]) => s > 0);
+  const incomplete = Object.entries(perModeScores).filter(([, s]) => s === 0);
+  if (completed.length === 0) {
+    return language === 'urdu'
+      ? 'ابھی تک کوئی ڈیٹا نہیں۔ اپنا پہلا انٹرویو مکمل کریں۔'
+      : 'No data yet. Complete your first interview to see personalized insights.';
+  }
+  if (completed.length === 1) {
+    const [mode, score] = completed[0];
+    const label = mode.charAt(0).toUpperCase() + mode.slice(1);
+    const remaining = incomplete.map(([m]) => m).join(', ');
+    if (score >= 70) {
+      return language === 'urdu'
+        ? `${label} میں مضبوط آغاز (${score}/100)۔ ${remaining} کی مشق سے مکمل پروفائل بنے گی۔`
+        : `Strong start in ${label} (${score}/100). Practicing ${remaining} will build a complete profile and unlock cross-mode analysis.`;
+    }
+    return language === 'urdu'
+      ? `${label} میں شروعات (${score}/100)۔ مزید مشق سے بہتری آئے گی۔ ${remaining} ابھی باقی ہے۔`
+      : `Getting started in ${label} (${score}/100). More practice will sharpen your skills. ${remaining} still needs your first session.`;
+  }
+  // Two modes completed — compare scores
+  completed.sort((a, b) => b[1] - a[1]);
+  const [strongMode, strongScore] = completed[0];
+  const [weakMode, weakScore] = completed[1];
+  const strongLabel = strongMode.charAt(0).toUpperCase() + strongMode.slice(1);
+  const weakLabel = weakMode.charAt(0).toUpperCase() + weakMode.slice(1);
+  const diff = strongScore - weakScore;
+  const incompleteLabel = incomplete.length > 0 ? incomplete[0][0] : null;
+  if (diff >= 15) {
+    const msg = language === 'urdu'
+      ? `${strongLabel} (${strongScore}) ${weakLabel} (${weakScore}) سے نمایاں طور پر مضبوط ہے۔`
+      : `Your ${strongLabel} score (${strongScore}) is notably stronger than ${weakLabel} (${weakScore}).`;
+    if (incompleteLabel) {
+      const incLabel = incompleteLabel.charAt(0).toUpperCase() + incompleteLabel.slice(1);
+      return msg + (language === 'urdu'
+        ? ` ${incLabel} ابھی باقی ہے — مکمل کرنے کے لیے سب سے کم اسکور والے علاقے پر توجہ دیں۔`
+        : ` ${incLabel} is still untried — focus on your weakest area for highest-impact practice.`);
+    }
+    return msg + (language === 'urdu'
+      ? ` ${weakLabel} پر توجہ دیں۔`
+      : ` Focus on ${weakLabel} to close the gap.`);
+  }
+  const msg = language === 'urdu'
+    ? `${strongLabel} (${strongScore}) اور ${weakLabel} (${weakScore}) مماثل ہیں۔`
+    : `${strongLabel} (${strongScore}) and ${weakLabel} (${weakScore}) are performing similarly.`;
+  if (incompleteLabel) {
+    const incLabel = incompleteLabel.charAt(0).toUpperCase() + incompleteLabel.slice(1);
+    return msg + (language === 'urdu'
+      ? ` ${incLabel} کی مشق سے مکمل تصویر سامنے آئے گی۔`
+      : ` Completing ${incLabel} will give you a full cross-mode picture.`);
+  }
+  return msg + (language === 'urdu'
+    ? ' تمام موڈز مکمل — مشق جاری رکھیں۔'
+    : ' All modes complete — keep practicing to improve.');
+};
+
+/**
  * GET /api/dashboard/:userId
  * Response shape (Section 8):
  * { overallReadiness, perMode, weakestCompetency, trend, crossModeInsight, weights }
@@ -129,9 +236,33 @@ export const getDashboardData = async (req, res, next) => {
       codingScore * weights.coding
     );
 
-    // Weakest competency across all modes
+    // Weakest competency with actionable details
     const allEvaluations = [...behavioralEval, ...technicalEval, ...codingEval];
-    const weakestCompetency = findWeakestCompetency(allEvaluations);
+    const weakestRaw = findWeakestCompetency(allEvaluations);
+    const strongestRaw = findStrongestCompetency(allEvaluations);
+
+    // Build enriched weakest competency details
+    let weakestCompetencyDetails = { key: weakestRaw, label: weakestRaw, score: 0, mode: null, why: '' };
+    if (weakestRaw && weakestRaw !== 'General Practice') {
+      const dimKey = weakestRaw.charAt(0).toLowerCase() + weakestRaw.slice(1).replace(/ /g, '');
+      const matchingEvals = allEvaluations.filter((ev) => ev.dimensions && typeof ev.dimensions[dimKey] === 'number');
+      const avgScore = matchingEvals.length > 0
+        ? Math.round(matchingEvals.reduce((sum, ev) => sum + ev.dimensions[dimKey], 0) / matchingEvals.length)
+        : 0;
+      const modeForDim = ['behavioral', 'technical', 'coding'].find((m) =>
+        collectEvaluations(sessions, m).some((ev) => ev.dimensions && typeof ev.dimensions[dimKey] === 'number')
+      ) || null;
+      const gaps = matchingEvals.map((ev) => ev.missing).filter(Boolean);
+      const improvements = matchingEvals.map((ev) => ev.improvement).filter(Boolean);
+      // Use the most recent evaluation's feedback (most relevant to current performance)
+      const allFeedback = [...gaps, ...improvements];
+      let why = '';
+      if (allFeedback.length > 0) {
+        why = allFeedback[allFeedback.length - 1];
+        if (why.length > 200) why = why.substring(0, 197) + '...';
+      }
+      weakestCompetencyDetails = { key: dimKey, label: weakestRaw, score: avgScore, mode: modeForDim, why };
+    }
 
     // Trend
     const trend = buildTrend(sessions);
@@ -149,13 +280,12 @@ export const getDashboardData = async (req, res, next) => {
         codingEval,
       });
     } else {
-      const completed = [];
-      if (behavioralEval.length > 0) completed.push('Behavioral');
-      if (technicalEval.length > 0) completed.push('Technical');
-      if (codingEval.length > 0) completed.push('Coding');
-      crossModeInsight = completed.length > 0
-        ? `Complete the remaining modes to unlock cross-mode insight. Currently completed: ${completed.join(', ')}.`
-        : 'Complete at least one session in each mode (Behavioral, Technical, Coding) to unlock your personalized cross-mode analysis.';
+      // Data-driven partial insight based on available mode data
+      crossModeInsight = generatePartialModeInsight(
+        { behavioral: behavioralScore, technical: technicalScore, coding: codingScore },
+        { behavioral: behavioralEval.length, technical: technicalEval.length, coding: codingEval.length },
+        req.query?.language || 'english'
+      );
     }
 
     return res.json({
@@ -165,7 +295,14 @@ export const getDashboardData = async (req, res, next) => {
         technical: technicalScore,
         coding: codingScore,
       },
-      weakestCompetency,
+      weakestCompetency: weakestRaw, // backward compat
+      weakestCompetencyDetails,
+      strongestCompetencyDetails: strongestRaw,
+      modeTrends: {
+        behavioral: computePerModeTrend(sessions, 'behavioral'),
+        technical: computePerModeTrend(sessions, 'technical'),
+        coding: computePerModeTrend(sessions, 'coding'),
+      },
       trend,
       crossModeInsight,
       weights,

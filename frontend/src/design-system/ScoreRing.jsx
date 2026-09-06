@@ -6,10 +6,11 @@ export const ScoreRing = ({ score = 0, max = 10, label = 'Readiness', size = 90,
   const circumference = 2 * Math.PI * radius;
   const strokeDashoffset = circumference - (percentage / 100) * circumference;
 
-  // Semantic accent colors based on score range
+  // Semantic accent colors based on score range — unified 80/60/40 bands
   let strokeColor;
   if (percentage >= 80) strokeColor = 'var(--color-success)';
-  else if (percentage >= 50) strokeColor = 'var(--color-warning)';
+  else if (percentage >= 60) strokeColor = 'var(--color-warning)';
+  else if (percentage >= 40) strokeColor = 'var(--color-warning)';
   else strokeColor = 'var(--color-danger)';
 
   return (

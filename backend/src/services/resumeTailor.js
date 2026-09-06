@@ -266,69 +266,127 @@ Return ONLY valid JSON matching this schema:
  * Uses the comprehensive anti-hallucination prompt.
  */
 export const generateTailoredResume = async (originalResumeData, jdAnalysis, jdText, originalResumeTextLength) => {
-  const systemPrompt = `You are an expert ATS resume tailoring system.
+  const systemPrompt = `You are an elite ATS resume strategist who has helped thousands of candidates land interviews at top companies.
 
-Your task: rewrite the candidate's resume to maximize its match with the target JOB DESCRIPTION.
+Your mission: transform this candidate's resume into a laser-targeted document for THIS SPECIFIC job. Different JDs must produce noticeably different emphasis.
 
-═══ YOU MUST MAKE SUBSTANTIVE CHANGES ═══
+═══════════════════════════════════════
+1. PROFESSIONAL SUMMARY — THE HOOK
+═══════════════════════════════════════
 
-Simply copying the original resume is a FAILURE. You MUST actively:
+Write a NEW 2-sentence summary using this formula:
+  Sentence 1: [Experience level/domain] + [most relevant skill cluster from JD] + [value proposition]
+  Sentence 2: [Secondary JD-relevant competency] + [how candidate delivers impact]
 
-1. REWRITE every bullet point in Projects and Experience:
-   - Use strong action verbs (Built, Developed, Designed, Implemented, Led, Optimized)
-   - Emphasize aspects relevant to the JD
-   - Add JD keywords where supported by the candidate's actual experience
-   - Make each bullet results-oriented where possible
+Rules:
+- Mirror the JD's role language ("Backend Engineer" → "backend development", not "software development")
+- Name the 2-3 most critical JD technologies that the candidate actually has
+- No filler ("passionate", "dedicated", "team player")
+- Max 35 words total
 
-2. REORDER skills by JD relevance:
-   - Skills mentioned in the JD go FIRST in each category
-   - Less relevant skills go later
-   - Categorize properly into languages, frameworks, databases, developerTools, softSkills
+═══════════════════════════════════════
+2. EXPERIENCE & PROJECT BULLETS — ACHIEVEMENT FRAMING
+═══════════════════════════════════════
 
-3. REWRITE the professional summary:
-   - Create a 1-2 sentence summary that directly aligns the candidate with the JD role
-   - Mention the most relevant technologies and experience areas
+Every bullet MUST follow this pattern:
+  [STRONG ACTION VERB] + [WHAT was built/done] + [HOW (relevant tech)] + [IMPACT/result]
 
-4. REORDER projects by JD relevance:
-   - Most relevant projects first
-   - Rewrite each project's bullets to emphasize JD-relevant aspects
+Action verb selection — choose from these categories:
+  BUILD:    Built, Developed, Engineered, Architected, Designed, Implemented, Deployed
+  IMPROVE:  Optimized, Refactored, Streamlined, Enhanced, Accelerated, Reduced, Automated
+  LEAD:     Led, Spearheaded, Orchestrated, Mentored, Coordinated, Drove
+  ANALYZE:  Analyzed, Identified, Diagnosed, Resolved, Investigated
 
-5. IMPROVE coursework selection:
-   - If the original has coursework, keep only the most JD-relevant courses
+Rules:
+- NEVER start a bullet with "Worked on", "Responsible for", "Helped with", or "Involved in"
+- Each bullet = 1-2 lines max (under 25 words). Cut filler ruthlessly.
+- Emphasize the ASPECTS of each project/job that align with the JD
+- If JD wants "scalable systems" → emphasize scale, performance, reliability aspects
+- If JD wants "APIs and databases" → emphasize backend architecture, data modeling
+- If JD wants "React/frontend" → emphasize UI, user experience, component architecture
+- Use JD terminology where the candidate's experience supports it ("RESTful services" vs "web APIs")
+- Preserve all metrics/numbers from the original. Do NOT invent new ones.
 
-═══ FACTUAL ACCURACY — NON-NEGOTIABLE ═══
+═══════════════════════════════════════
+3. SKILLS — STRATEGIC REORDERING
+═══════════════════════════════════════
 
-While you MUST make the changes above, you MUST NOT:
-- Invent skills, technologies, companies, projects, dates, metrics, or certifications
-- Add a technology not present in the original resume
-- Fabricate achievements, metrics, or responsibilities
-- Change dates, company names, job titles, degrees, or institutions
+Reorder EVERY skill category so JD-mentioned skills appear FIRST:
+  - If JD mentions "Python, SQL, ETL" → Python before JavaScript, SQL before MongoDB
+  - Keep original skills only — do NOT add skills not in the original resume
+  - Categorize into: languages, frameworks, databases, developerTools, softSkills
 
-If a JD keyword is NOT supported by the original resume, do NOT add it — list it in analysis.missingSkills instead.
+═══════════════════════════════════════
+4. PROJECTS — REORDER BY JD RELEVANCE
+═══════════════════════════════════════
 
-═══ EXAMPLE OF EXPECTED CHANGE ═══
+Score each project against JD requirements and place most relevant first.
+Rewrite each project's bullets to emphasize JD-relevant aspects.
+Keep the project name and technologies EXACTLY as original.
+Add a brief "subtitle" that frames the project for the JD role (e.g., "Full-Stack API Platform" for a backend JD).
 
-Original bullet: "Worked on a web app using React and Node.js"
-JD mentions: React, TypeScript, REST APIs, MongoDB
+═══════════════════════════════════════
+5. EDUCATION & COURSEWORK
+═══════════════════════════════════════
 
-GOOD tailored bullet: "Developed a full-stack web application using React and Node.js, implementing RESTful APIs and integrating MongoDB for data persistence"
+Keep institution, degree, dates, GPA EXACTLY as original.
+If coursework exists, keep ONLY courses relevant to the JD.
 
-BAD (no change): "Worked on a web app using React and Node.js"
-BAD (fabricated): "Worked on a web app using React, TypeScript, and GraphQL"  ← TypeScript/GraphQL not in original
+═══════════════════════════════════════
+6. FACTUAL ACCURACY — ZERO TOLERANCE
+═══════════════════════════════════════
 
-═══ OUTPUT JSON SCHEMA ═══
+NEVER:
+- Invent technologies, frameworks, tools, or programming languages
+- Fabricate metrics, percentages, user counts, or performance numbers
+- Add companies, projects, certifications, or degrees not in the original
+- Change dates, job titles, company names, or institution names
+- Add responsibilities the candidate never described
+
+If a JD requirement has NO support in the original resume, list it in analysis.missingSkills. Do NOT add it to the resume.
+
+═══════════════════════════════════════
+7. KEYWORD WEAVING STRATEGY
+═══════════════════════════════════════
+
+Integrate JD keywords NATURALLY into bullets and summary — never stuff them.
+
+GOOD: "Engineered RESTful APIs serving 10K+ daily requests using Node.js and Express"
+BAD: "Used Node.js, Express, REST API, APIs, backend, microservices, scalability"
+
+Every JD keyword you integrate MUST be supported by the candidate's actual experience.
+
+═══════════════════════════════════════
+EXAMPLES OF EXPECTED TRANSFORMATION
+═══════════════════════════════════════
+
+JD emphasizes: Backend APIs, databases, scalability
+
+Original: "Made a website for a shop using React and Node.js"
+Tailored: "Built an e-commerce platform with Node.js, implementing RESTful APIs and MongoDB for product catalog management"
+
+JD emphasizes: React, TypeScript, frontend performance
+
+SAME original: "Made a website for a shop using React and Node.js"
+Tailored: "Developed a responsive React storefront with component-based architecture, optimizing render performance for product listings"
+
+Notice: SAME candidate, DIFFERENT emphasis based on JD. That is the goal.
+
+═══════════════════════════════════════
+OUTPUT JSON SCHEMA
+═══════════════════════════════════════
 
 {
   "tailoredResume": {
     "contact": {
-      "name": "exact original name",
-      "email": "exact original email",
-      "phone": "exact original phone",
-      "linkedin": "EXACT original URL verbatim — do not modify any part",
-      "github": "EXACT original URL verbatim — do not modify any part",
-      "portfolio": "EXACT original URL verbatim — do not modify any part"
+      "name": "EXACT original name",
+      "email": "EXACT original email",
+      "phone": "EXACT original phone",
+      "linkedin": "EXACT original URL verbatim",
+      "github": "EXACT original URL verbatim",
+      "portfolio": "EXACT original URL verbatim"
     },
-    "summary": "NEW 1-2 sentence summary directly aligned to the JD role",
+    "summary": "NEW 2-sentence summary aligned to the JD (see Section 1)",
     "education": [
       {
         "institution": "same as original",
@@ -344,10 +402,10 @@ BAD (fabricated): "Worked on a web app using React, TypeScript, and GraphQL"  �
         "name": "exact project name from original",
         "subtitle": "brief JD-relevant descriptor",
         "bullets": [
-          "REWRITTEN bullet with strong action verb, JD keywords, results focus",
-          "REWRITTEN bullet emphasizing different JD-relevant aspect"
+          "REWRITTEN: action verb + what + how + impact (under 25 words)",
+          "REWRITTEN: different JD-relevant aspect emphasized"
         ],
-        "technologies": ["exact technologies from original"]
+        "technologies": ["EXACT technologies from original — do not add or remove"]
       }
     ],
     "skills": {
@@ -366,7 +424,7 @@ BAD (fabricated): "Worked on a web app using React, TypeScript, and GraphQL"  �
         "title": "same as original",
         "startDate": "same as original",
         "endDate": "same as original",
-        "bullets": ["REWRITTEN with action verbs and JD emphasis using ONLY original facts"]
+        "bullets": ["REWRITTEN with achievement framing + JD emphasis using ONLY original facts"]
       }
     ]
   },
@@ -374,20 +432,28 @@ BAD (fabricated): "Worked on a web app using React, TypeScript, and GraphQL"  �
     "matchScore": 0-100,
     "matchedSkills": ["skills from JD found in resume"],
     "missingSkills": ["skills from JD NOT in resume"],
-    "changesMade": ["SPECIFIC changes: e.g. 'Rewrote Project X bullets to emphasize React and REST APIs', 'Moved MongoDB before SQL in databases', 'Rewrote summary to highlight full-stack experience'"]
+    "keywordAlignment": [
+      { "keyword": "JD keyword", "where": "where it was integrated (e.g. 'summary', 'Project X bullets', 'experience')" }
+    ],
+    "changesMade": [
+      "SPECIFIC: 'Rewrote summary to position candidate as Backend Engineer with Node.js/Python expertise'",
+      "SPECIFIC: 'Reframed Project X bullets to emphasize API design and database architecture'",
+      "SPECIFIC: 'Moved Python before JavaScript in languages to match JD priority'"
+    ]
   }
 }
 
-COMPLETENESS CHECKLIST (verify internally before outputting):
-1. Every original section is represented.
-2. Every job/employer is represented.
-3. Every education entry is represented.
-4. Every project is present with REWRITTEN bullets.
-5. Every certification is represented.
-6. Skills are REORDERED by JD relevance.
-7. No placeholders like "...", "[insert]", "[add]".
-8. Every bullet point is DIFFERENT from the original (rephrased, improved).
-9. The result is a FULL resume suitable for downloading.`;
+COMPLETENESS CHECKLIST (verify before outputting):
+1. Every original section is represented
+2. Every job/employer is represented
+3. Every education entry is represented
+4. Every project is present with REWRITTEN bullets
+5. Every certification is represented
+6. Skills are REORDERED by JD relevance
+7. No placeholders ("...", "[insert]", "[add]")
+8. Every bullet is DIFFERENT from the original (rephrased with achievement framing)
+9. The result is a FULL resume suitable for downloading
+10. Summary is written and aligned to the JD role`;
 
   const userPrompt = `ORIGINAL RESUME DATA:
 ${JSON.stringify(originalResumeData, null, 2)}
@@ -395,7 +461,18 @@ ${JSON.stringify(originalResumeData, null, 2)}
 JOB DESCRIPTION:
 ${jdText}
 
-Tailor this resume for the job above. REWRITE every bullet point, REORDER skills by relevance, and WRITE a new summary. Do not copy the original verbatim. Do not invent any facts.`;
+JD ANALYSIS (use this to guide your tailoring priorities):
+- Target Role: ${jdAnalysis.role || 'Not specified'}
+- Key Technical Requirements: ${(jdAnalysis.technicalFocus || []).join(', ') || 'See JD'}
+- Required Skills: ${(jdAnalysis.skills || []).slice(0, 15).join(', ') || 'See JD'}
+- Experience Level: ${jdAnalysis.experienceLevel || 'Not specified'}
+
+Tailor this resume for the job above.
+REWRITE every bullet with achievement framing and strong action verbs.
+REORDER skills by JD relevance.
+WRITE a new 2-sentence summary aligned to the target role.
+Produce DIFFERENT emphasis than you would for a different JD.
+Do not copy the original verbatim. Do not invent any facts.`;
 
   logger.info('[NVIDIA] Tailoring started');
   const result = await callOpenRouter(systemPrompt, userPrompt, {
@@ -511,6 +588,7 @@ const validateCompleteness = (original, tailored, originalTextLength) => {
  * Validate that tailored resume doesn't contain fabricated information.
  */
 const validateNoFabrication = (original, tailored) => {
+  // Build comprehensive set of all technologies/skills from original resume
   const originalSkills = new Set([
     ...(original.skills?.technical || []),
     ...(original.skills?.tools || []),
@@ -518,9 +596,21 @@ const validateNoFabrication = (original, tailored) => {
     ...(original.skills?.frameworks || []),
     ...(original.skills?.databases || []),
     ...(original.skills?.developerTools || []),
+    ...(original.skills?.softSkills || []),
     ...(original.allTechnologiesMentioned || [])
   ].map(s => s.toLowerCase()));
 
+  // Also collect technologies from original projects and experience
+  (original.projects || []).forEach(p => {
+    (p.technologies || []).forEach(t => originalSkills.add(t.toLowerCase()));
+  });
+  (original.experience || []).forEach(e => {
+    (e.technologies || []).forEach(t => originalSkills.add(t.toLowerCase()));
+  });
+
+  const issues = [];
+
+  // Check 1: Skills section — no fabricated skills
   const tailoredSkillCategories = ['languages', 'frameworks', 'databases', 'developerTools', 'softSkills', 'technical', 'tools'];
   const allTailoredSkills = [];
   tailoredSkillCategories.forEach(cat => {
@@ -532,15 +622,25 @@ const validateNoFabrication = (original, tailored) => {
   const fabricatedSkills = allTailoredSkills.filter(
     skill => !originalSkills.has(skill.toLowerCase())
   );
-
   if (fabricatedSkills.length > 0) {
-    return {
-      valid: false,
-      reason: `Potential fabricated skills detected: ${fabricatedSkills.join(', ')}`,
-    };
+    issues.push(`Fabricated skills: ${fabricatedSkills.join(', ')}`);
   }
 
-  return { valid: true };
+  // Check 2: Project technologies — no invented technologies in projects
+  (tailored.projects || []).forEach((proj, idx) => {
+    const origProj = original.projects?.[idx];
+    const origTechs = new Set((origProj?.technologies || []).map(t => t.toLowerCase()));
+    (proj.technologies || []).forEach(tech => {
+      if (!origTechs.has(tech.toLowerCase()) && !originalSkills.has(tech.toLowerCase())) {
+        issues.push(`Project "${proj.name}" contains technology not in original: ${tech}`);
+      }
+    });
+  });
+
+  return {
+    valid: issues.length === 0,
+    reason: issues.length > 0 ? issues.join('; ') : '',
+  };
 };
 
 // ─── Fallback: deterministic JD analysis (no AI) ──────────────────────

@@ -161,6 +161,14 @@ export const translations = {
   'dashboard.good':               { en: 'Good',                                    ur: 'اچھا' },
   'dashboard.fair':               { en: 'Fair',                                    ur: 'ٹھیک' },
   'dashboard.needsWork':          { en: 'Needs Work',                              ur: 'محنت کی ضرورت' },
+  'dashboard.performanceBreakdown': { en: 'Performance Breakdown',                 ur: 'کارکردگی کا جائزہ' },
+  'dashboard.weakestArea':        { en: 'Weakest Area',                            ur: 'کمزور ترین علاقہ' },
+  'dashboard.strongestArea':      { en: 'Strongest Area',                          ur: 'مضبوط ترین علاقہ' },
+  'dashboard.whyLabel':           { en: 'Why',                                     ur: 'کیوں' },
+  'dashboard.nextLabel':          { en: 'Next',                                    ur: 'اگلا قدم' },
+  'dashboard.recommendedAction':  { en: 'Recommended Action',                      ur: 'تجویز کردہ اقدام' },
+  'dashboard.coaching':           { en: 'Coaching',                                ur: 'کوچنگ' },
+  'dashboard.progress':           { en: 'Progress',                                ur: 'پیشرفت' },
 
   // ─── Session History Page ───
   'sessionHistory.title':         { en: 'Session History',                         ur: 'سیشن کی تاریخ' },

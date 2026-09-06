@@ -42,19 +42,38 @@ export const ResumeTailor = ({ onNavigate, isDark = false, prefilledJob = null, 
   }, [prefilledJob]);
 
   // Compute diff between original and tailored resume for change highlighting
+  // Uses content-based (name) matching instead of index-based to handle reordering
   const diffChanges = React.useMemo(() => {
     if (!result?.originalResumeData || !result?.tailoredResume) return null;
     const orig = result.originalResumeData;
     const tailored = result.tailoredResume;
     const summaryChanged = (orig.summary || '') !== (tailored.summary || '');
-    const projectChanges = (orig.projects || []).map((op, i) => {
-      const tp = tailored.projects?.[i];
-      if (!tp) return { name: op.name, changed: true, origBullets: op.bullets || [op.description].filter(Boolean), newBullets: [] };
+
+    // Content-based matching: find tailored projects by name, not by index
+    const tailoredByName = new Map(
+      (tailored.projects || []).map(p => [p.name?.toLowerCase().trim(), p])
+    );
+    const origByName = new Map(
+      (orig.projects || []).map(p => [p.name?.toLowerCase().trim(), p])
+    );
+
+    const projectChanges = (orig.projects || []).map(op => {
+      const tp = tailoredByName.get(op.name?.toLowerCase().trim());
+      if (!tp) return { name: op.name, changed: true, origBullets: op.bullets || [op.description].filter(Boolean), newBullets: [], status: 'removed' };
       const origB = op.bullets || [op.description].filter(Boolean);
       const newB = tp.bullets || [tp.description].filter(Boolean);
       const changed = origB.join('|') !== newB.join('|') || op.name !== tp.name;
-      return { name: tp.name || op.name, changed, origBullets: origB, newBullets: newB };
+      return { name: tp.name || op.name, changed, origBullets: origB, newBullets: newB, status: changed ? 'modified' : 'unchanged' };
     });
+
+    // Detect newly added projects (in tailored but not in original)
+    (tailored.projects || []).forEach(tp => {
+      if (!origByName.has(tp.name?.toLowerCase().trim())) {
+        const newB = tp.bullets || [tp.description].filter(Boolean);
+        projectChanges.push({ name: tp.name, changed: true, origBullets: [], newBullets: newB, status: 'added' });
+      }
+    });
+
     const skillChanges = {};
     ['languages', 'frameworks', 'databases', 'developerTools', 'softSkills', 'technical', 'tools'].forEach(cat => {
       const o = orig.skills?.[cat] || [];
@@ -68,8 +87,79 @@ export const ResumeTailor = ({ onNavigate, isDark = false, prefilledJob = null, 
       }
     });
     const orderChanged = (orig.projects || []).map(p => p.name).join('|') !== (tailored.projects || []).map(p => p.name).join('|');
-    return { summaryChanged, projectChanges, skillChanges, orderChanged };
+
+    // Experience diff (content-based by company+title)
+    const tailoredExpByKey = new Map(
+      (tailored.experience || []).map(e => [`${e.company}|${e.title}`.toLowerCase(), e])
+    );
+    const experienceChanges = (orig.experience || []).map(oe => {
+      const key = `${oe.company}|${oe.title}`.toLowerCase();
+      const te = tailoredExpByKey.get(key);
+      if (!te) return { title: oe.title, company: oe.company, changed: true, origBullets: oe.responsibilities || oe.bullets || [], newBullets: [], status: 'removed' };
+      const origB = oe.responsibilities || oe.bullets || [];
+      const newB = te.bullets || te.responsibilities || [];
+      const changed = origB.join('|') !== newB.join('|');
+      return { title: te.title, company: te.company, changed, origBullets: origB, newBullets: newB, status: changed ? 'modified' : 'unchanged' };
+    });
+
+    return { summaryChanged, projectChanges, skillChanges, orderChanged, experienceChanges };
   }, [result]);
+
+  // Preview accent color and font (reused across all preview sections)
+  const ACCENT = '30, 64, 120'; // dark blue RGB
+  const PREVIEW_FONT = '-apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif';
+
+  // Compute quick-lookup sets for inline change highlighting in preview
+  const inlineHighlights = React.useMemo(() => {
+    if (!diffChanges || !showHighlight) return null;
+
+    // Which project names were modified (content-based)
+    const changedProjects = new Set(
+      (diffChanges.projectChanges || []).filter(p => p.changed).map(p => p.name?.toLowerCase().trim())
+    );
+
+    // Per-project bullet change tracking
+    const projBulletChanges = {};
+    (diffChanges.projectChanges || []).forEach(pc => {
+      projBulletChanges[pc.name?.toLowerCase().trim()] = new Set(
+        pc.newBullets.map((b, i) => (b !== pc.origBullets?.[i] ? b : null)).filter(Boolean)
+      );
+    });
+
+    // Which experience entries were modified
+    const changedExperience = new Set(
+      (diffChanges.experienceChanges || []).filter(e => e.changed).map(e => `${e.company}|${e.title}`.toLowerCase())
+    );
+
+    // Per-experience bullet change tracking
+    const expBulletChanges = {};
+    (diffChanges.experienceChanges || []).forEach(ec => {
+      const key = `${ec.company}|${ec.title}`.toLowerCase();
+      expBulletChanges[key] = new Set(
+        ec.newBullets.map((b, i) => (b !== ec.origBullets?.[i] ? b : null)).filter(Boolean)
+      );
+    });
+
+    // Skill categories that were reordered
+    const reorderedSkills = new Set(
+      Object.entries(diffChanges.skillChanges || {}).filter(([, c]) => c.reordered).map(([cat]) => cat)
+    );
+
+    // Original project order (for detecting reorder position)
+    const origProjectOrder = (result?.originalResumeData?.projects || []).map(p => p.name?.toLowerCase().trim());
+
+    return {
+      summaryChanged: diffChanges.summaryChanged,
+      changedProjects,
+      projBulletChanges,
+      changedExperience,
+      expBulletChanges,
+      reorderedSkills,
+      orderChanged: diffChanges.orderChanged,
+      origProjectOrder,
+      skillChanges: diffChanges.skillChanges || {},
+    };
+  }, [diffChanges, showHighlight, result]);
 
   const handleFileUpload = (e) => {
     const file = e.target.files?.[0];
@@ -114,50 +204,60 @@ export const ResumeTailor = ({ onNavigate, isDark = false, prefilledJob = null, 
     const resume = result.tailoredResume;
     const pageW = 210;
     const pageH = 297;
-    const marginL = 15;
-    const marginR = 15;
+    const marginL = 18;
+    const marginR = 18;
     const contentW = pageW - marginL - marginR;
-    let y = 15;
+    const BOTTOM_MARGIN = 18;
+    let y = 18;
+
+    // Brand accent color (restrained dark blue)
+    const ACCENT = [30, 64, 120]; // RGB
 
     const checkPage = (needed) => {
-      if (y + needed > pageH - 15) {
+      if (y + needed > pageH - BOTTOM_MARGIN) {
         doc.addPage();
-        y = 15;
+        y = 18;
       }
     };
 
     const drawSectionHeader = (title) => {
-      checkPage(12);
-      y += 2;
-      doc.setFontSize(11);
-      doc.setFont('times', 'bold');
+      checkPage(14);
+      y += 4;
+      doc.setFontSize(10.5);
+      doc.setFont('helvetica', 'bold');
+      doc.setTextColor(...ACCENT);
       doc.text(title.toUpperCase(), marginL, y);
-      y += 1.5;
-      doc.setDrawColor(0);
-      doc.setLineWidth(0.4);
+      y += 2;
+      doc.setDrawColor(...ACCENT);
+      doc.setLineWidth(0.35);
       doc.line(marginL, y, pageW - marginR, y);
+      doc.setTextColor(0, 0, 0);
       y += 5;
     };
 
-    const drawBullet = (text, indent = marginL + 3) => {
+    const drawBullet = (text, indent = marginL + 4) => {
       doc.setFontSize(9.5);
-      doc.setFont('times', 'normal');
+      doc.setFont('helvetica', 'normal');
+      doc.setTextColor(50, 50, 50);
       const bulletText = `\u2022  ${text}`;
-      const lines = doc.splitTextToSize(bulletText, contentW - 6);
-      checkPage(lines.length * 4.5 + 2);
+      const lines = doc.splitTextToSize(bulletText, contentW - 8);
+      checkPage(lines.length * 4.2 + 2);
       doc.text(lines, indent, y);
-      y += lines.length * 4.5 + 1.5;
+      y += lines.length * 4.2 + 1.8;
+      doc.setTextColor(0, 0, 0);
     };
 
     // ── HEADER: Name ──
-    doc.setFontSize(18);
-    doc.setFont('times', 'bold');
+    doc.setFontSize(22);
+    doc.setFont('helvetica', 'bold');
+    doc.setTextColor(20, 20, 20);
     doc.text(resume.contact?.name || 'Your Name', pageW / 2, y, { align: 'center' });
-    y += 7;
+    y += 8;
 
     // ── Contact line (with clickable URLs) ──
-    doc.setFontSize(9);
-    doc.setFont('times', 'normal');
+    doc.setFontSize(8.5);
+    doc.setFont('helvetica', 'normal');
+    doc.setTextColor(80, 80, 80);
     const contactParts = [];
     if (resume.contact?.email) contactParts.push({ text: resume.contact.email, url: `mailto:${resume.contact.email}` });
     if (resume.contact?.phone) contactParts.push({ text: resume.contact.phone });
@@ -176,60 +276,79 @@ export const ResumeTailor = ({ onNavigate, isDark = false, prefilledJob = null, 
       contactParts.push({ text: pf, url: pf.startsWith('http') ? pf : `https://${pf}` });
     }
     if (contactParts.length > 0) {
-      const sep = '  |  ';
+      const sep = '   |   ';
       const sepW = doc.getTextWidth(sep);
       const widths = contactParts.map(p => doc.getTextWidth(p.text));
       const totalW = widths.reduce((a, b) => a + b, 0) + sepW * (contactParts.length - 1);
       let cx = (pageW - totalW) / 2;
       contactParts.forEach((part, i) => {
-        if (part.url) {
-          doc.setTextColor(0, 51, 204);
+        if (part.url && part.url.startsWith('http')) {
+          doc.setTextColor(...ACCENT);
           doc.text(part.text, cx, y);
           const tw = widths[i];
-          doc.setLineWidth(0.15);
-          doc.line(cx, y + 0.8, cx + tw, y + 0.8);
           doc.link(cx, y - doc.internal.getLineHeight() + doc.internal.getFontSize() * 0.85, tw, doc.internal.getFontSize() + 2, { type: 'uri', url: part.url });
-          doc.setTextColor(0, 0, 0);
+          doc.setTextColor(80, 80, 80);
         } else {
-          doc.setTextColor(0, 0, 0);
           doc.text(part.text, cx, y);
         }
-        cx += widths[i] + (i < contactParts.length - 1 ? sepW : 0);
+        cx += widths[i];
+        if (i < contactParts.length - 1) {
+          doc.setTextColor(160, 160, 160);
+          doc.text(sep, cx, y);
+          doc.setTextColor(80, 80, 80);
+          cx += sepW;
+        }
       });
-      y += 6;
+      y += 7;
+    }
+
+    // ── SUMMARY (always show if present) ──
+    if (resume.summary) {
+      drawSectionHeader('Professional Summary');
+      doc.setFontSize(9.5);
+      doc.setFont('helvetica', 'normal');
+      doc.setTextColor(50, 50, 50);
+      const lines = doc.splitTextToSize(resume.summary, contentW);
+      doc.text(lines, marginL, y);
+      y += lines.length * 4.2 + 2;
+      doc.setTextColor(0, 0, 0);
     }
 
     // ── EDUCATION ──
     if (resume.education?.length > 0) {
       drawSectionHeader('Education');
       resume.education.forEach((edu) => {
-        checkPage(15);
+        checkPage(16);
         const degreeLine = edu.degree ? (edu.field ? `${edu.degree} in ${edu.field}` : edu.degree) : '';
         doc.setFontSize(10);
-        doc.setFont('times', 'bold');
+        doc.setFont('helvetica', 'bold');
+        doc.setTextColor(20, 20, 20);
         doc.text(degreeLine, marginL, y);
-        // Date on the right
         if (edu.dates || edu.graduationDate) {
           const dateStr = edu.dates || edu.graduationDate;
-          doc.setFontSize(9);
-          doc.setFont('times', 'normal');
+          doc.setFontSize(8.5);
+          doc.setFont('helvetica', 'normal');
+          doc.setTextColor(100, 100, 100);
           const dateW = doc.getTextWidth(dateStr);
           doc.text(dateStr, pageW - marginR - dateW, y);
         }
         y += 5;
-        doc.setFontSize(9.5);
-        doc.setFont('times', 'normal');
+        doc.setFontSize(9);
+        doc.setFont('helvetica', 'normal');
+        doc.setTextColor(60, 60, 60);
         const instLine = [edu.institution, edu.gpa ? `GPA: ${edu.gpa}` : ''].filter(Boolean).join('  |  ');
         doc.text(instLine, marginL, y);
         y += 5;
         if (edu.coursework?.length > 0) {
-          doc.setFontSize(9);
+          doc.setFontSize(8.5);
+          doc.setTextColor(80, 80, 80);
           const cwText = `Coursework: ${edu.coursework.join(', ')}`;
           const cwLines = doc.splitTextToSize(cwText, contentW);
           doc.text(cwLines, marginL, y);
-          y += cwLines.length * 4.5 + 1;
+          y += cwLines.length * 4 + 1;
         }
-        y += 1;
+        doc.setTextColor(0, 0, 0);
+        y += 2;
       });
     }
 
@@ -237,31 +356,32 @@ export const ResumeTailor = ({ onNavigate, isDark = false, prefilledJob = null, 
     if (resume.projects?.length > 0) {
       drawSectionHeader('Projects');
       resume.projects.forEach((proj) => {
-        checkPage(20);
-        // Project name
+        checkPage(22);
         doc.setFontSize(10);
-        doc.setFont('times', 'bold');
+        doc.setFont('helvetica', 'bold');
+        doc.setTextColor(20, 20, 20);
         doc.text(proj.name, marginL, y);
         y += 5;
-        // Subtitle if present
         if (proj.subtitle) {
-          doc.setFontSize(9);
-          doc.setFont('times', 'italic');
+          doc.setFontSize(8.5);
+          doc.setFont('helvetica', 'italic');
+          doc.setTextColor(100, 100, 100);
           doc.text(proj.subtitle, marginL, y);
           y += 4.5;
         }
-        // Bullet points
+        doc.setTextColor(0, 0, 0);
         const bullets = proj.bullets || (proj.description ? [proj.description] : []);
         bullets.forEach((b) => drawBullet(b));
-        // Technologies
         if (proj.technologies?.length > 0) {
-          doc.setFontSize(9);
-          doc.setFont('times', 'italic');
+          doc.setFontSize(8.5);
+          doc.setFont('helvetica', 'italic');
+          doc.setTextColor(80, 80, 80);
           const techText = `Technologies: ${proj.technologies.join(', ')}`;
           const techLines = doc.splitTextToSize(techText, contentW);
-          checkPage(techLines.length * 4.5 + 2);
+          checkPage(techLines.length * 4 + 2);
           doc.text(techLines, marginL, y);
-          y += techLines.length * 4.5 + 2;
+          y += techLines.length * 4 + 2;
+          doc.setTextColor(0, 0, 0);
         }
         y += 2;
       });
@@ -274,7 +394,6 @@ export const ResumeTailor = ({ onNavigate, isDark = false, prefilledJob = null, 
       { key: 'databases', label: 'Databases' },
       { key: 'developerTools', label: 'Developer Tools' },
       { key: 'softSkills', label: 'Soft Skills' },
-      // Fallback for old format
       { key: 'technical', label: 'Technical Skills' },
       { key: 'tools', label: 'Tools' },
     ];
@@ -285,20 +404,22 @@ export const ResumeTailor = ({ onNavigate, isDark = false, prefilledJob = null, 
         const items = resume.skills?.[cat.key];
         if (items?.length > 0) {
           checkPage(8);
-          doc.setFontSize(9.5);
-          doc.setFont('times', 'bold');
-          doc.text(`${cat.label}:`, marginL, y);
+          doc.setFontSize(9);
+          doc.setFont('helvetica', 'bold');
+          doc.setTextColor(40, 40, 40);
+          doc.text(`${cat.label}: `, marginL, y);
           const labelW = doc.getTextWidth(`${cat.label}: `);
-          doc.setFont('times', 'normal');
+          doc.setFont('helvetica', 'normal');
+          doc.setTextColor(50, 50, 50);
           const skillText = items.join(', ');
           const skillLines = doc.splitTextToSize(skillText, contentW - labelW);
-          // First line next to label, rest indented
           doc.text(skillLines[0], marginL + labelW, y);
           if (skillLines.length > 1) {
-            y += 4.5;
+            y += 4.2;
             doc.text(skillLines.slice(1), marginL + labelW, y);
           }
-          y += skillLines.length * 4.5 + 1.5;
+          doc.setTextColor(0, 0, 0);
+          y += skillLines.length * 4.2 + 2;
         }
       });
     }
@@ -311,18 +432,21 @@ export const ResumeTailor = ({ onNavigate, isDark = false, prefilledJob = null, 
         const certName = typeof cert === 'string' ? cert : (cert.name || '');
         const issuer = typeof cert === 'object' ? cert.issuer : '';
         const date = typeof cert === 'object' ? cert.date : '';
-        doc.setFontSize(9.5);
-        doc.setFont('times', 'normal');
-        const certLine = [certName, issuer].filter(Boolean).join(' — ');
-        const lines = doc.splitTextToSize(`\u2022  ${certLine}`, contentW - 3);
-        doc.text(lines, marginL + 3, y);
-        y += lines.length * 4.5;
+        doc.setFontSize(9);
+        doc.setFont('helvetica', 'normal');
+        doc.setTextColor(50, 50, 50);
+        const certLine = [certName, issuer].filter(Boolean).join(' \u2014 ');
+        const lines = doc.splitTextToSize(`\u2022  ${certLine}`, contentW - 4);
+        doc.text(lines, marginL + 4, y);
+        y += lines.length * 4.2;
         if (date) {
-          doc.setFontSize(8.5);
-          doc.setFont('times', 'italic');
-          doc.text(date, marginL + 6, y);
+          doc.setFontSize(8);
+          doc.setFont('helvetica', 'italic');
+          doc.setTextColor(100, 100, 100);
+          doc.text(date, marginL + 7, y);
           y += 4;
         }
+        doc.setTextColor(0, 0, 0);
       });
     }
 
@@ -330,36 +454,30 @@ export const ResumeTailor = ({ onNavigate, isDark = false, prefilledJob = null, 
     if (resume.experience?.length > 0) {
       drawSectionHeader('Professional Experience');
       resume.experience.forEach((exp) => {
-        checkPage(18);
+        checkPage(20);
         doc.setFontSize(10);
-        doc.setFont('times', 'bold');
+        doc.setFont('helvetica', 'bold');
+        doc.setTextColor(20, 20, 20);
         doc.text(exp.title || '', marginL, y);
         if (exp.startDate || exp.endDate) {
-          const dateStr = `${exp.startDate || ''} - ${exp.endDate || ''}`;
-          doc.setFontSize(9);
-          doc.setFont('times', 'normal');
+          const dateStr = `${exp.startDate || ''} \u2013 ${exp.endDate || ''}`.trim();
+          doc.setFontSize(8.5);
+          doc.setFont('helvetica', 'normal');
+          doc.setTextColor(100, 100, 100);
           const dateW = doc.getTextWidth(dateStr);
           doc.text(dateStr, pageW - marginR - dateW, y);
         }
         y += 5;
-        doc.setFontSize(9.5);
-        doc.setFont('times', 'italic');
+        doc.setFontSize(9);
+        doc.setFont('helvetica', 'italic');
+        doc.setTextColor(70, 70, 70);
         doc.text(exp.company || '', marginL, y);
+        doc.setTextColor(0, 0, 0);
         y += 5;
         const bullets = exp.bullets || exp.responsibilities || [];
         bullets.forEach((b) => drawBullet(b));
         y += 2;
       });
-    }
-
-    // ── SUMMARY (only if no other sections, otherwise skip) ──
-    if (resume.summary && !resume.education?.length && !resume.projects?.length && !resume.experience?.length) {
-      drawSectionHeader('Summary');
-      doc.setFontSize(9.5);
-      doc.setFont('times', 'normal');
-      const lines = doc.splitTextToSize(resume.summary, contentW);
-      doc.text(lines, marginL, y);
-      y += lines.length * 4.5;
     }
 
     doc.save('tailored-resume.pdf');
@@ -647,51 +765,71 @@ export const ResumeTailor = ({ onNavigate, isDark = false, prefilledJob = null, 
             {/* Resume document */}
             {result?.tailoredResume && (
               <div
-                className="mx-auto shadow-lg"
+                className="mx-auto"
                 style={{
-                  maxWidth: '800px',
+                  maxWidth: '820px',
                   backgroundColor: '#ffffff',
                   color: '#1a1a1a',
-                  padding: '40px 48px',
-                  fontFamily: 'Georgia, "Times New Roman", serif',
-                  lineHeight: '1.4',
-                  border: isDark ? '1px solid #374151' : '1px solid #e5e7eb',
+                  padding: '48px 52px',
+                  fontFamily: PREVIEW_FONT,
+                  lineHeight: '1.5',
+                  border: isDark ? '1px solid #374151' : '1px solid #e2e8f0',
+                  borderRadius: '2px',
+                  boxShadow: '0 4px 24px rgba(0,0,0,0.08), 0 1px 4px rgba(0,0,0,0.04)',
                 }}
               >
                 {/* Name */}
-                <div className="text-center pb-3" style={{ borderBottom: '2px solid #1a1a1a' }}>
-                  <h1 className="text-3xl font-bold tracking-wide" style={{ color: '#1a1a1a', fontFamily: 'Georgia, serif', margin: 0 }}>
+                <div className="text-center pb-4" style={{ borderBottom: '2px solid #1a1a1a' }}>
+                  <h1 style={{ fontSize: '26px', fontWeight: 700, letterSpacing: '0.5px', color: '#111', fontFamily: PREVIEW_FONT, margin: 0 }}>
                     {result.tailoredResume.contact?.name}
                   </h1>
-                  <div className="flex flex-wrap justify-center gap-x-3 gap-y-1 mt-2 text-xs" style={{ color: '#444' }}>
+                  <div className="flex flex-wrap justify-center gap-x-4 gap-y-1 mt-2.5" style={{ fontSize: '12px', color: '#555' }}>
                     {result.tailoredResume.contact?.email && <span>{result.tailoredResume.contact.email}</span>}
-                    {result.tailoredResume.contact?.phone && <><span>|</span><span>{result.tailoredResume.contact.phone}</span></>}
-                    {result.tailoredResume.contact?.linkedin && <><span>|</span><span>{result.tailoredResume.contact.linkedin}</span></>}
-                    {result.tailoredResume.contact?.github && <><span>|</span><span>{result.tailoredResume.contact.github}</span></>}
+                    {result.tailoredResume.contact?.phone && <span style={{ color: '#ccc' }}>|</span>}
+                    {result.tailoredResume.contact?.phone && <span>{result.tailoredResume.contact.phone}</span>}
+                    {result.tailoredResume.contact?.linkedin && <span style={{ color: '#ccc' }}>|</span>}
+                    {result.tailoredResume.contact?.linkedin && <span>{result.tailoredResume.contact.linkedin}</span>}
+                    {result.tailoredResume.contact?.github && <span style={{ color: '#ccc' }}>|</span>}
+                    {result.tailoredResume.contact?.github && <span>{result.tailoredResume.contact.github}</span>}
                   </div>
                 </div>
 
+                {/* Professional Summary */}
+                {result.tailoredResume.summary && (
+                  <div style={{ marginTop: '20px' }}>
+                    <h2 style={{ fontSize: '12px', fontWeight: 700, letterSpacing: '2px', textTransform: 'uppercase', color: 'rgb(30, 64, 120)', borderBottom: '1px solid rgb(30, 64, 120)', paddingBottom: '4px', marginBottom: '10px', fontFamily: PREVIEW_FONT, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                      <span>Professional Summary</span>
+                      {inlineHighlights?.summaryChanged && (
+                        <span style={{ fontSize: '9px', fontWeight: 600, letterSpacing: '0.5px', color: '#16a34a', backgroundColor: '#22c55e12', border: '1px solid #22c55e40', borderRadius: '3px', padding: '1px 6px', textTransform: 'uppercase' }}>AI-Rewritten</span>
+                      )}
+                    </h2>
+                    <p style={{ fontSize: '13px', lineHeight: '1.6', color: '#333', margin: 0, padding: inlineHighlights?.summaryChanged ? '8px 10px' : 0, backgroundColor: inlineHighlights?.summaryChanged ? '#f0fdf4' : 'transparent', borderRadius: inlineHighlights?.summaryChanged ? '4px' : 0, borderLeft: inlineHighlights?.summaryChanged ? '3px solid #22c55e' : 'none' }}>
+                      {result.tailoredResume.summary}
+                    </p>
+                  </div>
+                )}
+
                 {/* Education */}
                 {result.tailoredResume.education?.length > 0 && (
-                  <div className="mt-4">
-                    <h2 className="text-sm font-bold tracking-widest uppercase pb-1 mb-2" style={{ color: '#1a1a1a', borderBottom: '1px solid #1a1a1a', fontFamily: 'Georgia, serif' }}>
+                  <div>
+                    <h2 style={{ fontSize: '12px', fontWeight: 700, letterSpacing: '2px', textTransform: 'uppercase', color: 'rgb(30, 64, 120)', borderBottom: '1px solid rgb(30, 64, 120)', paddingBottom: '4px', marginBottom: '10px', marginTop: '20px', fontFamily: PREVIEW_FONT }}>
                       Education
                     </h2>
                     {result.tailoredResume.education.map((edu, idx) => (
-                      <div key={idx} className="mb-2">
+                      <div key={idx} style={{ marginBottom: '10px' }}>
                         <div className="flex justify-between items-baseline">
-                          <span className="font-bold text-sm text-text-primary">
+                          <span style={{ fontSize: '14px', fontWeight: 600, color: '#1a1a1a', fontFamily: PREVIEW_FONT }}>
                             {edu.degree}{edu.field ? ` in ${edu.field}` : ''}
                           </span>
-                          <span className="text-xs flex-shrink-0 ml-4" style={{ color: '#555' }}>
+                          <span style={{ fontSize: '12px', color: '#666', flexShrink: 0, marginLeft: '16px' }}>
                             {edu.dates || edu.graduationDate || ''}
                           </span>
                         </div>
-                        <div className="text-xs mt-0.5" style={{ color: '#444' }}>
+                        <div style={{ fontSize: '12px', marginTop: '2px', color: '#555' }}>
                           {[edu.institution, edu.gpa ? `GPA: ${edu.gpa}` : ''].filter(Boolean).join(' | ')}
                         </div>
                         {edu.coursework?.length > 0 && (
-                          <div className="text-xs mt-0.5 italic" style={{ color: '#555' }}>
+                          <div style={{ fontSize: '11px', marginTop: '2px', fontStyle: 'italic', color: '#666' }}>
                             Coursework: {edu.coursework.join(', ')}
                           </div>
                         )}
@@ -702,28 +840,37 @@ export const ResumeTailor = ({ onNavigate, isDark = false, prefilledJob = null, 
 
                 {/* Projects */}
                 {result.tailoredResume.projects?.length > 0 && (
-                  <div className="mt-4">
-                    <h2 className="text-sm font-bold tracking-widest uppercase pb-1 mb-2" style={{ color: '#1a1a1a', borderBottom: '1px solid #1a1a1a', fontFamily: 'Georgia, serif' }}>
+                  <div>
+                    <h2 style={{ fontSize: '12px', fontWeight: 700, letterSpacing: '2px', textTransform: 'uppercase', color: 'rgb(30, 64, 120)', borderBottom: '1px solid rgb(30, 64, 120)', paddingBottom: '4px', marginBottom: '10px', marginTop: '20px', fontFamily: PREVIEW_FONT }}>
                       Projects
                     </h2>
                     {result.tailoredResume.projects.map((proj, idx) => {
                       const bullets = proj.bullets || (proj.description ? [proj.description] : []);
+                      const projKey = proj.name?.toLowerCase().trim();
+                      const projChanged = inlineHighlights?.changedProjects?.has(projKey);
+                      const origIdx = inlineHighlights?.origProjectOrder?.indexOf(projKey);
+                      const wasReordered = inlineHighlights?.orderChanged && origIdx !== idx && origIdx >= 0;
                       return (
-                        <div key={idx} className="mb-3">
-                          <div className="font-bold text-sm text-text-primary">
-                            {proj.name}
+                        <div key={idx} style={{ marginBottom: '14px' }}>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                            <span style={{ fontSize: '14px', fontWeight: 600, color: '#1a1a1a', fontFamily: PREVIEW_FONT }}>{proj.name}</span>
+                            {projChanged && <span style={{ fontSize: '9px', fontWeight: 600, color: '#16a34a', backgroundColor: '#22c55e12', border: '1px solid #22c55e40', borderRadius: '3px', padding: '0px 5px', textTransform: 'uppercase' }}>Modified</span>}
+                            {wasReordered && !projChanged && <span style={{ fontSize: '9px', fontWeight: 600, color: 'rgb(30, 64, 120)', backgroundColor: '#3b82f610', border: '1px solid #3b82f630', borderRadius: '3px', padding: '0px 5px', textTransform: 'uppercase' }}>Reordered</span>}
                           </div>
                           {proj.subtitle && (
-                            <div className="text-xs italic mb-1" style={{ color: '#555' }}>{proj.subtitle}</div>
+                            <div style={{ fontSize: '11px', fontStyle: 'italic', color: '#666', marginBottom: '4px' }}>{proj.subtitle}</div>
                           )}
-                          {bullets.map((b, bi) => (
-                            <div key={bi} className="flex items-start gap-2 text-xs ml-3 text-text-primary">
-                              <span className="text-text-primary">{'\u2022'}</span>
-                              <span>{b}</span>
-                            </div>
-                          ))}
+                          {bullets.map((b, bi) => {
+                            const bulletChanged = inlineHighlights?.projBulletChanges?.[projKey]?.has(b);
+                            return (
+                              <div key={bi} style={{ display: 'flex', alignItems: 'flex-start', gap: '8px', fontSize: '12px', marginLeft: '14px', lineHeight: '1.5', color: '#333', padding: bulletChanged ? '2px 6px' : '1px 0', backgroundColor: bulletChanged ? '#f0fdf4' : 'transparent', borderRadius: bulletChanged ? '3px' : 0, borderLeft: bulletChanged ? '2px solid #22c55e' : 'none', marginBottom: '3px' }}>
+                                <span style={{ color: bulletChanged ? '#16a34a' : '#888', flexShrink: 0 }}>{'\u2022'}</span>
+                                <span>{b}</span>
+                              </div>
+                            );
+                          })}
                           {proj.technologies?.length > 0 && (
-                            <div className="text-xs mt-1 italic" style={{ color: '#555' }}>
+                            <div style={{ fontSize: '11px', marginTop: '4px', fontStyle: 'italic', color: '#666' }}>
                               Technologies: {proj.technologies.join(', ')}
                             </div>
                           )}
@@ -748,16 +895,22 @@ export const ResumeTailor = ({ onNavigate, isDark = false, prefilledJob = null, 
                   const active = cats.filter(c => s?.[c.key]?.length > 0);
                   if (active.length === 0) return null;
                   return (
-                    <div className="mt-4">
-                      <h2 className="text-sm font-bold tracking-widest uppercase pb-1 mb-2" style={{ color: '#1a1a1a', borderBottom: '1px solid #1a1a1a', fontFamily: 'Georgia, serif' }}>
+                    <div>
+                      <h2 style={{ fontSize: '12px', fontWeight: 700, letterSpacing: '2px', textTransform: 'uppercase', color: 'rgb(30, 64, 120)', borderBottom: '1px solid rgb(30, 64, 120)', paddingBottom: '4px', marginBottom: '10px', marginTop: '20px', fontFamily: PREVIEW_FONT }}>
                         Skills
                       </h2>
-                      {active.map((cat) => (
-                        <div key={cat.key} className="text-xs mb-1 text-text-primary">
-                          <span className="font-bold text-text-primary">{cat.label}: </span>
-                          <span>{s[cat.key].join(', ')}</span>
-                        </div>
-                      ))}
+                      {active.map((cat) => {
+                        const reordered = inlineHighlights?.reorderedSkills?.has(cat.key);
+                        const catChanges = inlineHighlights?.skillChanges?.[cat.key];
+                        return (
+                          <div key={cat.key} style={{ fontSize: '12px', marginBottom: '5px', display: 'flex', alignItems: 'flex-start', gap: '6px', flexWrap: 'wrap' }}>
+                            <span style={{ fontWeight: 600, color: '#333', fontFamily: PREVIEW_FONT }}>{cat.label}: </span>
+                            <span style={{ color: '#444' }}>{s[cat.key].join(', ')}</span>
+                            {reordered && <span style={{ fontSize: '9px', fontWeight: 600, color: 'rgb(30, 64, 120)', backgroundColor: '#3b82f610', border: '1px solid #3b82f630', borderRadius: '3px', padding: '0px 5px', textTransform: 'uppercase', whiteSpace: 'nowrap' }}>Reordered by JD</span>}
+                            {catChanges?.added?.length > 0 && <span style={{ fontSize: '10px', color: '#16a34a' }}>+{catChanges.added.join(', ')}</span>}
+                          </div>
+                        );
+                      })}
                     </div>
                   );
                 })()}
@@ -765,15 +918,15 @@ export const ResumeTailor = ({ onNavigate, isDark = false, prefilledJob = null, 
                 {/* Certifications */}
                 {result.tailoredResume.certifications?.length > 0 && (
                   <div className="mt-4">
-                    <h2 className="text-sm font-bold tracking-widest uppercase pb-1 mb-2" style={{ color: '#1a1a1a', borderBottom: '1px solid #1a1a1a', fontFamily: 'Georgia, serif' }}>
+                    <h2 style={{ fontSize: '12px', fontWeight: 700, letterSpacing: '2px', textTransform: 'uppercase', color: 'rgb(30, 64, 120)', borderBottom: '1px solid rgb(30, 64, 120)', paddingBottom: '4px', marginBottom: '10px', marginTop: '20px', fontFamily: PREVIEW_FONT }}>
                       Certifications & Courses
                     </h2>
                     {result.tailoredResume.certifications.map((cert, idx) => {
                       const name = typeof cert === 'string' ? cert : (cert.name || '');
                       const issuer = typeof cert === 'object' ? cert.issuer : '';
                       return (
-                        <div key={idx} className="flex items-start gap-2 text-xs ml-3 mb-1 text-text-primary">
-                          <span className="text-text-primary">{'\u2022'}</span>
+                        <div key={idx} style={{ display: 'flex', alignItems: 'flex-start', gap: '8px', fontSize: '12px', marginLeft: '14px', marginBottom: '4px', color: '#333', lineHeight: '1.5' }}>
+                          <span style={{ color: '#888', flexShrink: 0 }}>{'\u2022'}</span>
                           <span>{name}{issuer ? ` \u2014 ${issuer}` : ''}</span>
                         </div>
                       );
@@ -784,26 +937,34 @@ export const ResumeTailor = ({ onNavigate, isDark = false, prefilledJob = null, 
                 {/* Experience */}
                 {result.tailoredResume.experience?.length > 0 && (
                   <div className="mt-4">
-                    <h2 className="text-sm font-bold tracking-widest uppercase pb-1 mb-2" style={{ color: '#1a1a1a', borderBottom: '1px solid #1a1a1a', fontFamily: 'Georgia, serif' }}>
+                    <h2 style={{ fontSize: '12px', fontWeight: 700, letterSpacing: '2px', textTransform: 'uppercase', color: 'rgb(30, 64, 120)', borderBottom: '1px solid rgb(30, 64, 120)', paddingBottom: '4px', marginBottom: '10px', marginTop: '20px', fontFamily: PREVIEW_FONT }}>
                       Professional Experience
                     </h2>
                     {result.tailoredResume.experience.map((exp, idx) => {
                       const bullets = exp.bullets || exp.responsibilities || [];
+                      const expKey = `${exp.company}|${exp.title}`.toLowerCase();
+                      const expChanged = inlineHighlights?.changedExperience?.has(expKey);
                       return (
-                        <div key={idx} className="mb-3">
-                          <div className="flex justify-between items-baseline">
-                            <span className="font-bold text-sm text-text-primary">{exp.title}</span>
-                            <span className="text-xs flex-shrink-0 ml-4" style={{ color: '#555' }}>
+                        <div key={idx} style={{ marginBottom: '14px' }}>
+                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline' }}>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                              <span style={{ fontSize: '14px', fontWeight: 600, color: '#1a1a1a', fontFamily: PREVIEW_FONT }}>{exp.title}</span>
+                              {expChanged && <span style={{ fontSize: '9px', fontWeight: 600, color: '#16a34a', backgroundColor: '#22c55e12', border: '1px solid #22c55e40', borderRadius: '3px', padding: '0px 5px', textTransform: 'uppercase' }}>Modified</span>}
+                            </div>
+                            <span style={{ fontSize: '12px', color: '#666', flexShrink: 0, marginLeft: '16px' }}>
                               {exp.startDate}{exp.endDate ? ` \u2013 ${exp.endDate}` : ''}
                             </span>
                           </div>
-                          <div className="text-xs italic mb-1" style={{ color: '#555' }}>{exp.company}</div>
-                          {bullets.map((b, bi) => (
-                            <div key={bi} className="flex items-start gap-2 text-xs ml-3 text-text-primary">
-                              <span className="text-text-primary">{'\u2022'}</span>
-                              <span>{b}</span>
-                            </div>
-                          ))}
+                          <div style={{ fontSize: '12px', fontStyle: 'italic', color: '#555', marginBottom: '4px' }}>{exp.company}</div>
+                          {bullets.map((b, bi) => {
+                            const bulletChanged = inlineHighlights?.expBulletChanges?.[expKey]?.has(b);
+                            return (
+                              <div key={bi} style={{ display: 'flex', alignItems: 'flex-start', gap: '8px', fontSize: '12px', marginLeft: '14px', lineHeight: '1.5', color: '#333', padding: bulletChanged ? '2px 6px' : '1px 0', backgroundColor: bulletChanged ? '#f0fdf4' : 'transparent', borderRadius: bulletChanged ? '3px' : 0, borderLeft: bulletChanged ? '2px solid #22c55e' : 'none', marginBottom: '3px' }}>
+                                <span style={{ color: bulletChanged ? '#16a34a' : '#888', flexShrink: 0 }}>{'\u2022'}</span>
+                                <span>{b}</span>
+                              </div>
+                            );
+                          })}
                         </div>
                       );
                     })}
@@ -822,90 +983,165 @@ export const ResumeTailor = ({ onNavigate, isDark = false, prefilledJob = null, 
               </Button>
             </div>
 
-            {/* Change Highlight Panel */}
+            {/* Change Highlight Panel: ORIGINAL -> AI-TAILORED */}
             {showHighlight && diffChanges && (
               <div
-                className="mx-auto mt-4 p-5 rounded-lg border"
+                className="mx-auto mt-4 rounded-lg border overflow-hidden"
                 style={{
                   maxWidth: '800px',
                   backgroundColor: isDark ? '#111827' : '#f9fafb',
-                  borderColor: isDark ? '#374151' : '#e5e7eb',
+                  borderColor: isDark ? '#374151' : '#d1d5db',
                 }}
               >
-                <h3 className="text-sm font-bold mb-3 flex items-center gap-2 text-text-primary">
-                  <Sparkles size={16} className="text-blue-500" />
-                  {L('resumeTailor.changesTitle')}
-                </h3>
-                <p className="text-xs mb-4 text-text-muted">
-                  <span className="inline-block w-3 h-3 mr-1" style={{ backgroundColor: '#22c55e33', border: '1px solid #22c55e' }}></span>
-                  {L('resumeTailor.greenAdded')} &nbsp;&nbsp;
-                  <span className="inline-block w-3 h-3 mr-1" style={{ backgroundColor: '#ef444433', border: '1px solid #ef4444' }}></span>
-                  {L('resumeTailor.redRemoved')} &nbsp;&nbsp;
-                  <span className="text-xs italic">{L('resumeTailor.pdfClean')}</span>
-                </p>
+                {/* Panel header */}
+                <div className="px-5 py-3 flex items-center justify-between" style={{ backgroundColor: isDark ? '#1f2937' : '#f3f4f6', borderBottom: `1px solid ${isDark ? '#374151' : '#d1d5db'}` }}>
+                  <h3 className="text-sm font-bold flex items-center gap-2 text-text-primary">
+                    <Sparkles size={16} className="text-blue-500" />
+                    ORIGINAL &rarr; AI-TAILORED
+                  </h3>
+                  <div className="flex items-center gap-3 text-xs">
+                    <span className="flex items-center gap-1">
+                      <span className="inline-block w-2.5 h-2.5 rounded-sm" style={{ backgroundColor: '#ef444433', border: '1px solid #ef4444' }}></span>
+                      Original
+                    </span>
+                    <span className="flex items-center gap-1">
+                      <span className="inline-block w-2.5 h-2.5 rounded-sm" style={{ backgroundColor: '#22c55e33', border: '1px solid #22c55e' }}></span>
+                      AI-Tailored
+                    </span>
+                  </div>
+                </div>
 
-                {/* Summary change */}
-                {diffChanges.summaryChanged && (
-                  <div className="mb-3">
-                    <div className="text-xs font-semibold mb-1 text-text-primary">{L('resumeTailor.summaryRewritten')}</div>
-                    <div className="text-xs p-2 rounded" style={{ backgroundColor: '#22c55e15', border: '1px solid #22c55e40', color: '#16a34a' }}>
-                      {result.tailoredResume.summary}
+                <div className="p-5 space-y-4">
+                  {/* Summary change */}
+                  {diffChanges.summaryChanged && (
+                    <div>
+                      <div className="text-xs font-bold mb-2 uppercase tracking-wide text-text-muted">Professional Summary</div>
+                      {result.originalResumeData.summary && (
+                        <div className="text-xs p-2.5 rounded mb-1.5" style={{ backgroundColor: '#ef444410', border: '1px solid #ef444430', color: isDark ? '#fca5a5' : '#b91c1c', textDecoration: 'line-through', opacity: 0.75 }}>
+                          {result.originalResumeData.summary}
+                        </div>
+                      )}
+                      <div className="text-xs p-2.5 rounded" style={{ backgroundColor: '#22c55e12', border: '1px solid #22c55e40', color: isDark ? '#86efac' : '#15803d' }}>
+                        {result.tailoredResume.summary}
+                      </div>
                     </div>
-                  </div>
-                )}
+                  )}
 
-                {/* Project changes */}
-                {diffChanges.projectChanges?.filter(p => p.changed).length > 0 && (
-                  <div className="mb-3">
-                    <div className="text-xs font-semibold mb-1 text-text-primary">{L('resumeTailor.projectChanges')}</div>
-                    {diffChanges.projectChanges.filter(p => p.changed).map((proj, idx) => (
-                      <div key={idx} className="mb-2 ml-2">
-                        <div className="text-xs font-medium mb-1 text-text-muted">{proj.name}</div>
-                        {proj.origBullets.map((b, bi) => {
-                          const newB = proj.newBullets[bi];
-                          return (
-                            <div key={bi} className="text-xs mb-1">
-                              <div style={{ color: '#ef4444', textDecoration: 'line-through', opacity: 0.7 }}>
-                                {b}
+                  {/* Experience changes */}
+                  {diffChanges.experienceChanges?.filter(e => e.changed).length > 0 && (
+                    <div>
+                      <div className="text-xs font-bold mb-2 uppercase tracking-wide text-text-muted">Experience Bullets</div>
+                      {diffChanges.experienceChanges.filter(e => e.changed).map((exp, idx) => (
+                        <div key={idx} className="mb-3 ml-2">
+                          <div className="text-xs font-semibold mb-1.5 text-text-primary">{exp.title} <span className="font-normal text-text-muted">at {exp.company}</span></div>
+                          {exp.origBullets.map((b, bi) => {
+                            const newB = exp.newBullets[bi];
+                            const bulletChanged = b !== newB;
+                            return (
+                              <div key={bi} className="mb-1.5 pl-2" style={{ borderLeft: `2px solid ${bulletChanged ? '#3b82f6' : (isDark ? '#374151' : '#e5e7eb')}` }}>
+                                {bulletChanged && (
+                                  <div className="text-xs py-0.5 px-1.5 rounded mb-0.5" style={{ color: isDark ? '#fca5a5' : '#b91c1c', opacity: 0.7, textDecoration: 'line-through' }}>
+                                    {b}
+                                  </div>
+                                )}
+                                {newB && bulletChanged && (
+                                  <div className="text-xs py-0.5 px-1.5 rounded" style={{ backgroundColor: '#22c55e12', color: isDark ? '#86efac' : '#15803d' }}>
+                                    {newB}
+                                  </div>
+                                )}
+                                {newB && !bulletChanged && (
+                                  <div className="text-xs py-0.5 px-1.5 text-text-muted">{newB}</div>
+                                )}
                               </div>
-                              {newB && (
-                                <div style={{ color: '#16a34a', backgroundColor: '#22c55e15', padding: '1px 4px', borderRadius: '2px' }}>
-                                  {newB}
+                            );
+                          })}
+                          {exp.newBullets.length > exp.origBullets.length && (
+                            exp.newBullets.slice(exp.origBullets.length).map((newB, bi) => (
+                              <div key={`new-${bi}`} className="mb-1.5 pl-2" style={{ borderLeft: '2px solid #22c55e' }}>
+                                <div className="text-xs py-0.5 px-1.5 rounded" style={{ backgroundColor: '#22c55e12', color: isDark ? '#86efac' : '#15803d' }}>
+                                  + {newB}
                                 </div>
-                              )}
-                            </div>
-                          );
-                        })}
-                      </div>
-                    ))}
-                  </div>
-                )}
+                              </div>
+                            ))
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  )}
 
-                {/* Skill reorder */}
-                {Object.keys(diffChanges.skillChanges || {}).length > 0 && (
-                  <div className="mb-3">
-                    <div className="text-xs font-semibold mb-1 text-text-primary">{L('resumeTailor.skillReordering')}</div>
-                    {Object.entries(diffChanges.skillChanges).map(([cat, changes]) => (
-                      <div key={cat} className="text-xs mb-1 ml-2">
-                        <span className="font-medium text-text-primary">{cat}: </span>
-                        {changes.reordered && <span style={{ color: '#3b82f6' }}>{L('resumeTailor.reorderedByJd')}</span>}
-                        {changes.added?.length > 0 && (
-                          <span style={{ color: '#16a34a' }}> +{changes.added.join(', ')}</span>
-                        )}
-                        {changes.removed?.length > 0 && (
-                          <span style={{ color: '#ef4444', textDecoration: 'line-through' }}> −{changes.removed.join(', ')}</span>
-                        )}
-                      </div>
-                    ))}
-                  </div>
-                )}
+                  {/* Project changes */}
+                  {diffChanges.projectChanges?.filter(p => p.changed).length > 0 && (
+                    <div>
+                      <div className="text-xs font-bold mb-2 uppercase tracking-wide text-text-muted">Project Descriptions</div>
+                      {diffChanges.projectChanges.filter(p => p.changed).map((proj, idx) => (
+                        <div key={idx} className="mb-3 ml-2">
+                          <div className="text-xs font-semibold mb-1.5 text-text-primary">
+                            {proj.name}
+                            {proj.status === 'added' && <span className="ml-2 px-1.5 py-0.5 rounded text-[10px] font-medium" style={{ backgroundColor: '#22c55e20', color: '#16a34a' }}>NEW</span>}
+                          </div>
+                          {proj.status === 'added' ? (
+                            proj.newBullets.map((b, bi) => (
+                              <div key={bi} className="mb-1 pl-2" style={{ borderLeft: '2px solid #22c55e' }}>
+                                <div className="text-xs py-0.5 px-1.5 rounded" style={{ backgroundColor: '#22c55e12', color: isDark ? '#86efac' : '#15803d' }}>
+                                  + {b}
+                                </div>
+                              </div>
+                            ))
+                          ) : (
+                            proj.origBullets.map((b, bi) => {
+                              const newB = proj.newBullets[bi];
+                              const bulletChanged = b !== newB;
+                              return (
+                                <div key={bi} className="mb-1.5 pl-2" style={{ borderLeft: `2px solid ${bulletChanged ? '#3b82f6' : (isDark ? '#374151' : '#e5e7eb')}` }}>
+                                  {bulletChanged && (
+                                    <div className="text-xs py-0.5 px-1.5 rounded mb-0.5" style={{ color: isDark ? '#fca5a5' : '#b91c1c', opacity: 0.7, textDecoration: 'line-through' }}>
+                                      {b}
+                                    </div>
+                                  )}
+                                  {newB && bulletChanged && (
+                                    <div className="text-xs py-0.5 px-1.5 rounded" style={{ backgroundColor: '#22c55e12', color: isDark ? '#86efac' : '#15803d' }}>
+                                      {newB}
+                                    </div>
+                                  )}
+                                  {newB && !bulletChanged && (
+                                    <div className="text-xs py-0.5 px-1.5 text-text-muted">{newB}</div>
+                                  )}
+                                </div>
+                              );
+                            })
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  )}
 
-                {/* Project order */}
-                {diffChanges.orderChanged && (
-                  <div className="text-xs" style={{ color: '#3b82f6' }}>
-                    {L('resumeTailor.projectsReordered')}
-                  </div>
-                )}
+                  {/* Skill reorder */}
+                  {Object.keys(diffChanges.skillChanges || {}).length > 0 && (
+                    <div>
+                      <div className="text-xs font-bold mb-2 uppercase tracking-wide text-text-muted">Skills Reordered</div>
+                      {Object.entries(diffChanges.skillChanges).map(([cat, changes]) => (
+                        <div key={cat} className="text-xs mb-1.5 ml-2 flex items-center gap-2">
+                          <span className="font-medium text-text-primary capitalize">{cat}: </span>
+                          {changes.reordered && <span className="px-1.5 py-0.5 rounded text-[10px]" style={{ backgroundColor: '#3b82f620', color: '#3b82f6' }}>REORDERED BY JD</span>}
+                          {changes.added?.length > 0 && (
+                            <span style={{ color: '#16a34a' }}>+{changes.added.join(', ')}</span>
+                          )}
+                          {changes.removed?.length > 0 && (
+                            <span style={{ color: '#ef4444', textDecoration: 'line-through', opacity: 0.7 }}>{changes.removed.join(', ')}</span>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  )}
+
+                  {/* Project reordering notice */}
+                  {diffChanges.orderChanged && (
+                    <div className="flex items-center gap-2 text-xs px-3 py-2 rounded" style={{ backgroundColor: '#3b82f610', border: '1px solid #3b82f630' }}>
+                      <span style={{ color: '#3b82f6' }}>&#8645;</span>
+                      <span style={{ color: '#3b82f6' }}>Projects reordered by JD relevance</span>
+                    </div>
+                  )}
+                </div>
               </div>
             )}
           </div>
